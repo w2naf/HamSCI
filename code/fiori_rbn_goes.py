@@ -2,7 +2,6 @@
 #This code is used to generate the RBN-GOES map for the Space Weather feature article.
 
 import sys
-sys.path.append('/data/mypython')
 import os
 
 import matplotlib
@@ -12,7 +11,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
-import gme
+from davitpy import gme
 import datetime
 
 import rbn_lib
