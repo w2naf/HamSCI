@@ -40,6 +40,8 @@ nosetests.xml
 disabled
 data/*
 output/*
+code/data/*
+code/output/*
 *.bbl
 *.blg
 *.swp
