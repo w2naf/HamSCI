@@ -90,6 +90,7 @@ for inx,flare in flares.iterrows():
 
             print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
 
+            import ipdb; ipdb.set_trace()
             # Go plot!!
             rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True)
             title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
@@ -103,6 +104,7 @@ for inx,flare in flares.iterrows():
             print flare
             print map_sTime
 
+        import ipdb; ipdb.set_trace()
         ax      = fig.add_subplot(3,1,3)
         
         ax.plot(inx,flare['B_AVG'],'o',label='{0} Class Flare @ {1}'.format(flare['class'],inx.strftime('%H%M UT')))

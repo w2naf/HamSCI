@@ -16,6 +16,7 @@ def read_rbn(sTime,eTime=None,data_dir=None,
 
     from hamtools import qrz
 
+    #import ipdb; ipdb.set_trace()
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
     qz      = qrz.Session(qrz_call,qrz_passwd)
@@ -42,6 +43,8 @@ def read_rbn(sTime,eTime=None,data_dir=None,
                  pass
              # File downloading code from: http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
              url = 'http://www.reversebeacon.net/raw_data/dl.php?f='+ymd
+
+             #import ipdb; ipdb.set_trace()
              u = urllib2.urlopen(url)
              f = open(data_path, 'wb')
              meta = u.info()
@@ -111,6 +114,7 @@ def read_rbn(sTime,eTime=None,data_dir=None,
             with open(p_filepath,'rb') as fl:
                 df = pickle.load(fl)
 
+        #import ipdb; ipdb.set_trace()
         return df
 
 # Set up a dictionary which identifies which bands we want and some plotting attributes for each band
