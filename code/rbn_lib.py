@@ -256,6 +256,7 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
                     cut_point = cut_point[0]
 
                     # create new vertices with a nan inbetween and set those as the path's vertices
+                    import ipdb; ipdb.set_trace()
                     new_verts = np.concatenate(
                                                [p.vertices[:cut_point, :], 
                                                 [[np.nan, np.nan]], 
@@ -263,6 +264,21 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
                                                )
                     p.codes = None
                     p.vertices = new_verts
+                #
+#                cut_point_lat = np.where(np.abs(np.diff(p.vertices[:, 1])) > 90)[0]
+#                if cut_point_lat:
+#                    cut_point_lat = cut_point_lat[0]
+#
+#                    # create new vertices with a nan inbetween and set those as the path's vertices
+#                    import ipdb; ipdb.set_trace()
+#                    new_verts = np.concatenate(
+#                                               [p.vertices[:cut_point_lat,:], 
+#                                                [[np.nan, np.nan]], 
+#                                                p.vertices[cut_point_lat+1:,:]]
+#                                               )
+#                    p.codes = None
+#                    p.vertices = new_verts
+#                    import ipdb; ipdb.set_trace()
     if ncdxf:
         dxf_df = pd.DataFrame.from_csv('ncdxf.csv')
         m.scatter(dxf_df['lon'],dxf_df['lat'],s=dxf_plot_size,**dxf_prop)

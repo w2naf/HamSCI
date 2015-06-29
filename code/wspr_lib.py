@@ -54,6 +54,7 @@ def read_wspr(sTime,eTime=None,data_dir=None):
              # File downloading code from: http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
              url = 'http://wsprnet.org/archive/'+data_file
              u = urllib2.urlopen(url)
+             import ipdb; ipdb.set_trace()
              f = open(data_path, 'wb')
              meta = u.info()
              file_size = int(meta.getheaders("Content-Length")[0])
@@ -96,6 +97,9 @@ def plot_wspr_histograms(df):
                             # If you want to avoid using X11, you must call matplotlib.use('Agg') BEFORE calling anything that might use pyplot
                             # I don't like X11 because I often run my code in terminal or web server environments that don't have access to it.
     import matplotlib.pyplot as plt #Pyplot gives easier acces to Matplotlib.  
+    import pandas as pd     #This is a nice utility for working with time-series type data.
+    import os
+    import datetime 
 
     output_dir  = 'output'
 
@@ -151,15 +155,16 @@ def plot_wspr_histograms(df):
 
     fig.tight_layout()  #This often cleans up subplot spacing when you have multiple panels.
 
-    filename    = os.path.join(output_dir,'%s_histogram.png' % year_month)
-    fig.savefig(filename,bbox_inches='tight') # bbox_inches='tight' removes whitespace at the edge of the figure.  Very useful when creating PDFs for papers.
+#    filename    = os.path.join(output_dir,'%s_histogram.png' % year_month)
+#    fig.savefig(filename,bbox_inches='tight') # bbox_inches='tight' removes whitespace at the edge of the figure.  Very useful when creating PDFs for papers.
 
-    filename    = os.path.join(output_dir,'%s_histogram.pdf' % year_month)
-    fig.savefig(filename,bbox_inches='tight') # Now we save as a scalar-vector-graphics PDF ready to drop into PDFLatex
+#    filename    = os.path.join(output_dir,'%s_histogram.pdf' % year_month)
+#    fig.savefig(filename,bbox_inches='tight') # Now we save as a scalar-vector-graphics PDF ready to drop into PDFLatex
 
     time_1      = datetime.datetime.now()
 
-    print 'Total processing time is %.1f s.' % (time_1-time_0).total_seconds()
+#    print 'Total processing time is %.1f s.' % (time_1-time_0).total_seconds()
+    return fig
 
 if __name__ == '__main__':
     import datetime
