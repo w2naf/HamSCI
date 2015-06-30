@@ -163,7 +163,7 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},tit
     return legend
 
 def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_paths=True,
-        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
+        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,eclipse=False):
     """Plot Reverse Beacon Network data.
 
     **Args**:
@@ -188,6 +188,8 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
 
     import numpy as np
     import pandas as pd
+
+    import eclipse_lib
 
     if ax is None:
         fig     = plt.figure(figsize=(10,6))
@@ -222,7 +224,10 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
     m.drawcoastlines(color='0.65')
     m.drawmapboundary(fill_color='w')
     m.nightshade(plot_mTime,color='0.82')
-    
+    #if plotting the 2017 eclipse map then also draw state boundaries
+    if eclipse:
+        m.drawcountries(color='0.65')#np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+        m.drawstates(color='0.65')
     
     de_list = []
     dx_list = []
@@ -256,7 +261,7 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
                     cut_point = cut_point[0]
 
                     # create new vertices with a nan inbetween and set those as the path's vertices
-                    import ipdb; ipdb.set_trace()
+                   # import ipdb; ipdb.set_trace()
                     new_verts = np.concatenate(
                                                [p.vertices[:cut_point, :], 
                                                 [[np.nan, np.nan]], 
@@ -283,6 +288,10 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
         dxf_df = pd.DataFrame.from_csv('ncdxf.csv')
         m.scatter(dxf_df['lon'],dxf_df['lat'],s=dxf_plot_size,**dxf_prop)
 
+    #if eclipse:
+     #   df_cl=eclipse_lib.eclipse_get_path(fname='ds_CL.csv')
+     #   m.plot(df_cl['eLon'],df_cl['eLat'],'m--',label='2017 Eclipse Central Line', linewidth=2, latlon=True)
+
     text = []
     text.append('TX Stations: {0:d}'.format(len(dx_list)))
     text.append('RX Stations: {0:d}'.format(len(de_list)))
@@ -294,4 +303,4 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
     if legend:
         band_legend()
 
-    return fig
+    return m,fig

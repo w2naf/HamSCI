@@ -17,9 +17,12 @@ import datetime
 
 import rbn_lib
 import handling
+import eclipse_lib
 
 sTime = datetime.datetime(2013,5,12)
 eTime = datetime.datetime(2013,5,14)
+#sTime = datetime.datetime(2014,9,10)
+#eTime = datetime.datetime(2014,9,11)
 sat_nr = 15
 
 goes_data = gme.sat.read_goes(sTime,eTime,sat_nr)
@@ -83,7 +86,13 @@ for inx,flare in flares.iterrows():
             print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
 
             # Go plot!!
-            rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True)
+            m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=-130 ,llcrnrlat=20, urcrnrlon=-60, urcrnrlat=60 , eclipse=True)
+            #Plot Eclipse cetral line on map
+            #cl_color='green'
+            m,fig=eclipse_lib.eclipse_map_plot(infile='ds_CL.csv',mapobj=m, fig=fig, style='--m')
+            m,fig=eclipse_lib.eclipse_map_plot(infile='ds_NL.csv',mapobj=m, fig=fig, style='--m')
+            m,fig=eclipse_lib.eclipse_map_plot(infile='ds_SL.csv',mapobj=m, fig=fig, style='--m')
+            #Titles and other propertites
             title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
             ax0.set_title(title,loc='center')
             ax0.set_title(map_sTime.strftime('%d %b %Y'),loc='right')
@@ -113,7 +122,6 @@ for inx,flare in flares.iterrows():
 
         gme.sat.goes_plot(goes_data_map,ax=ax,legendLoc='lower right')
         leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.305],ncdxf=True,ncol=4)
-
         title_prop = {'weight':'bold','size':22}
 #        fig.text(0.525,1.025,'HF Communication Paths',ha='center',**title_prop)
         fig.text(0.525,1.000,'Reverse Beacon Network\nSolar Flare HF Communication Paths',ha='center',**title_prop)
