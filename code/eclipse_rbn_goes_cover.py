@@ -19,6 +19,14 @@ import rbn_lib
 import handling
 import eclipse_lib
 
+from davitpy.pydarn.radar import *
+from davitpy.pydarn.plotting import *
+from davitpy.utils import *
+
+#Define SuperDARN radars want on the map
+radars=['fhw', 'fhe']
+
+#Specify start and end time
 sTime = datetime.datetime(2013,5,12)
 eTime = datetime.datetime(2013,5,14)
 #sTime = datetime.datetime(2014,9,10)
@@ -92,6 +100,11 @@ for inx,flare in flares.iterrows():
             m,fig=eclipse_lib.eclipse_map_plot(infile='ds_CL.csv',mapobj=m, fig=fig, style='--m')
             m,fig=eclipse_lib.eclipse_map_plot(infile='ds_NL.csv',mapobj=m, fig=fig, style='--m')
             m,fig=eclipse_lib.eclipse_map_plot(infile='ds_SL.csv',mapobj=m, fig=fig, style='--m')
+            #Plot Fort Hayes West and Fort Hayes East on the map
+            #for code in radars:
+            overlayRadar(m,fontSize=12,codes=radars,dateTime=map_sTime)
+            overlayFov(m, codes=radars, maxGate=75, beams=[0, 4, 7, 8])
+            #end of loop
             #Titles and other propertites
             title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
             ax0.set_title(title,loc='center')

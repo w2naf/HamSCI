@@ -191,6 +191,10 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
 
     import eclipse_lib
 
+    from davitpy.pydarn.radar import *
+    from davitpy.pydarn.plotting import *
+    from davitpy.utils import *
+
     if ax is None:
         fig     = plt.figure(figsize=(10,6))
         ax      = fig.add_subplot(111)
@@ -211,7 +215,8 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
     half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
     plot_mTime = sTime + half_time
 
-    m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection='cyl',ax=ax)
+    m = plotUtils.mapObj(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection='cyl',ax=ax)
+    #m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection='cyl',ax=ax)
 
 #    title = sTime.strftime('%H%M - ')+eTime.strftime('%H%M UT')
 #    title = sTime.strftime('Reverse Beacon Network %Y %b %d %H%M UT - ')+eTime.strftime('%Y %b %d %H%M UT')
