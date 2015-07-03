@@ -19,12 +19,16 @@ import rbn_lib
 import handling
 import eclipse_lib
 
+import rti_magda
 from davitpy.pydarn.radar import *
 from davitpy.pydarn.plotting import *
 from davitpy.utils import *
 
+from davitpy import pydarn
+
 #Define SuperDARN radars want on the map
 radars=['fhw', 'fhe']
+beam=7
 
 #Specify start and end time
 sTime = datetime.datetime(2013,5,12)
@@ -103,7 +107,7 @@ for inx,flare in flares.iterrows():
             #Plot Fort Hayes West and Fort Hayes East on the map
             #for code in radars:
             overlayRadar(m,fontSize=12,codes=radars,dateTime=map_sTime)
-            overlayFov(m, codes=radars, maxGate=75, beams=[0, 4, 7, 8])
+            overlayFov(m, codes=radars, maxGate=40, beams=[0, 4, 7, 8])
             #end of loop
             #Titles and other propertites
             title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
@@ -123,29 +127,34 @@ for inx,flare in flares.iterrows():
             print flare
             print map_sTime
 
-        ax      = fig.add_subplot(3,1,3)
-        ax.plot(inx,flare['B_AVG'],'o',label='{0} Class Flare @ {1}'.format(flare['class'],inx.strftime('%H%M UT')))
+#        ax      = fig.add_subplot(3,1,3)
+        #ax.plot(inx,flare['B_AVG'],'o',label='{0} Class Flare @ {1}'.format(flare['class'],inx.strftime('%H%M UT')))
 #        goes_map_sTime = datetime.datetime(inx.year,inx.month,inx.day)
 #        goes_map_eTime = goes_map_sTime + datetime.timedelta(days=1)
 
-        goes_sTime = datetime.datetime(2013,5,13,16) - datetime.timedelta(hours=3)
-        goes_eTime = datetime.datetime(2013,5,13,16) + datetime.timedelta(hours=3)
+        goes_sTime = datetime.datetime(2013,5,13,16) - datetime.timedelta(hours=2)
+        goes_eTime = datetime.datetime(2013,5,13,16) + datetime.timedelta(hours=2)
 
-        goes_data_map = gme.sat.read_goes(goes_sTime,goes_eTime,sat_nr=sat_nr)
+        #goes_data_map = gme.sat.read_goes(goes_sTime,goes_eTime,sat_nr=sat_nr)
 
-        gme.sat.goes_plot(goes_data_map,ax=ax,legendLoc='lower right')
+        #Plot RTI plots for two radars (Radar at FHW and FHE)
+        ax      = fig.add_subplot(3,1,3)
+        rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax, rad=radars[0], params=['power'],yrng=[0,40])
+       # ax2      = fig.add_subplot(3,1,3)
+       # rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax2, rad=radars[1], params=['power'])
+        #gme.sat.goes_plot(goes_data_map,ax=ax,legendLoc='lower right')
         leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.305],ncdxf=True,ncol=4)
         title_prop = {'weight':'bold','size':22}
 #        fig.text(0.525,1.025,'HF Communication Paths',ha='center',**title_prop)
         fig.text(0.525,1.000,'Reverse Beacon Network\nSolar Flare HF Communication Paths',ha='center',**title_prop)
 #        fig.text(0.525,0.995,flare.name.strftime('%d %B %Y'),ha='center',size=18)
 
-        fig.tight_layout(h_pad=2.5,w_pad=3.5)
         x0, y0, width, height = ax.get_position().bounds
 
         ax0_bounds = ax0.get_position().bounds
         ax_bounds = ax.get_position().bounds
         
+        import ipdb; ipdb.set_trace()
         width   = 0.80
         x0      = (1.-width) / 2. + 0.050
 #        y0      = .050
@@ -155,8 +164,10 @@ for inx,flare in flares.iterrows():
 
         ax.text(-0.0320,-0.140,flare.name.strftime('%d %b %Y'),transform=ax.transAxes)
         ax.set_xlabel('Time [UT]')
-        ax.set_title('NOAA GOES 15')
-#        ax.text(.015,.90,'(e)',transform=ax.transAxes,**letter_prop)
+        #Set title of SuperDARN RTI PLOT
+        r=pydarn.radar.network().getRadarByCode(radars[0])
+        ax.set_title(r.name+' (Beam: '+str(beam)+')')
+#       # ax.text(.015,.90,'(e)',transform=ax.transAxes,**letter_prop)
 
         xticks  = []
         for x in range(7):
@@ -173,6 +184,7 @@ for inx,flare in flares.iterrows():
 
         ax.vlines(map_times,0,1,linestyle='--',color='b')
 
+        fig.tight_layout(h_pad=2.5,w_pad=3.5)
         fig.savefig(filepath,bbox_inches='tight')
         fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
         plt.clf()

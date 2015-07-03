@@ -43,7 +43,6 @@ from davitpy.utils.timeUtils import *
 from davitpy.pydarn.sdio import *
 from matplotlib.figure import Figure
 
-
 def plotRti(sTime,rad,eTime=None,bmnum=7,fileType='fitex',params=['velocity','power','width'], \
               scales=[],channel=None,coords='gate',colors='lasse',yrng=-1,gsct=False,lowGray=False, \
               pdf=False,png=False,dpi=500,show=True,retfig=False,filtered=False,fileName=None, \
@@ -98,7 +97,9 @@ def plotRti(sTime,rad,eTime=None,bmnum=7,fileType='fitex',params=['velocity','po
   import os
   from davitpy import pydarn
   from davitpy import utils
-    
+  
+  import plotUtils_magda
+
   t1 = datetime.datetime.now()
   #check the inputs
   assert(isinstance(sTime,datetime.datetime)),'error, sTime must be a datetime object'
@@ -339,34 +340,41 @@ def plotRti(sTime,rad,eTime=None,bmnum=7,fileType='fitex',params=['velocity','po
       
       pcoll = ax.pcolormesh(X, Y, data[:tcnt][:].T, lw=0.01,edgecolors='None',alpha=1,lod=True,cmap=cmap,norm=norm)
   
-#      cb = utils.drawCB(fig=None,coll=pcoll,cmap=cmap,norm=norm,map=0,pos=[pos[0]+pos[2]+.02, pos[1], 0.02, pos[3]])
-      
-#      l = []
+#      ax.colorbar(pcoll)
+      cb = plot.colorbar(pcoll, orientation='vertical',ax=ax,norm=norm)
+#      fig_tmp = plot.figure()
+#      ax_tmp = fig_tmp.add_subplot(111)
+#      ax_tmp.set_visible(False)
+ 
+#      cb = plotUtils_magda.drawCB(fig=fig_tmp,coll=pcoll,cmap=cmap,norm=norm,map=0,pos=[pos[0]+pos[2]+.02, pos[1], 0.02, pos[3]])
+      #plotUtils_magda.
+
+      l = []
       #define the colorbar labels
-#      for i in range(0,len(bounds)):
-#        if(params[p] == 'phi0'):
-#          ln = 4
-#          if(bounds[i] == 0): ln = 3
-#          elif(bounds[i] < 0): ln = 5
-#          l.append(str(bounds[i])[:ln])
-#          continue
-#        if((i == 0 and params[p] == 'velocity') or i == len(bounds)-1):
-#          l.append(' ')
-#          continue
-#        l.append(str(int(bounds[i])))
-#      cb.ax.set_yticklabels(l)
-#        
+      for i in range(0,len(bounds)):
+        if(params[p] == 'phi0'):
+          ln = 4
+          if(bounds[i] == 0): ln = 3
+          elif(bounds[i] < 0): ln = 5
+          l.append(str(bounds[i])[:ln])
+          continue
+        if((i == 0 and params[p] == 'velocity') or i == len(bounds)-1):
+          l.append(' ')
+          continue
+        l.append(str(int(bounds[i])))
+      cb.ax.set_yticklabels(l)
+        
       #set colorbar ticklabel size
-#      for t in cb.ax.get_yticklabels():
-#        t.set_fontsize(9)
+      for t in cb.ax.get_yticklabels():
+        t.set_fontsize(9)
       
       #set colorbar label
-#      if(params[p] == 'velocity'): cb.set_label('Velocity [m/s]',size=10)
-#      if(params[p] == 'grid'): cb.set_label('Velocity [m/s]',size=10)
-#      if(params[p] == 'power'): cb.set_label('Power [dB]',size=10)
-#      if(params[p] == 'width'): cb.set_label('Spec Wid [m/s]',size=10)
-#      if(params[p] == 'elevation'): cb.set_label('Elev [deg]',size=10)
-#      if(params[p] == 'phi0'): cb.set_label('Phi0 [rad]',size=10)
+      if(params[p] == 'velocity'): cb.set_label('Velocity [m/s]',size=10)
+      if(params[p] == 'grid'): cb.set_label('Velocity [m/s]',size=10)
+      if(params[p] == 'power'): cb.set_label('Power [dB]',size=10)
+      if(params[p] == 'width'): cb.set_label('Spec Wid [m/s]',size=10)
+      if(params[p] == 'elevation'): cb.set_label('Elev [deg]',size=10)
+      if(params[p] == 'phi0'): cb.set_label('Phi0 [rad]',size=10)
   
     #handle the outputs
 #    if png == True:
@@ -438,8 +446,8 @@ def drawAxes(ax,times,rad,cpid,bmnum,nrang,frang,rsep,bottom,myFig=None,yrng=-1,
   ax.xaxis.set_tick_params(direction='out',which='minor')
 
   #draw the axes
-  ax.plot_date(matplotlib.dates.date2num(times), numpy.arange(len(times)), fmt='w', \
-  tz=None, xdate=True, ydate=False, alpha=0.0)
+#  ax.plot_date(matplotlib.dates.date2num(times), numpy.arange(len(times)), fmt='w', \
+ # tz=None, xdate=True, ydate=False, alpha=0.0)
   
   if(yrng == -1):
     ymin,ymax = 99999999,-999999999

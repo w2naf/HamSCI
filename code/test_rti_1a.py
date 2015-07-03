@@ -29,7 +29,7 @@ try:
 except:
     pass 
 
-outfile='RTIplot_'+radars[0]
+outfile='RTIplot_'+radars[0]+'_'+radars[1]
 
 #Define Figure and Axes
 fig     = plt.figure(figsize=(10,6))
