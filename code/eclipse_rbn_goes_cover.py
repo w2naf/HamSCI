@@ -25,10 +25,28 @@ from davitpy.pydarn.plotting import *
 from davitpy.utils import *
 
 from davitpy import pydarn
+from pylab import gca
+from matplotlib.patches import Polygon 
 
-#Define SuperDARN radars want on the map
-radars=['fhw', 'fhe']
+#Define Eclipse Path limits
+eLimits=['ds_NL.csv', 'ds_SL.csv']
+#Define visual 
+eColor=(0.75,0.25,0.5)
+#pZorder is the zorder of the eclipse path with higher zorder=on top
+pZorder=11
+
+#Define SuperDARN radars want on the map 
+#Note: Data for the RTI plot will be taken from beam of radars[0]
+radars=['fhw', 'fhe','cvw','cve']
 beam=7
+#Define visual properties of Radars on the map 
+fovColor=(0.5,0,0.75)
+#fovZorder is the zorder of the FOV with higher zorder=on top
+fovZorder=10
+
+#Define Properties of RTI plots
+#plot groundscatter in gray (True) or in color (False)
+gs=False
 
 #Specify start and end time
 sTime = datetime.datetime(2013,5,12)
@@ -101,13 +119,20 @@ for inx,flare in flares.iterrows():
             m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=-130 ,llcrnrlat=20, urcrnrlon=-60, urcrnrlat=60 , eclipse=True)
             #Plot Eclipse cetral line on map
             #cl_color='green'
-            m,fig=eclipse_lib.eclipse_map_plot(infile='ds_CL.csv',mapobj=m, fig=fig, style='--m')
-            m,fig=eclipse_lib.eclipse_map_plot(infile='ds_NL.csv',mapobj=m, fig=fig, style='--m')
-            m,fig=eclipse_lib.eclipse_map_plot(infile='ds_SL.csv',mapobj=m, fig=fig, style='--m')
-            #Plot Fort Hayes West and Fort Hayes East on the map
+            m,fig=eclipse_lib.eclipse_swath(infile=eLimits,mapobj=m, fig=fig, pathColor=eColor, pZorder=pZorder)
+#            m,fig=eclipse_lib.eclipse_map_plot(infile='ds_CL.csv',mapobj=m, fig=fig, style='--m')
+#            m,fig=eclipse_lib.eclipse_map_plot(infile='ds_NL.csv',mapobj=m, fig=fig, style='--m')
+#            m,fig=eclipse_lib.eclipse_map_plot(infile='ds_SL.csv',mapobj=m, fig=fig, style='--m')
+            #Plot SuperDARN Radars of interest on map (Fort Hayes West and Fort Hayes East on the map)
             #for code in radars:
-            overlayRadar(m,fontSize=12,codes=radars,dateTime=map_sTime)
-            overlayFov(m, codes=radars, maxGate=40, beams=[0, 4, 7, 8])
+#            overlayRadar(m,fontSize=12,codes=radars,dateTime=map_sTime)
+#            overlayFov(m, codes=radars, maxGate=40, beams=beam)
+            #First plot radar with the beam shown in the FOV which we will plot RTI data from later (radars[0])
+            overlayRadar(m,fontSize=12,codes=radars[0],dateTime=map_sTime)
+            overlayFov(m, codes=radars[0], maxGate=40, beams=beam,model='GS', fovColor=fovColor,zorder=fovZorder)
+            #Next plot the rest of the radars (no beams will be plotted)
+            overlayRadar(m,fontSize=12,codes=radars[1:],dateTime=map_sTime)
+            overlayFov(m, codes=radars[1:], maxGate=40, beams=None,model='GS', fovColor=fovColor,zorder=fovZorder)
             #end of loop
             #Titles and other propertites
             title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
@@ -139,7 +164,7 @@ for inx,flare in flares.iterrows():
 
         #Plot RTI plots for two radars (Radar at FHW and FHE)
         ax      = fig.add_subplot(3,1,3)
-        rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax, rad=radars[0], params=['power'],yrng=[0,40])
+        rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax, rad=radars[0], params=['power'],yrng=[0,40], gsct=gs)
        # ax2      = fig.add_subplot(3,1,3)
        # rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax2, rad=radars[1], params=['power'])
         #gme.sat.goes_plot(goes_data_map,ax=ax,legendLoc='lower right')
