@@ -33,7 +33,10 @@ eLimits=['ds_NL.csv', 'ds_SL.csv']
 #Define visual 
 eColor=(0.75,0.25,0.5)
 #pZorder is the zorder of the eclipse path with higher zorder=on top
-pZorder=11
+pZorder=9
+
+#define RBN alpha
+path_alpha=0.3
 
 #Define SuperDARN radars want on the map 
 #Note: Data for the RTI plot will be taken from beam of radars[0]
@@ -116,7 +119,7 @@ for inx,flare in flares.iterrows():
             print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
 
             # Go plot!!
-            m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=-130 ,llcrnrlat=20, urcrnrlon=-60, urcrnrlat=60 , eclipse=True)
+            m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=-130 ,llcrnrlat=20, urcrnrlon=-60, urcrnrlat=60 , basemapType=False, eclipse=True,path_alpha=path_alpha)
             #Plot Eclipse cetral line on map
             #cl_color='green'
             m,fig=eclipse_lib.eclipse_swath(infile=eLimits,mapobj=m, fig=fig, pathColor=eColor, pZorder=pZorder)

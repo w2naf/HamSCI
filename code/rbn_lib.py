@@ -163,7 +163,7 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},tit
     return legend
 
 def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_paths=True,
-        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,eclipse=False):
+        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,basemapType=True,eclipse=False,path_alpha=None):
     """Plot Reverse Beacon Network data.
 
     **Args**:
@@ -215,8 +215,10 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
     half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
     plot_mTime = sTime + half_time
 
-    m = plotUtils.mapObj(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection='cyl',ax=ax,fillContinents='None')
-    #m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection='cyl',ax=ax)
+    if basemapType:
+        m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection='cyl',ax=ax)
+    else:
+        m = plotUtils.mapObj(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection='cyl',ax=ax,fillContinents='None')
 
 #    title = sTime.strftime('%H%M - ')+eTime.strftime('%H%M UT')
 #    title = sTime.strftime('Reverse Beacon Network %Y %b %d %H%M UT - ')+eTime.strftime('%Y %b %d %H%M UT')
@@ -257,7 +259,7 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
 
             rx    = m.scatter(de_lon,de_lat,color='k',s=2,zorder=100)
             if plot_paths:
-                line, = m.drawgreatcircle(dx_lon,dx_lat,de_lon,de_lat,color=color)
+                line, = m.drawgreatcircle(dx_lon,dx_lat,de_lon,de_lat,color=color, alpha=path_alpha)
 
                 p = line.get_path()
                 # find the index which crosses the dateline (the delta is large)
