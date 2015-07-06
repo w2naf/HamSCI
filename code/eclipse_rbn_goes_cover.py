@@ -165,7 +165,7 @@ for inx,flare in flares.iterrows():
 
         #goes_data_map = gme.sat.read_goes(goes_sTime,goes_eTime,sat_nr=sat_nr)
 
-        #Plot RTI plots for two radars (Radar at FHW and FHE)
+        #Plot RTI plots for radars[0] (Radar at FHW)
         ax      = fig.add_subplot(3,1,3)
         rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax, rad=radars[0], params=['power'],yrng=[0,40], gsct=gs)
        # ax2      = fig.add_subplot(3,1,3)
@@ -181,6 +181,7 @@ for inx,flare in flares.iterrows():
 
         ax0_bounds = ax0.get_position().bounds
         ax_bounds = ax.get_position().bounds
+        import ipdb; ipdb.set_trace()
         
         import ipdb; ipdb.set_trace()
         width   = 0.80
