@@ -46,7 +46,7 @@ from matplotlib.figure import Figure
 def plotRti(sTime,rad,eTime=None,bmnum=7,fileType='fitex',params=['velocity','power','width'], \
               scales=[],channel=None,coords='gate',colors='lasse',yrng=-1,gsct=False,lowGray=False, \
               pdf=False,png=False,dpi=500,show=True,retfig=False,filtered=False,fileName=None, \
-              custType='fitex', tFreqBands=[], myFile=None,figure=None,ax=None,xtick_size=9,ytick_size=9,xticks=None,axvlines=None,plotTerminator=False):
+              custType='fitex', tFreqBands=[], myFile=None,figure=None,ax=None,xtick_size=9,ytick_size=9,xticks=None,axvlines=None,plotTerminator=False, c_anchor=[0.0,0.5]):
   """create an rti plot for a secified radar and time period
 
   **Args**:
@@ -80,6 +80,7 @@ def plotRti(sTime,rad,eTime=None,bmnum=7,fileType='fitex',params=['velocity','po
     * **[xticks]**: (list) datetime.datetime objects indicating the location of xticks
     * **[axvlines]**: (list) datetime.datetime objects indicating the location vertical lines marking the plot
     * **[plotTerminator]**: (boolean) Overlay the day/night terminator.
+    * **[c_anchor]**: (list) anchor point of the colorbar
   **Returns**:
     * Possibly figure, depending on the **retfig** keyword
 
@@ -341,7 +342,10 @@ def plotRti(sTime,rad,eTime=None,bmnum=7,fileType='fitex',params=['velocity','po
       pcoll = ax.pcolormesh(X, Y, data[:tcnt][:].T, lw=0.01,edgecolors='None',alpha=1,lod=True,cmap=cmap,norm=norm)
   
 #      ax.colorbar(pcoll)
-      cb = plot.colorbar(pcoll, orientation='vertical',ax=ax,norm=norm)
+    
+#      fig_tmp = plot.figure()
+#      ax_tmp = fig_tmp.add_subplot(111)
+      cb = plot.colorbar(pcoll, orientation='vertical', ax=ax,norm=norm)
 #      fig_tmp = plot.figure()
 #      ax_tmp = fig_tmp.add_subplot(111)
 #      ax_tmp.set_visible(False)

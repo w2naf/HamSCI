@@ -28,6 +28,9 @@ from davitpy import pydarn
 from pylab import gca
 from matplotlib.patches import Polygon 
 
+#Map Properties 
+#define map projection 
+mapProj='cyl'
 #Define Eclipse Path limits
 eLimits=['ds_NL.csv', 'ds_SL.csv']
 #Define visual 
@@ -119,7 +122,7 @@ for inx,flare in flares.iterrows():
             print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
 
             # Go plot!!
-            m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=-130 ,llcrnrlat=20, urcrnrlon=-60, urcrnrlat=60 , basemapType=False, eclipse=True,path_alpha=path_alpha)
+            m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=-130 ,llcrnrlat=25, urcrnrlon=-65, urcrnrlat=50 , proj=mapProj, basemapType=False, eclipse=True,path_alpha=path_alpha)
             #Plot Eclipse cetral line on map
             #cl_color='green'
             m,fig=eclipse_lib.eclipse_swath(infile=eLimits,mapobj=m, fig=fig, pathColor=eColor, pZorder=pZorder)
@@ -137,6 +140,10 @@ for inx,flare in flares.iterrows():
             overlayRadar(m,fontSize=12,codes=radars[1:],dateTime=map_sTime)
             overlayFov(m, codes=radars[1:], maxGate=40, beams=None,model='GS', fovColor=fovColor,zorder=fovZorder)
             #end of loop
+            x,y, w, h=ax0.get_position().bounds
+            print "ax0 map 1-(x,y,width, height)="
+            print x,y,w,h
+#            import ipdb; ipdb.set_trace()
             #Titles and other propertites
             title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
             ax0.set_title(title,loc='center')
@@ -166,7 +173,8 @@ for inx,flare in flares.iterrows():
         #goes_data_map = gme.sat.read_goes(goes_sTime,goes_eTime,sat_nr=sat_nr)
 
         #Plot RTI plots for radars[0] (Radar at FHW)
-        ax      = fig.add_subplot(3,1,3)
+#        ax      = fig.add_axes([0.125,0.099999,0.775, 0.22]) 
+        ax      =fig.add_subplot(3,1,3)
         rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax, rad=radars[0], params=['power'],yrng=[0,40], gsct=gs)
        # ax2      = fig.add_subplot(3,1,3)
        # rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax2, rad=radars[1], params=['power'])
@@ -181,9 +189,11 @@ for inx,flare in flares.iterrows():
 
         ax0_bounds = ax0.get_position().bounds
         ax_bounds = ax.get_position().bounds
-        import ipdb; ipdb.set_trace()
+        print "ax0 map2-(x,y,width, height)=" 
+        print ax0_bounds
+#        import ipdb; ipdb.set_trace()
         
-        import ipdb; ipdb.set_trace()
+#        import ipdb; ipdb.set_trace()
         width   = 0.80
         x0      = (1.-width) / 2. + 0.050
 #        y0      = .050

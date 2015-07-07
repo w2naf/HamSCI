@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
-import gme
+from davitpy import gme
 import datetime
 
 import rbn_lib
@@ -121,6 +121,7 @@ for inx,flare in flares.iterrows():
 
         fig.tight_layout(h_pad=2.5,w_pad=3.5)
         x0, y0, width, height = ax.get_position().bounds
+        import ipdb; ipdb.set_trace()
 
         ax0_bounds = ax0.get_position().bounds
         ax_bounds = ax.get_position().bounds
