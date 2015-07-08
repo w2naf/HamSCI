@@ -219,7 +219,7 @@ for inx,flare in flares.iterrows():
        # rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax2, rad=radars[1], params=['power'])
 
         #gme.sat.goes_plot(goes_data_map,ax=ax,legendLoc='lower right')
-        leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.305],ncdxf=True,ncol=4)
+#        leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
         
         title_prop = {'weight':'bold','size':22}
 #        fig.text(0.525,1.025,'HF Communication Paths',ha='center',**title_prop)
@@ -248,16 +248,25 @@ for inx,flare in flares.iterrows():
         width1=width1
         height1=height1
         x1=x1
-        y1 =1-0.025-height1
+        #increase shift to shift map down; decrease shift to shift map up
+        shift=0.025
+        y1 =1-shift-height1
         ax1.set_position([x1,y1,width1, height1])
         #Bottom Map
         x2, y2, width2, height2= ax0.get_position().bounds
         width2=width2
         height2=height2
         x2=x2
-        y2 = y1-0.025-height2
+        #increase shift to shift map down; decrease shift to shift map up
+        shift=0.0300
+        y2 = y1-shift-height2
         #1-0.025-height2
         ax0.set_position([x2,y2,width2, height2])
+
+        #Set Legend position
+        shift=0.060
+        yl=y2-shift-0.025
+        leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,yl],ncdxf=True,ncol=4)
 
         ax.text(-0.0320,-0.140,flare.name.strftime('%d %b %Y'),transform=ax.transAxes)
         ax.set_xlabel('Time [UT]')
