@@ -39,10 +39,9 @@ urcrnrlat=52
 x1=0.125
 w1=0.775
 h1=0.235
-y1=0.6647
-space=0.05
-y2=y1+h1+space
-map_ax=[[x1,y1, w1, h1], [x1, y2, w1, h1]]
+y1=0.6647+h1
+y2=y1+h1+.05
+
 
 #Define Eclipse Path limits
 eLimits=['ds_NL.csv', 'ds_SL.csv']
@@ -120,8 +119,8 @@ for inx,flare in flares.iterrows():
         map_times.append(datetime.datetime(2013,5,13,16,5))
         for kk,map_sTime in enumerate(map_times):
             plt_inx = kk + 1
-#            ax0     = fig.add_subplot(3,1,plt_inx)
-            ax0     = fig.add_axes(map_ax[plt_inx])
+            ax0     = fig.add_subplot(3,1,plt_inx)
+            ax0     = fig.add_axes(
 
             map_eTime = map_sTime + datetime.timedelta(minutes=15)
 
@@ -164,19 +163,18 @@ for inx,flare in flares.iterrows():
             x,y, w, h=ax0.get_position().bounds
             print "ax0 map 1-(x,y,width, height)="
             print x,y,w,h
-#            import ipdb; ipdb.set_trace()
-#            if plt_inx==1:
-#                w1=w
-#                h1=h
-#                ax0.set_position([x1,y1,w1,h1])
-#            else: 
-#                y2=0.05+y1+w1
-#                w1=w
-#                h1=h
-#                ax0.set_position([x1,y2, w1, h1])
-#
+            import ipdb; ipdb.set_trace()
+            if plt_inx==1:
+                w1=w
+                h1=h
+                ax0.set_position([x1,y1,w1,h1])
+            else: 
+                y2=0.05+y1+w1
+                w1=w
+                h1=h
+                ax0.set_position([x1,y2, w1, h1])
+
             print ax0.get_position().bounds
-            print map_sTime
             import ipdb; ipdb.set_trace()
             #Titles and other propertites
             title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
