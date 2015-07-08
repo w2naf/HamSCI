@@ -46,7 +46,7 @@ from matplotlib.figure import Figure
 def plotRti(sTime,rad,eTime=None,bmnum=7,fileType='fitex',params=['velocity','power','width'], \
               scales=[],channel=None,coords='gate',colors='lasse',yrng=-1,gsct=False,lowGray=False, \
               pdf=False,png=False,dpi=500,show=True,retfig=False,filtered=False,fileName=None, \
-              custType='fitex', tFreqBands=[], myFile=None,figure=None,ax=None,xtick_size=9,ytick_size=9,xticks=None,axvlines=None,plotTerminator=False, c_anchor=[0.0,0.5]):
+              custType='fitex', tFreqBands=[], myFile=None,figure=None,ax=None,xtick_size=9,ytick_size=9,xticks=None,axvlines=None,plotTerminator=False, cax=None, c_anchor=[0.0,0.5]):
   """create an rti plot for a secified radar and time period
 
   **Args**:
@@ -80,6 +80,7 @@ def plotRti(sTime,rad,eTime=None,bmnum=7,fileType='fitex',params=['velocity','po
     * **[xticks]**: (list) datetime.datetime objects indicating the location of xticks
     * **[axvlines]**: (list) datetime.datetime objects indicating the location vertical lines marking the plot
     * **[plotTerminator]**: (boolean) Overlay the day/night terminator.
+    * **[cax]**: (matplotlib.figure.add_axes()) axis object for colorbar. Right Now: cax must be passed in! Need to add code to switch between cax and ax options for colorbar!
     * **[c_anchor]**: (list) anchor point of the colorbar
   **Returns**:
     * Possibly figure, depending on the **retfig** keyword
@@ -345,7 +346,11 @@ def plotRti(sTime,rad,eTime=None,bmnum=7,fileType='fitex',params=['velocity','po
     
 #      fig_tmp = plot.figure()
 #      ax_tmp = fig_tmp.add_subplot(111)
-      cb = plot.colorbar(pcoll, orientation='vertical', ax=ax,norm=norm)
+      if cax:
+          cb = plot.colorbar(pcoll, orientation='vertical', cax=cax,norm=norm)
+      else: 
+          cb = plot.colorbar(pcoll, orientation='vertical', ax=ax,norm=norm)
+
 #      fig_tmp = plot.figure()
 #      ax_tmp = fig_tmp.add_subplot(111)
 #      ax_tmp.set_visible(False)

@@ -31,6 +31,19 @@ from matplotlib.patches import Polygon
 #Map Properties 
 #define map projection 
 mapProj='cyl'
+llcrnrlon=-130 
+llcrnrlat=25
+urcrnrlon=-65
+urcrnrlat=52 
+
+x1=0.125
+w1=0.775
+h1=0.235
+y1=0.6647
+space=0.05
+y2=y1+h1+space
+map_ax=[[x1,y1, w1, h1], [x1, y2, w1, h1]]
+
 #Define Eclipse Path limits
 eLimits=['ds_NL.csv', 'ds_SL.csv']
 #Define visual 
@@ -53,7 +66,14 @@ fovZorder=10
 #Define Properties of RTI plots
 #plot groundscatter in gray (True) or in color (False)
 gs=False
-
+ax_dim=[0.125,0.099999,0.7, 0.22]
+cax_x=0.125+ax_dim[2]+.005
+cax_w=0.08
+#cax_w=(1-cax_x-0.01)/2
+cax_dim=[cax_x, ax_dim[1],cax_w, ax_dim[3]]
+print ax_dim
+print cax_dim
+import ipdb; ipdb.set_trace()
 #Specify start and end time
 sTime = datetime.datetime(2013,5,12)
 eTime = datetime.datetime(2013,5,14)
@@ -100,7 +120,8 @@ for inx,flare in flares.iterrows():
         map_times.append(datetime.datetime(2013,5,13,16,5))
         for kk,map_sTime in enumerate(map_times):
             plt_inx = kk + 1
-            ax0     = fig.add_subplot(3,1,plt_inx)
+#            ax0     = fig.add_subplot(3,1,plt_inx)
+            ax0     = fig.add_axes(map_ax[plt_inx])
 
             map_eTime = map_sTime + datetime.timedelta(minutes=15)
 
@@ -122,8 +143,8 @@ for inx,flare in flares.iterrows():
             print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
 
             # Go plot!!
-            m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=-130 ,llcrnrlat=25, urcrnrlon=-65, urcrnrlat=50 , proj=mapProj, basemapType=False, eclipse=True,path_alpha=path_alpha)
-            #Plot Eclipse cetral line on map
+            m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat, proj=mapProj, basemapType=False, eclipse=True,path_alpha=path_alpha)
+            #Plot Eclipse path swath on map
             #cl_color='green'
             m,fig=eclipse_lib.eclipse_swath(infile=eLimits,mapobj=m, fig=fig, pathColor=eColor, pZorder=pZorder)
 #            m,fig=eclipse_lib.eclipse_map_plot(infile='ds_CL.csv',mapobj=m, fig=fig, style='--m')
@@ -144,6 +165,19 @@ for inx,flare in flares.iterrows():
             print "ax0 map 1-(x,y,width, height)="
             print x,y,w,h
 #            import ipdb; ipdb.set_trace()
+#            if plt_inx==1:
+#                w1=w
+#                h1=h
+#                ax0.set_position([x1,y1,w1,h1])
+#            else: 
+#                y2=0.05+y1+w1
+#                w1=w
+#                h1=h
+#                ax0.set_position([x1,y2, w1, h1])
+#
+            print ax0.get_position().bounds
+            print map_sTime
+            import ipdb; ipdb.set_trace()
             #Titles and other propertites
             title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
             ax0.set_title(title,loc='center')
@@ -154,6 +188,7 @@ for inx,flare in flares.iterrows():
                 ax0.set_title('Flare Peak',loc='left')
 
             letter_prop = {'weight':'bold','size':20}
+#            ax0.set_position(
 #            ax0.text(.015,.90,'({0})'.format(letters[kk]),transform=ax0.transAxes,**letter_prop)
 
 #            for item in (ax0.get_xticklabels() + ax0.get_yticklabels()):
@@ -174,12 +209,16 @@ for inx,flare in flares.iterrows():
 
         #Plot RTI plots for radars[0] (Radar at FHW)
 #        ax      = fig.add_axes([0.125,0.099999,0.775, 0.22]) 
-        ax      =fig.add_subplot(3,1,3)
-        rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax, rad=radars[0], params=['power'],yrng=[0,40], gsct=gs)
+        ax      = fig.add_axes(ax_dim)
+#        ax      =fig.add_subplot(3,1,3)
+        cax     =fig.add_axes(cax_dim)
+        rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax, rad=radars[0], params=['power'],yrng=[0,40], gsct=gs, cax=cax)
        # ax2      = fig.add_subplot(3,1,3)
        # rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax2, rad=radars[1], params=['power'])
+
         #gme.sat.goes_plot(goes_data_map,ax=ax,legendLoc='lower right')
         leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.305],ncdxf=True,ncol=4)
+        
         title_prop = {'weight':'bold','size':22}
 #        fig.text(0.525,1.025,'HF Communication Paths',ha='center',**title_prop)
         fig.text(0.525,1.000,'Reverse Beacon Network\nSolar Flare HF Communication Paths',ha='center',**title_prop)
@@ -194,11 +233,11 @@ for inx,flare in flares.iterrows():
 #        import ipdb; ipdb.set_trace()
         
 #        import ipdb; ipdb.set_trace()
-        width   = 0.80
-        x0      = (1.-width) / 2. + 0.050
+        width   = width #0.80
+        x0      = x0 #(1.-width) / 2. + 0.050
 #        y0      = .050
-        y0      = .080
-        height  = 0.200
+        y0      = y0 #.080
+        height  = height #0.200
         ax.set_position([x0,y0,width,height])
 
         ax.text(-0.0320,-0.140,flare.name.strftime('%d %b %Y'),transform=ax.transAxes)
@@ -223,7 +262,7 @@ for inx,flare in flares.iterrows():
 
         ax.vlines(map_times,0,1,linestyle='--',color='b')
 
-        fig.tight_layout(h_pad=2.5,w_pad=3.5)
+#        fig.tight_layout(h_pad=2.5,w_pad=3.5)
         fig.savefig(filepath,bbox_inches='tight')
         fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
         plt.clf()
