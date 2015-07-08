@@ -39,9 +39,10 @@ urcrnrlat=52
 x1=0.125
 w1=0.775
 h1=0.235
-y1=0.6647+h1
-y2=y1+h1+.05
-
+y1=0.6647
+space=0.05
+y2=y1+h1+space
+map_ax=[[x1,y1, w1, h1], [x1, y2, w1, h1]]
 
 #Define Eclipse Path limits
 eLimits=['ds_NL.csv', 'ds_SL.csv']
@@ -120,7 +121,7 @@ for inx,flare in flares.iterrows():
         for kk,map_sTime in enumerate(map_times):
             plt_inx = kk + 1
             ax0     = fig.add_subplot(3,1,plt_inx)
-            ax0     = fig.add_axes(
+#            ax0     = fig.add_axes(map_ax[plt_inx])
 
             map_eTime = map_sTime + datetime.timedelta(minutes=15)
 
@@ -163,18 +164,21 @@ for inx,flare in flares.iterrows():
             x,y, w, h=ax0.get_position().bounds
             print "ax0 map 1-(x,y,width, height)="
             print x,y,w,h
-            import ipdb; ipdb.set_trace()
+#            import ipdb; ipdb.set_trace()
+            #If this is the first map plotted, then save the axis as ax1
             if plt_inx==1:
-                w1=w
-                h1=h
-                ax0.set_position([x1,y1,w1,h1])
-            else: 
-                y2=0.05+y1+w1
-                w1=w
-                h1=h
-                ax0.set_position([x1,y2, w1, h1])
-
+                ax1=ax0
+#                w1=w
+#                h1=h
+#                ax0.set_position([x1,y1,w1,h1])
+#            else: 
+#                y2=0.05+y1+w1
+#                w1=w
+#                h1=h
+#                ax0.set_position([x1,y2, w1, h1])
+#
             print ax0.get_position().bounds
+            print map_sTime
             import ipdb; ipdb.set_trace()
             #Titles and other propertites
             title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
@@ -224,12 +228,12 @@ for inx,flare in flares.iterrows():
 
         x0, y0, width, height = ax.get_position().bounds
 
-        ax0_bounds = ax0.get_position().bounds
         ax_bounds = ax.get_position().bounds
         print "ax0 map2-(x,y,width, height)=" 
-        print ax0_bounds
+#        print ax0_bounds
 #        import ipdb; ipdb.set_trace()
         
+        #Set position of Bottommost plot
 #        import ipdb; ipdb.set_trace()
         width   = width #0.80
         x0      = x0 #(1.-width) / 2. + 0.050
@@ -237,6 +241,23 @@ for inx,flare in flares.iterrows():
         y0      = y0 #.080
         height  = height #0.200
         ax.set_position([x0,y0,width,height])
+
+        #Set postion of maps
+        #Top Map
+        x1, y1, width1, height1= ax1.get_position().bounds
+        width1=width1
+        height1=height1
+        x1=x1
+        y1 =1-0.025-height1
+        ax1.set_position([x1,y1,width1, height1])
+        #Bottom Map
+        x2, y2, width2, height2= ax0.get_position().bounds
+        width2=width2
+        height2=height2
+        x2=x2
+        y2 = y1-0.025-height2
+        #1-0.025-height2
+        ax0.set_position([x2,y2,width2, height2])
 
         ax.text(-0.0320,-0.140,flare.name.strftime('%d %b %Y'),transform=ax.transAxes)
         ax.set_xlabel('Time [UT]')
