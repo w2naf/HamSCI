@@ -68,7 +68,8 @@ fovZorder=10
 gs=False
 ax_dim=[0.125,0.099999,0.7, 0.22]
 cax_x=0.125+ax_dim[2]+.005
-cax_w=0.08
+#cax_w=0.08
+cax_w=0.075
 #cax_w=(1-cax_x-0.01)/2
 cax_dim=[cax_x, ax_dim[1],cax_w, ax_dim[3]]
 print ax_dim
@@ -265,6 +266,8 @@ for inx,flare in flares.iterrows():
 
         #Set Legend position
         shift=0.060
+        #wl is the width of the legend (right now it is an educated guess)
+        wl=0.025
         yl=y2-shift-0.025
         leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,yl],ncdxf=True,ncol=4)
 
