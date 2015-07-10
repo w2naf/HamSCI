@@ -74,7 +74,7 @@ cax_w=0.075
 cax_dim=[cax_x, ax_dim[1],cax_w, ax_dim[3]]
 print ax_dim
 print cax_dim
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 #Specify start and end time
 sTime = datetime.datetime(2013,5,12)
 eTime = datetime.datetime(2013,5,14)
@@ -180,7 +180,7 @@ for inx,flare in flares.iterrows():
 #
             print ax0.get_position().bounds
             print map_sTime
-            import ipdb; ipdb.set_trace()
+#            import ipdb; ipdb.set_trace()
             #Titles and other propertites
             title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
             ax0.set_title(title,loc='center')
@@ -250,7 +250,7 @@ for inx,flare in flares.iterrows():
         height1=height1
         x1=x1
         #increase shift to shift map down; decrease shift to shift map up
-        shift=0.025
+        shift=0.030
         y1 =1-shift-height1
         ax1.set_position([x1,y1,width1, height1])
         #Bottom Map
@@ -259,17 +259,22 @@ for inx,flare in flares.iterrows():
         height2=height2
         x2=x2
         #increase shift to shift map down; decrease shift to shift map up
-        shift=0.0300
+        shift=0.0350
         y2 = y1-shift-height2
         #1-0.025-height2
         ax0.set_position([x2,y2,width2, height2])
 
         #Set Legend position
-        shift=0.060
+        shift=0.070
         #wl is the width of the legend (right now it is an educated guess)
         wl=0.025
+        #the lower left y coordinate of the legend (yl) is equal to the lower y coordinate of the bottom map minus the estimated legend width and the shift
         yl=y2-shift-0.025
         leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,yl],ncdxf=True,ncol=4)
+
+        #Insert line between 
+        axl_h=0.005
+        axl=fig.add_ax([0,(y0+yl)/2,1, axl_h])
 
         ax.text(-0.0320,-0.140,flare.name.strftime('%d %b %Y'),transform=ax.transAxes)
         ax.set_xlabel('Time [UT]')
