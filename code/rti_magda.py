@@ -375,12 +375,14 @@ def plotRti(sTime,rad,eTime=None,bmnum=7,fileType='fitex',params=['velocity','po
         
       #set colorbar ticklabel size
       for t in cb.ax.get_yticklabels():
-        t.set_fontsize(9)
+#        t.set_fontsize(9)
+        t.set_fontsize(15)
       
       #set colorbar label
       if(params[p] == 'velocity'): cb.set_label('Velocity [m/s]',size=10)
       if(params[p] == 'grid'): cb.set_label('Velocity [m/s]',size=10)
-      if(params[p] == 'power'): cb.set_label('Power [dB]',size=10)
+#      if(params[p] == 'power'): cb.set_label('Power [dB]',size=10)
+      if(params[p] == 'power'): cb.set_label('Power [dB]',size=18)
       if(params[p] == 'width'): cb.set_label('Spec Wid [m/s]',size=10)
       if(params[p] == 'elevation'): cb.set_label('Elev [deg]',size=10)
       if(params[p] == 'phi0'): cb.set_label('Phi0 [rad]',size=10)
@@ -503,14 +505,16 @@ def drawAxes(ax,times,rad,cpid,bmnum,nrang,frang,rsep,bottom,myFig=None,yrng=-1,
     for tick in ax.xaxis.get_major_ticks():
       tick.label.set_fontsize(xtick_size) 
     ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
-    ax.xaxis.set_label_text('UT')
+#    ax.xaxis.set_label_text('UT')
+    ax.xaxis.set_label_text('UT',size=18)
     
   #set ytick size
   for tick in ax.yaxis.get_major_ticks():
     tick.label.set_fontsize(ytick_size) 
   #format y axis depending on coords
   if(coords == 'gate'): 
-    ax.yaxis.set_label_text('Range gate',size=10)
+#    ax.yaxis.set_label_text('Range gate',size=10)
+    ax.yaxis.set_label_text('Range gate',size=18)
     ax.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%d'))
     ax.yaxis.set_major_locator(MultipleLocator((ymax-ymin)/5.))
     ax.yaxis.set_minor_locator(MultipleLocator((ymax-ymin)/25.))

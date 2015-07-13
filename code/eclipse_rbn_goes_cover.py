@@ -67,9 +67,11 @@ fovZorder=10
 #plot groundscatter in gray (True) or in color (False)
 gs=False
 ax_dim=[0.125,0.099999,0.7, 0.22]
-cax_x=0.125+ax_dim[2]+.005
+#cax_x=0.125+ax_dim[2]+.005
+cax_x=0.125+ax_dim[2]+.075
 #cax_w=0.08
-cax_w=0.075
+#cax_w=0.075
+cax_w=0.025
 #cax_w=(1-cax_x-0.01)/2
 cax_dim=[cax_x, ax_dim[1],cax_w, ax_dim[3]]
 print ax_dim
@@ -215,7 +217,7 @@ for inx,flare in flares.iterrows():
         ax      = fig.add_axes(ax_dim)
 #        ax      =fig.add_subplot(3,1,3)
         cax     =fig.add_axes(cax_dim)
-        rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax, rad=radars[0], params=['power'],yrng=[0,40], gsct=gs, cax=cax)
+        rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax, rad=radars[0], params=['power'],yrng=[0,40], gsct=gs, cax=cax, xtick_size=18,ytick_size=18)
        # ax2      = fig.add_subplot(3,1,3)
        # rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax2, rad=radars[1], params=['power'])
 
@@ -265,7 +267,8 @@ for inx,flare in flares.iterrows():
         ax0.set_position([x2,y2,width2, height2])
 
         #Set Legend position
-        shift=0.070
+#        shift=0.070
+        shift=0.075
         #wl is the width of the legend (right now it is an educated guess)
         wl=0.025
         #the lower left y coordinate of the legend (yl) is equal to the lower y coordinate of the bottom map minus the estimated legend width and the shift
@@ -284,7 +287,7 @@ for inx,flare in flares.iterrows():
 ##        axl(linspace(0,1,100), axl_y*ones([1,100]), 'k-')
 
         ax.text(-0.0320,-0.140,flare.name.strftime('%d %b %Y'),transform=ax.transAxes)
-        ax.set_xlabel('Time [UT]')
+        ax.set_xlabel('Time [UT]', size=18)
         #Set title of SuperDARN RTI PLOT
         r=pydarn.radar.network().getRadarByCode(radars[0])
         ax.set_title(r.name+' (Beam: '+str(beam)+')')
