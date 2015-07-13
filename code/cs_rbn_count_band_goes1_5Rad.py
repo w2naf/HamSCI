@@ -34,8 +34,8 @@ freq2=21000
 sat_nr= 15
 Local=1
 NA=1
-latMin=-45
-latMax=45
+latMin=30
+latMax=80
 lonMin=-110
 lonMax=-60
 #END
@@ -55,9 +55,9 @@ unit='minutes'
 #graphfile='rbnCount_timeStep_'+str(dt)+' '+unit
 
 #specify times
-Flar=datetime.datetime(2014,9,10,17,45)
-sTime=datetime.datetime(2014,9,10,14,45)
-eTime=datetime.datetime(2014,9,10,20,45)
+Flar=datetime.datetime(2014,3,29,17,48)
+sTime=datetime.datetime(2014,3,29,14,48)
+eTime=datetime.datetime(2014,3,29,20,48)
 #sTime=datetime.datetime(2014,9,10,16,45)
 #eTime=datetime.datetime(2014, 9,10, 18, 30)
 #specify time interval for spot counts
@@ -65,22 +65,23 @@ tDelta=datetime.timedelta(minutes=dt)
 #Specify whether to include eTime in the count if tDelta results in an end time greater than eTime
 Inc_eTime=True
 if Local==0:
-    graphfile=str(Flar)+' Global'
+    graphfile=str(Flar)+' Global '+'('+str(latMin)+','+str(latMax)+')'+' ['+str(lonMin)+','+str(lonMax)+']'
 else:
-    graphfile=str(Flar)+' Local'
+    graphfile=str(Flar)+' Local '+'('+str(latMin)+','+str(latMax)+')'+' ['+str(lonMin)+','+str(lonMax)+']'
 
 #-----------------------------------------
 #CARSON FIND FLARE TIME AND GET sTime and eTime from
-#goes_data   = gme.sat.read_goes(sTime,eTime,sat_nr)
+goes_data   = gme.sat.read_goes(sTime,eTime,sat_nr)
 #flares      = gme.sat.find_flares(goes_data,min_class='X1',window_minutes=60)
 #Time=flares.index[0]
-#Dum=datetime.datetime.strptime(str(Flar),'%Y-%m-%d %H:%M:%S')
-#Var=Dum.strftime('%Y %m %d %H %M %S')
-#Year=int(str.split(Var)[0])
-#Month=int(str.split(Var)[1])
-#Day=int(str.split(Var)[2])
-#Hour=int(str.split(Var)[3])
-                        
+Dum=datetime.datetime.strptime(str(Flar),'%Y-%m-%d %H:%M:%S')
+Var=Dum.strftime('%Y %m %d %H %M %S')
+Year=int(str.split(Var)[0])
+Month=int(str.split(Var)[1])
+Day=int(str.split(Var)[2])
+Hour=int(str.split(Var)[3])
+Min=int(str.split(Var)[4])
+                       
 #if Hour>=20:
 #    D=Day+1
 #    H=Hour-23
@@ -308,7 +309,7 @@ for label in labels:
 
 #================================================================================================================================
 #Set subplot and axis labels
-ax0.set_title('RBN Spots with GOES Data for 16:22 Flare\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'),fontsize=28)
+ax0.set_title('RBN Spots with GOES Data for '+str(Hour)+':'+str(Min)+' Flare\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'),fontsize=28)
 ax0.set_xlabel('')
 ax1.set_ylabel('[NR. Spots], '+str(freq1/1000)+' MHz')
 ax2.set_ylabel('[NR. Spots], '+str(freq2/1000)+' MHz')
