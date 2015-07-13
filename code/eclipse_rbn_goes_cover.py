@@ -273,10 +273,15 @@ for inx,flare in flares.iterrows():
         leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,yl],ncdxf=True,ncol=4)
 
         #Insert line between 
-        axl_h=0.005
-        sh_axl_y=(yl-y0+width)/2
-        axl_y=y0+width+sh_axl_y
-        axl=fig.add_axes([0,axl_y,1, axl_h])
+#        axl_h=0.0025
+#        sh_axl_y=0.005#
+#        sh_axl=(yl+y0+height)/2
+#        axl_y=(yl+y0+height)/2
+##        axl_y=y0+height+sh_axl_y
+##        axl=fig.add_axes([x0,axl_y,width, axl_h])
+##        axl.set_visible(False)
+#        plt.axhline(axl_y,xmin=0, xmax=0,hold=None,color= 'k', linewidth=2)
+##        axl(linspace(0,1,100), axl_y*ones([1,100]), 'k-')
 
         ax.text(-0.0320,-0.140,flare.name.strftime('%d %b %Y'),transform=ax.transAxes)
         ax.set_xlabel('Time [UT]')

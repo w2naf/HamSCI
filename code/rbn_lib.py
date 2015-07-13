@@ -4,7 +4,7 @@ dxf_leg_size    = 150
 dxf_plot_size   = 50
 
 def read_rbn(sTime,eTime=None,data_dir=None,
-             qrz_call='w2naf',qrz_passwd='hamscience'):
+             qrz_call='km4ege',qrz_passwd='ProjectEllie_2014'):
     import os               # Provides utilities that help us do os-level operations like create directories
     import datetime         # Really awesome module for working with dates and times.
     import zipfile
