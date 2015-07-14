@@ -66,9 +66,12 @@ fovZorder=10
 #Define Properties of RTI plots
 #plot groundscatter in gray (True) or in color (False)
 gs=False
-ax_dim=[0.125,0.099999,0.7, 0.22]
+#ax_dim=[0.125,0.099999,0.7, 0.22]
+#ax_dim=[0.125,0.099999,0.77, 0.22]
+ax_dim=[0.125,0.099999,0.78, 0.22]
 #cax_x=0.125+ax_dim[2]+.005
-cax_x=0.125+ax_dim[2]+.075
+#cax_x=0.125+ax_dim[2]+.075
+cax_x=0.125+ax_dim[2]+.055
 #cax_w=0.08
 #cax_w=0.075
 cax_w=0.025
@@ -261,14 +264,14 @@ for inx,flare in flares.iterrows():
         height2=height2
         x2=x2
         #increase shift to shift map down; decrease shift to shift map up
-        shift=0.0350
+        shift=0.0350+0.005
         y2 = y1-shift-height2
         #1-0.025-height2
         ax0.set_position([x2,y2,width2, height2])
 
         #Set Legend position
 #        shift=0.070
-        shift=0.075
+        shift=0.070+0.005
         #wl is the width of the legend (right now it is an educated guess)
         wl=0.025
         #the lower left y coordinate of the legend (yl) is equal to the lower y coordinate of the bottom map minus the estimated legend width and the shift
@@ -286,7 +289,7 @@ for inx,flare in flares.iterrows():
 #        plt.axhline(axl_y,xmin=0, xmax=0,hold=None,color= 'k', linewidth=2)
 ##        axl(linspace(0,1,100), axl_y*ones([1,100]), 'k-')
 
-        ax.text(-0.0320,-0.140,flare.name.strftime('%d %b %Y'),transform=ax.transAxes)
+        ax.text(-0.0320,-0.140,flare.name.strftime('%d %b %Y'),transform=ax.transAxes,size=14)
         ax.set_xlabel('Time [UT]', size=18)
         #Set title of SuperDARN RTI PLOT
         r=pydarn.radar.network().getRadarByCode(radars[0])
@@ -299,12 +302,20 @@ for inx,flare in flares.iterrows():
         ax.xaxis.set_ticks(xticks)
 
         ax.title.set_fontsize(title_prop['size'])
+#        ax.title.set_weight(title_prop['weight'])
+#
+#        ax.title.set_fontsize(18)
         ax.title.set_weight(title_prop['weight'])
 
         xticklabels = []
+#        ax.label.set_fontsize(18) 
+#        rcParams.update({'font.size':18})
+        xfont={'size':18}
         for x,tick in enumerate(xticks):
             xticklabels.append(tick.strftime('%H%M'))
-        ax.set_xticklabels(xticklabels)
+        ax.set_xticklabels(xticklabels, fontdict=xfont)
+        for item in (ax.get_xticklabels()):
+            item.set_fontsize(18)
 
         ax.vlines(map_times,0,1,linestyle='--',color='b')
 
