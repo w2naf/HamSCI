@@ -44,7 +44,19 @@ rbn_df=rbn_lib.read_rbn(sTime, eTime,data_dir='data/rbn')
 epop_df=pd.DataFrame.from_csv(infile)
 import ipdb; ipdb.set_trace()
 
-##Interval
+i=1
+while i<epop_df.Index(:end):
+    callsign=epop_df.Call[:1]
+    print callsign
+    import ipdb; ipdb.set_trace()
+    df_temp=pd.DataFrame(callsign, ['Callsign'])
+    for i in range(0,len(rbn_df)-1):
+        if rbn_df.callsign[i]==callsign:
+            df.=rbn_df=
+
+
+
+#Interval
 #df_temp=
-##Export to text file
-#df.to_csv(outfile, index=False)
+#Export to text file
+df.to_csv(outfile, index=False)
