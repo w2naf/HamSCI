@@ -67,6 +67,7 @@ for i in range(0,len(epop_df)-1):
     epopCall=epop_df.Call[i]
     print epopCall
     df_temp=rbn_df[rbn_df['dx']==epopCall]
+    df_temp=df_temp[df_temp['band']=='40m']
 #    if df_temp.empty():
 #        print 'not heard'
 
@@ -99,7 +100,7 @@ for i in range(0,len(epop_df)-1):
 #Interval
 import ipdb; ipdb.set_trace()
 #df_temp=
-csvfname='rbn_and_epop_calls'
+csvfname='rbn_and_epop_calls_40m'
 outfile=os.path.join(output_dir,csvfname)
 #Export to text file
 df.to_csv(outfile, index=False)
@@ -108,7 +109,7 @@ df.to_csv(outfile, index=False)
 fig = plt.figure(figsize=(8,4))
 ax0  = fig.add_subplot(1,1,1)
 rbn_lib.rbn_map_plot(df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True)
-filename='ePOP_RBN_2.jpg'
+filename='ePOP_RBN_40M.jpg'
 filepath    = os.path.join(output_dir,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
