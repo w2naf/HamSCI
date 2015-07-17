@@ -14,9 +14,10 @@ import numpy as np
 import pandas as pd
 
 from davitpy import gme
+#from davitpyCS import gme as gm
 import datetime
-
 import rbn_lib
+import davitpy
 
 #create output directory if none exists
 output_dir='output'
@@ -32,11 +33,11 @@ freq3=14000
 freq1=28000
 freq2=21000
 sat_nr= 15
-Local=1
+Local=0
 NA=1
 latMin=30
 latMax=80
-lonMin=-110
+lonMin=-130
 lonMax=-60
 #END
 
@@ -55,9 +56,12 @@ unit='minutes'
 #graphfile='rbnCount_timeStep_'+str(dt)+' '+unit
 
 #specify times
-Flar=datetime.datetime(2014,3,29,17,48)
-sTime=datetime.datetime(2014,3,29,14,48)
-eTime=datetime.datetime(2014,3,29,20,48)
+Flar=datetime.datetime(2015,3,10,16,22)
+#Delt=datetime.timedelta(hours=3)
+#sTime=Flar-Delt
+#eTime=Flar+Delt
+sTime=datetime.datetime(2015,3,10,13,22)
+eTime=datetime.datetime(2015,3,10,19,22)
 #sTime=datetime.datetime(2014,9,10,16,45)
 #eTime=datetime.datetime(2014, 9,10, 18, 30)
 #specify time interval for spot counts
@@ -72,7 +76,9 @@ else:
 #-----------------------------------------
 #CARSON FIND FLARE TIME AND GET sTime and eTime from
 goes_data   = gme.sat.read_goes(sTime,eTime,sat_nr)
-#flares      = gme.sat.find_flares(goes_data,min_class='X1',window_minutes=60)
+flares      = gme.sat.find_flares(goes_data,min_class='X1',window_minutes=60)
+
+
 #Time=flares.index[0]
 Dum=datetime.datetime.strptime(str(Flar),'%Y-%m-%d %H:%M:%S')
 Var=Dum.strftime('%Y %m %d %H %M %S')
@@ -81,7 +87,7 @@ Month=int(str.split(Var)[1])
 Day=int(str.split(Var)[2])
 Hour=int(str.split(Var)[3])
 Min=int(str.split(Var)[4])
-                       
+                     
 #if Hour>=20:
 #    D=Day+1
 #    H=Hour-23
@@ -99,8 +105,8 @@ Min=int(str.split(Var)[4])
 #Generate a time/date vector
 curr_time=sTime
 #Two ways to have time labels for each count for the graph of counts  vs time: 
-    #1) the number of counts and the time at which that count started 
-    #2) the number of counts and the time at which that count ended [the number of counts in a 5min interval stamped with the time the interval ended and the next interval began]
+#1) the number of counts and the time at which that count started 
+#2) the number of counts and the time at which that count ended [the number of counts in a 5min interval stamped with the time the interval ended and the next interval began]
 #For option 1: uncomment line 48 and comment line 49 (uncomment the line after these notes and comment the one after it)
 #For option 2: uncomment line 49 and comment line 48 (comment the following line and uncomment the one after it)
 #times=[sTime]
@@ -182,7 +188,7 @@ while cTime < t_end:
         DumLone=df2.de_lon.iloc[I]
         
         if Local==1:
-            if (DumLatx>latMin and DumLatx<latMax and DumLonx>lonMin and DumLonx<lonMax) and (DumLate>30 and DumLate<70 and DumLone<60 and DumLone>-110):
+            if (DumLatx>latMin and DumLatx<latMax and DumLonx>lonMin and DumLonx<lonMax) and (DumLate>latMin and DumLate<latMax and DumLone<lonMax and DumLone>lonMin):
                 NA=1
             else:
                 NA=0
@@ -212,7 +218,7 @@ spot_df['Count_F3']=spots3
 spot_df['Count_F4']=spots4
 spot_df['Count_F5']=spots5
 #spot_df=pd.DataFrame(data=spots, columns=['Count'])
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 
 #now isolate those on the day side
 #now we need to constrain the data to those contacts that are only on the day side 
