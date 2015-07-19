@@ -1,0 +1,116 @@
+#!/usr/bin/env python
+#This code is intended to download the RBN data from the ePOP Satellite pass on Field Day 2015
+#and find the RBN recievers that heard the callsigns recorded by ePOP during from 0116-0118UT on 28 June 2015
+
+import sys
+import os
+
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
+
+import numpy as np
+import pandas as pd
+
+from davitpy import gme
+import datetime
+
+import rbn_lib
+import handling
+
+#ePOP data input file
+inPath="data/epop"
+fname="Callsigns_7MHz.csv"
+infile = os.path.join(inPath,fname)
+print infile
+#create output directory if none exists
+output_dir='output/epop'
+#handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
+#try: 
+#    os.makedirs(output_dir)
+#except:
+#    pass 
+
+#output_path = os.path.join('output','firori')
+#handling.prepare_output_dirs({0:output_path},clear_output_dirs=True)
+
+#Time of ePOP pass
+sTime = datetime.datetime(2015,6,28,01,16)
+eTime = datetime.datetime(2015,6,28,01,18)
+#sTime = datetime.datetime(2015,6,28,01,16,00)
+#eTime = datetime.datetime(2015,6,28,01,16,30)
+
+#Get RBN data 
+rbn_df=rbn_lib.read_rbn(sTime, eTime,data_dir='data/rbn')
+
+#Get epop callsign data
+epop_df=pd.DataFrame.from_csv(infile)
+import ipdb; ipdb.set_trace()
+
+i=0
+#callsign=epop_df.Call[i]
+#print callsign
+#import ipdb; ipdb.set_trace()
+#df=pd.DataFrame(callsign, ['Callsign'])
+
+#for n in range(0,len(rbn_df)-1):
+#    if rbn_df.callsign[n]==callsign:
+#        if n=0:
+#            df=rbn_df[n]
+#        else:
+#            df=concat[df, rbn_df[n]]
+#        ['Lat']=rbn_df.de_lat[n]
+i=0
+flag=False
+for i in range(0,len(epop_df)-1):
+#while i<len(epop_df):
+    epopCall=epop_df.Call[i]
+    print epopCall
+    df_temp=rbn_df[rbn_df['dx']==epopCall]
+#    if df_temp.empty():
+#        print 'not heard'
+
+    if flag == False: 
+        df=df_temp
+        flag=True
+    else:
+        df=pd.concat([df, df_temp])
+#
+#    for n in range(0,len(rbn_df)-1):
+#        k=1
+#        df_temp=rbn_df[:k]
+##        import ipdb; ipdb.set_trace()
+#        if rbn_df.callsign.iloc[n]==epopCall and flag == False:
+#            df_temp.columns=[rbn_df.iloc[n]
+#            df['Callsign']=rbn_df.callsign.iloc[n]
+#            df['freq']=rbn_df.freq.iloc[n]
+#            df['dx_lat']=rbn_df.dx_lat.iloc[n]
+##            df=rbn_df
+#            import ipdb; ipdb.set_trace()
+#            flag=True
+#        elif rbn_df.callsign.iloc[n]==epopCall and flag == True:
+#                df=concat[df, rbn_df.loc(n)]
+##                import ipdb; ipdb.set_trace()
+#
+
+
+#end of loop
+
+#Interval
+import ipdb; ipdb.set_trace()
+#df_temp=
+csvfname='rbn_and_epop_calls'
+outfile=os.path.join(output_dir,csvfname)
+#Export to text file
+df.to_csv(outfile, index=False)
+
+#Plot on map
+fig = plt.figure(figsize=(8,4))
+ax0  = fig.add_subplot(1,1,1)
+rbn_lib.rbn_map_plot(df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True)
+filename='ePOP_RBN_2.jpg'
+filepath    = os.path.join(output_dir,filename)
+fig.savefig(filepath,bbox_inches='tight')
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+plt.clf()
+import ipdb; ipdb.set_trace()
