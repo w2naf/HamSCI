@@ -61,13 +61,11 @@ i=0
 #            df=concat[df, rbn_df[n]]
 #        ['Lat']=rbn_df.de_lat[n]
 i=0
-dx_call=[]
 flag=False
 for i in range(0,len(epop_df)-1):
 #while i<len(epop_df):
     epopCall=epop_df.Call[i]
     print epopCall
-    dx_call[i]=epopCall
     df_temp=rbn_df[rbn_df['dx']==epopCall]
 #    if df_temp.empty():
 #        print 'not heard'
@@ -109,7 +107,6 @@ df.to_csv(outfile, index=False)
 #Plot on map
 fig = plt.figure(figsize=(8,4))
 ax0  = fig.add_subplot(1,1,1)
-color_array=[(0.0, 0.75, 0.75), (0.0, 0.0, 1.0), (0.0, 0.5, 0.0), (0.75, 0.75, 0), (1.0, 0.0, 0.0), (0.75, 0, 0.75), (1, .75, .75), (.75, .75, 1), (.75, 1, .75), (.5, 1, .5)]
 rbn_lib.rbn_map_plot(df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True)
 filename='ePOP_RBN_2.jpg'
 filepath    = os.path.join(output_dir,filename)

@@ -315,7 +315,7 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
 
 
 
-def dx_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},title=None,bbox_to_anchor=None,ncdxf=False,ncol=None):
+def dx_legend(dx_dict, dxlist, fig=None,loc='lower center',markerscale=0.5,prop={'size':10},title=None,bbox_to_anchor=None,ncdxf=False,ncol=None):
     from matplotlib import pyplot as plt
     import matplotlib.patches as mpatches
 
@@ -323,9 +323,9 @@ def dx_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},title
 
     handles = []
     labels  = []
-    for band in bandlist:
-        color = band_dict[band]['color']
-        label = band_dict[band]['freq']
+    for dx in dxlist:
+        color = dx_dict[dx]['color']
+        label = dx_dict[dx]['name']
         handles.append(mpatches.Patch(color=color,label=label))
         labels.append(label)
 
@@ -347,7 +347,79 @@ def dx_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},title
     legend = fig.legend(handles,labels,ncol=ncol,loc=loc,markerscale=markerscale,prop=prop,title=title,bbox_to_anchor=bbox_to_anchor,scatterpoints=1)
     return legend
 
-def rbn_by_dx_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_paths=True,
+def set_dx_dict(dx_call, color_array=None):
+    """Create dictionary for dx callsigns identified in RBN to plot 
+
+    **Args**:
+        * **[dx_call]**: An array of unique callsigns
+    """
+    from matplotlib import colors as color
+    # Set up a dictionary which identifies which calls we want and some plotting attributes for each band
+#    st_color=['red', 'orange', 'yellow', 'green', 'blue', 'aqua']
+##    if len(colors) != len(dx_call):
+##        print "ERROR: Not enough colors"
+#
+#    #Define colors
+##    colors=[]
+##    (red, green, blue)=color.to_rgb('b')
+##    red=color.ColorConverter.to_rgb('red')
+##    green=color('green')
+##    blue=color('blue')
+#
+##    for i in range (0,len(dx_call)-1):
+##        if i<3:
+##            colors[i]=(red, green, blue)
+##
+##       elif i>3:
+##           color
+#
+#    dx_dict       = {}
+#    i=0
+#    for dx in dx_call:
+#    red=0
+#    green=.5
+#    blue=.2
+#    for dx in dx_call:
+#        if i>=6:
+#            if red<1:
+#                colors[i]=(red+0.05,green, blue)
+#
+#            elif blue<1:
+#                colors[i]=(red,green, blue+0.05)
+#
+#
+#        dx_dict[i]   = {'name': dx_call[i],  'color':colors[i]}
+#        i=+1
+#
+##    dx_dict[21]   = {'name': '15 m',  'freq': '21 MHz',  'color':'orange'}
+##    dx_dict[14]   = {'name': '20 m',  'freq': '14 MHz',  'color':'yellow'}
+##    dx_dict[7]    = {'name': '40 m',  'freq': '7 MHz',   'color':'green'}
+##    dx_dict[3]    = {'name': '80 m',  'freq': '3.5 MHz', 'color':'blue'}
+##    dx_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
+
+#may need this next line for a more general code
+#    dx__call=[]
+#    dx_call=e
+
+    dx_dict       = {}
+    i=0
+    for dx in dx_call:
+#        import ipdb; ipdb.set_trace()
+        call=dx
+        color=color_array[i]
+        dx_dict[i+1]   = {'name': call,  'color':color}
+#        import ipdb; ipdb.set_trace()
+        i=i+1
+
+#    import ipdb; ipdb.set_trace()
+    dxlist        = dx_dict.keys()
+    dxlist.sort(reverse=True)
+    return dx_dict, dxlist
+    
+#color_dict={'c': (0.0, 0.75, 0.75), 'b': (0.0, 0.0, 1.0), 'g': (0.0, 0.5, 0.0), 'y': (0.75, 0.75, 0), 'r': (1.0, 0.0, 0.0), 'm': (0.75, 0, 0.75)}
+#for color in color_dict:
+
+def rbn_map_byDX(df,dx_dict=None, dxlist=None,dx_call=None, color_array=None,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_paths=True,
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,eclipse=False,path_alpha=None):
     """Plot Reverse Beacon Network data.
 
@@ -390,16 +462,19 @@ def rbn_by_dx_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,pl
     #Drop NaNs (QSOs without Lat/Lons)
     df = df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
 
-    ##Sort the data by band and time, then group by band.
-    df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
-    srt         = df.sort(['band','date'])
-    grouped     = srt.groupby('band')
+    ##Sort the data by dx call and time, then group by call.
+#    df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
+    srt         = df.sort(['dx','date'])
+    grouped     = srt.groupby('dx')
 
     sTime       = df['date'].min()
     eTime       = df['date'].max()
 
     half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
     plot_mTime = sTime + half_time
+
+    if dx_dict==None:
+        dx_dict, dxlist=set_dx_dict(dx_call, color_array)
 
     if basemapType:
         m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax)
@@ -422,16 +497,23 @@ def rbn_by_dx_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,pl
         m.drawcountries(color='0.65')#np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
         m.drawstates(color='0.65')
     
+#    for idx in range(0, 100)
+        
+#    color_idx=0
+#    import ipdb; ipdb.set_trace()
     de_list = []
     dx_list = []
-    for band in bandlist:
+    for dx  in dxlist:
+#        import ipdb; ipdb.set_trace()
+        label = dx_dict[dx]['name']
         try:
-            this_group = grouped.get_group(band)
+            this_group = grouped.get_group(label)
         except:
             continue
 
-        color = dx_dict[band]['color']
-        label = dx_dict[band]['name']
+#        color = color_array[color_idx]
+        color = dx_dict[dx]['color']
+#        label = dx_dict[dx]['name']
 
         for index,row in this_group.iterrows():
             #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
@@ -485,7 +567,7 @@ def rbn_by_dx_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,pl
      #   df_cl=eclipse_lib.eclipse_get_path(fname='ds_CL.csv')
      #   m.plot(df_cl['eLon'],df_cl['eLat'],'m--',label='2017 Eclipse Central Line', linewidth=2, latlon=True)
 
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     text = []
     text.append('TX Stations: {0:d}'.format(len(dx_list)))
     text.append('RX Stations: {0:d}'.format(len(de_list)))
@@ -495,6 +577,7 @@ def rbn_by_dx_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,pl
     ax.text(0.02,0.05,'\n'.join(text),transform=ax.transAxes,ha='left',va='bottom',size=9,bbox=props)
 
     if legend:
-        band_legend()
+        dx_legend(dx_dict, dxlist, ncol=4)
+#        dx_legend(dx_dict, dxlist,fig=fig, loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True)
 
     return m,fig

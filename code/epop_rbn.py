@@ -67,10 +67,13 @@ for i in range(0,len(epop_df)-1):
 #while i<len(epop_df):
     epopCall=epop_df.Call[i]
     print epopCall
-    dx_call[i]=epopCall
     df_temp=rbn_df[rbn_df['dx']==epopCall]
-#    if df_temp.empty():
-#        print 'not heard'
+    df_temp=df_temp[df_temp['band']=='40m']
+    if df_temp.empty:
+        print 'not heard'
+#        import ipdb; ipdb.set_trace()
+    else:
+        dx_call.append(epopCall)
 
     if flag == False: 
         df=df_temp
@@ -101,17 +104,27 @@ for i in range(0,len(epop_df)-1):
 #Interval
 import ipdb; ipdb.set_trace()
 #df_temp=
-csvfname='rbn_and_epop_calls'
+csvfname='rbn_and_epop_calls_40m.csv'
 outfile=os.path.join(output_dir,csvfname)
 #Export to text file
 df.to_csv(outfile, index=False)
 
 #Plot on map
-fig = plt.figure(figsize=(8,4))
+fig = plt.figure(figsize=(8,6))
 ax0  = fig.add_subplot(1,1,1)
-color_array=[(0.0, 0.75, 0.75), (0.0, 0.0, 1.0), (0.0, 0.5, 0.0), (0.75, 0.75, 0), (1.0, 0.0, 0.0), (0.75, 0, 0.75), (1, .75, .75), (.75, .75, 1), (.75, 1, .75), (.5, 1, .5)]
-rbn_lib.rbn_map_plot(df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True)
-filename='ePOP_RBN_2.jpg'
+color_array=[(0.0, 0.75, 0.75), (0.0, 0.0, 1.0), (0.0, 0.5, 0.0), (0.75, 0.75, 0), (1.0, 0.0, 0.0), (0.75, 0, 0.75), (1, .75, .75), (.75, .75, 1), (.75, 1, .75), (.5, 1, .5), (1, .5, .5), (.5, .5, 1),(0.25, 0.5, 0.70), (0.75, 0.50, 0.25) , (0.75, 0.25, 0.50)]
+print 'dx_call='
+print len(dx_call)
+print 'color array='
+print len(color_array)
+import ipdb; ipdb.set_trace()
+dx_dict, dxlist=rbn_lib.set_dx_dict(dx_call, color_array)
+rbn_lib.rbn_map_byDX(df,dx_dict, dxlist, legend=True,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlat=0)
+#leg=rbn_lib.dx_legend(dx_dict, dxlist)
+#leg = rbn_lib.dx_legend(dx_dict, dxlist, fig=None,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
+#rbn_lib.rbn_map_byDX(df,dx_call, color_array, legend=True,ax=ax0,tick_font_size=9,ncdxf=True)
+#rbn_lib.rbn_map_plot(df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True)
+filename='ePOP_RBN_40M_dx.jpg'
 filepath    = os.path.join(output_dir,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
