@@ -40,8 +40,13 @@ eTime = datetime.datetime(2015,6,28,01,18)
 #sTime = datetime.datetime(2015,6,28,01,16,00)
 #eTime = datetime.datetime(2015,6,28,01,16,30)
 
+map_sTime=sTime-datetime.timedelta(minutes=4)
+map_eTime = map_sTime + datetime.timedelta(minutes=10)
+print map_sTime
+print map_eTime
+#import ipdb; ipdb.set_trace()
 #Get RBN data 
-rbn_df=rbn_lib.read_rbn(sTime, eTime,data_dir='data/rbn')
+rbn_df=rbn_lib.read_rbn(map_sTime, map_eTime,data_dir='data/rbn')
 
 #Get epop callsign data
 epop_df=pd.DataFrame.from_csv(infile)
@@ -101,6 +106,9 @@ for i in range(0,len(epop_df)-1):
 
 #end of loop
 
+#Restrict rbn recievers to 40m 
+df2=rbn_df[rbn_df['band']=='40m']
+
 #Interval
 import ipdb; ipdb.set_trace()
 #df_temp=
@@ -122,12 +130,12 @@ print len(color_array)
 import ipdb; ipdb.set_trace()
 dx_dict, dxlist=rbn_lib.set_dx_dict(dx_call, color_array)
 m, fig=rbn_lib.rbn_map_byDX(df,dx_dict, dxlist, legend=True,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlat=0,llcrnrlon=-135,urcrnrlon=45)
-rbn_lib.rbn_map_overlay(rbn_df, m,ax=ax0, plot_paths=False, legend=False,scatter_rbn=True)
+rbn_lib.rbn_map_overlay(df2, m,ax=ax0, plot_paths=False, legend=False,scatter_rbn=True)
 #leg=rbn_lib.dx_legend(dx_dict, dxlist)
 #leg = rbn_lib.dx_legend(dx_dict, dxlist, fig=None,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
 #rbn_lib.rbn_map_byDX(df,dx_call, color_array, legend=True,ax=ax0,tick_font_size=9,ncdxf=True)
 #rbn_lib.rbn_map_plot(df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True)
-filename='ePOP_RBN_40m_dx_and_de_zoom.jpg'
+filename='ePOP_RBN_40m_zoom.jpg'
 filepath    = os.path.join(output_dir,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
