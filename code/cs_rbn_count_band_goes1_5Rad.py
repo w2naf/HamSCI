@@ -60,8 +60,8 @@ Flar=datetime.datetime(2015,3,10,16,22)
 #Delt=datetime.timedelta(hours=3)
 #sTime=Flar-Delt
 #eTime=Flar+Delt
-sTime=datetime.datetime(2015,3,10,13,22)
-eTime=datetime.datetime(2015,3,10,19,22)
+sTime=datetime.datetime(2015,7,11)
+eTime=datetime.datetime(2015,7,11,23)
 #sTime=datetime.datetime(2014,9,10,16,45)
 #eTime=datetime.datetime(2014, 9,10, 18, 30)
 #specify time interval for spot counts
@@ -179,13 +179,14 @@ while cTime < t_end:
     #Clip according to the range of time for this itteration
     df2=df1[(df1.Lower <= df1.date) & (df1.date < df1.Upper)]
     #store spot count for the given time interval in an array 
-    spots[index]=len(df2)
+    #spots[index]=len(df2)
 
     for I in range(0,len(df2)-1):
         DumLatx=df2.dx_lat.iloc[I]
         DumLonx=df2.dx_lon.iloc[I]
         DumLate=df2.de_lat.iloc[I]
         DumLone=df2.de_lon.iloc[I]
+        Call=df2.dx.iloc[I]
         
         if Local==1:
             if (DumLatx>latMin and DumLatx<latMax and DumLonx>lonMin and DumLonx<lonMax) and (DumLate>latMin and DumLate<latMax and DumLone<lonMax and DumLone>lonMin):
@@ -195,16 +196,19 @@ while cTime < t_end:
 
 
         Dummy=df2.freq.iloc[I]
-        if NA==1 and Dummy>(freq1-500) and Dummy<(freq1+500):
+        if NA==1 and Dummy>(freq1-500) and Dummy<(freq1+500) and Call=='K4KDJ':
             spots1[index]+=1
-        elif NA==1 and Dummy>(freq2-500) and Dummy<(freq2+500): 
+        elif NA==1 and Dummy>(freq2-500) and Dummy<(freq2+500) and Call=='K4KDJ': 
             spots2[index]+=1
-        elif NA==1 and Dummy>(freq3-500) and Dummy<(freq3+500):
+        elif NA==1 and Dummy>(freq3-500) and Dummy<(freq3+500) and Call=='K4KDJ':
             spots3[index]+=1
-        elif NA==1 and Dummy>(freq4-500) and Dummy<(freq4+500):
+        elif NA==1 and Dummy>(freq4-500) and Dummy<(freq4+500) and Call=='K4KDJ':
             spots4[index]+=1
-        elif NA==1 and Dummy>(freq5-500) and Dummy<(freq5+500):
+        elif NA==1 and Dummy>(freq5-500) and Dummy<(freq5+500) and Call=='K4KDJ':
             spots5[index]+=1
+        elif NA==1 and Call=='K4KDJ':
+            spots[index]+=1
+
 
     #Itterate current time value and index
     cTime=endTime
@@ -217,6 +221,7 @@ spot_df['Count_F2']=spots2
 spot_df['Count_F3']=spots3
 spot_df['Count_F4']=spots4
 spot_df['Count_F5']=spots5
+spot_df['Count_F6']=spots
 #spot_df=pd.DataFrame(data=spots, columns=['Count'])
 #import ipdb; ipdb.set_trace()
 
@@ -233,8 +238,8 @@ ARR=np.array([Flar,Flar])
 #Plot figures
 #================================================================================================================================
 #================================================================================================================================
-fig=plt.figure(figsize=(11,15))#generate a figure
-gs=grd.GridSpec(7,1)#specify grid squares for plots to populate
+fig=plt.figure(figsize=(11,18))#generate a figure
+gs=grd.GridSpec(8,1)#specify grid squares for plots to populate
 
 #fig, ((ax0),(ax1),(ax2),(ax3))=plt.subplots(4,1,sharex=True,sharey=False)
 #ax.plot(spot_df['dates'], spot_df['Count_F1'],'r*-',spot_df['dates'],spot_df['Count_F2'],'b*-',spot_df['dates'],spot_df['Count_F3'],'g*-')
@@ -244,7 +249,7 @@ ax1=plt.subplot(gs[2,:])
 ax1.plot(spot_df['dates'],spot_df['Count_F1'],'g*-')
 axes=plt.gca()
 DumLim=axes.get_ylim()
-ax1.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
+#ax1.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
 ax1.grid(b=True, which='major', color='k', linestyle='--')
 labels=ax1.get_xticklabels()
 for label in labels:
@@ -255,7 +260,7 @@ ax0=plt.subplot(gs[:2,:],sharex=ax1)
 gme.sat.goes_plot(goes_data,ax=ax0,sTime=sTime,eTime=t_end)
 axes=plt.gca()
 DumLim=axes.get_ylim()
-ax0.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
+#ax0.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
 #gme.sat.goes_plot(goes_data,ax=ax0,sTime=sTime,eTime=t_end)
 labels=ax0.get_xticklabels()
 for label in labels:
@@ -266,7 +271,7 @@ ax2=plt.subplot(gs[3,:],sharex=ax1)
 ax2.plot(spot_df['dates'], spot_df['Count_F2'],'r*-')
 axes=plt.gca()
 DumLim=axes.get_ylim()
-ax2.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
+#ax2.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
 ax2.grid(b=True, which='major', color='k', linestyle='--')
 labels=ax2.get_xticklabels()
 for label in labels:
@@ -277,7 +282,7 @@ ax3=plt.subplot(gs[4,:],sharex=ax1)
 ax3.plot(spot_df['dates'], spot_df['Count_F3'],'b*-')
 axes=plt.gca()
 DumLim=axes.get_ylim()
-ax3.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
+#ax3.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
 ax3.grid(b=True, which='major', color='k', linestyle='--')
 labels=ax3.get_xticklabels()
 for label in labels:
@@ -288,7 +293,7 @@ ax4=plt.subplot(gs[5,:],sharex=ax1)
 ax4.plot(spot_df['dates'],spot_df['Count_F4'],'y*-')
 axes=plt.gca()
 DumLim=axes.get_ylim()
-ax4.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
+#ax4.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
 ax4.grid(b=True,which='major',color='k',linestyle='--')
 labels=ax4.get_xticklabels()
 for label in labels:
@@ -299,11 +304,29 @@ ax5=plt.subplot(gs[6,:],sharex=ax1)
 ax5.plot(spot_df['dates'], spot_df['Count_F5'],'g*-')
 axes=plt.gca()
 DumLim=axes.get_ylim()
-ax5.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
+#ax5.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
 ax5.grid(b=True,which='major',color='k',linestyle='--')
 labels=ax5.get_xticklabels()
 for label in labels:
+    #label.set_rotation(30)
+    label.set_visible(False)
+
+#===============================================================================================================================
+ax6=plt.subplot(gs[7,:],sharex=ax1)
+ax5.plot(spot_df['dates'], spot_df['Count_F6'],'b*-')
+axes=plt.gca()
+DumLim=axes.get_ylim()
+#ax6.plot(ARR,np.array([DumLim[0],DumLim[1]),'k-',linwidth=2.0)
+ax5.grid(b=True,which='major',color='k',linestyle='--')
+labels=ax6.get_xticklabels()
+for label in labels:
     label.set_rotation(30)
+
+
+
+
+
+
 #ax0.set_yticks(np.arange(min(Mag)/2, max(Mag)*1.2, (max(Mag)-min(Mag))/4))
 #ax1.set_yticks(np.arange(min(spot_df['Count_F1'])/2,max(spot_df['Count_F1'])*1.2,(max(spot_df['Count_F1'])-min(spot_df['Count_F1']))/5))
 

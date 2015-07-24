@@ -96,6 +96,7 @@ if times[len(times)-1]>eTime:
 #CARSON CHANGES
 #GET GOES Data
 goes_data   = gme.sat.read_goes(sTime+tDelta,t_end,sat_nr)
+import ipdb;ipdb.set_trace()
 b=goes_data.values()[0]
 Time=[]
 for I in range(0,len(b.index)):

@@ -60,7 +60,7 @@ Inc_eTime=True
 
 #-----------------------------------------
 #CARSON FIND FLARE TIME AND GET sTime and eTime from
-#goes_data   = gme.sat.read_goes(sTime,eTime,sat_nr)
+goes_data   = gme.sat.read_goes(sTime,eTime,sat_nr)
 #flares      = gme.sat.find_flares(goes_data,min_class='X1',window_minutes=60)
 #Time=flares.index[0]
 #Dum=datetime.datetime.strptime(str(Time),'%Y-%m-%d %H:%M:%S')
@@ -69,7 +69,7 @@ Inc_eTime=True
 #Month=int(str.split(Var)[1])
 #Day=int(str.split(Var)[2])
 #Hour=int(str.split(Var)[3])
-                          
+                         
 #if Hour>=20:
 #    D=Day+1
 #    H=Hour-23

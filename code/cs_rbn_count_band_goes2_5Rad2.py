@@ -32,7 +32,7 @@ freq3=14000
 freq1=28000
 freq2=21000
 sat_nr= 15
-Local=0
+Local=1
 NA=1
 latMin=30
 latMax=80
@@ -68,14 +68,14 @@ tDelta=datetime.timedelta(minutes=dt)
 #Specify whether to include eTime in the count if tDelta results in an end time greater than eTime
 Inc_eTime=True
 
-sT=datetime.datetime(2015,3,1)
-eT=datetime.datetime(2015,3,30)
+sT=datetime.datetime(2014,3,11)
+eT=datetime.datetime(2014,3,12)
 goes_data=gme.sat.read_goes(sT,eT,sat_nr)
 flares=gme.sat.find_flares(goes_data,min_class='X1',window_minutes=60)
 #import ipdb; ipdb.set_trace()
 for T in range(0,len(flares)):
     Flar=flares.index[T]
-    #Flar=Flar-datetime.timedelta(days=1)
+    Flar=Flar-datetime.timedelta(hours=6)
     if Local==0:
         graphfile=str(Flar)+' Global '+'('+str(latMin)+','+str(latMax)+')'+' ['+str(lonMin)+','+str(lonMax)+']'
     else:
@@ -111,7 +111,7 @@ for T in range(0,len(flares)):
     #eTime=datetime.datetime(Year,Month,D, H+3)
 
 
-    if Hour<21 and Hour>13:
+    if Hour<21 and Hour>4:
 
 
         #Redundant/old Code (next two lines)
@@ -264,6 +264,7 @@ for T in range(0,len(flares)):
         ax1.plot(spot_df['dates'],spot_df['Count_F1'],'g*-')
         axes=plt.gca()
         DumLim=axes.get_ylim()
+        #ax1.set_ylim([0,80])
         ax1.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
         ax1.grid(b=True, which='major', color='k', linestyle='--')
         labels=ax1.get_xticklabels()
@@ -289,6 +290,7 @@ for T in range(0,len(flares)):
         ax2.plot(spot_df['dates'], spot_df['Count_F2'],'r*-')
         axes=plt.gca()
         DumLim=axes.get_ylim()
+        #ax2.set_ylim([0,100])
         ax2.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
         ax2.grid(b=True, which='major', color='k', linestyle='--')
         labels=ax2.get_xticklabels()
@@ -300,6 +302,7 @@ for T in range(0,len(flares)):
         ax3.plot(spot_df['dates'], spot_df['Count_F3'],'b*-')
         axes=plt.gca()
         DumLim=axes.get_ylim()
+        #ax3.set_ylim([0,150])
         ax3.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
         ax3.grid(b=True, which='major', color='k', linestyle='--')
         labels=ax3.get_xticklabels()
@@ -311,6 +314,7 @@ for T in range(0,len(flares)):
         ax4.plot(spot_df['dates'],spot_df['Count_F4'],'y*-')
         axes=plt.gca()
         DumLim=axes.get_ylim()
+        #ax4.set_ylim([0,100])
         ax4.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
         ax4.grid(b=True,which='major',color='k',linestyle='--')
         labels=ax4.get_xticklabels()

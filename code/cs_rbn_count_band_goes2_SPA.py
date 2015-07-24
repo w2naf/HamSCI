@@ -82,7 +82,7 @@ ax5=plt.subplot(gs[4,:],sharex=ax1)
 sT=datetime.datetime(2013,1,1)
 eT=datetime.datetime(2015,5,30)
 
-graphfile='SPA: ' + str(sT) +' to '+str(eT)
+graphfile='SPA no scale: ' + str(sT) +' to '+str(eT)
 Tspots1=np.zeros(36)
 Tspots2=np.zeros(36)
 Tspots3=np.zeros(36)
@@ -285,11 +285,11 @@ for T in range(0,len(flares)):
         
         #create Data Frame from spots and times vectors
         spot_df=pd.DataFrame(data=times, columns=['dates'])
-        spot_df['Count_F1']= nspots1
-        spot_df['Count_F2']= nspots2
-        spot_df['Count_F3']= nspots3
-        spot_df['Count_F4']= nspots4
-        spot_df['Count_F5']= nspots5
+        spot_df['Count_F1']= spots1
+        spot_df['Count_F2']= spots2
+        spot_df['Count_F3']= spots3
+        spot_df['Count_F4']= spots4
+        spot_df['Count_F5']= spots5
         #spot_df=pd.DataFrame(data=spots, columns=['Count'])
         #import ipdb; ipdb.set_trace()
 
@@ -347,7 +347,8 @@ Med1=np.zeros(Tspots1.shape[1])
 for I in range(0,Tspots1.shape[1]):
     Med1[I]=np.median(Tspots1[1:,I])
 #import ipdb;ipdb.set_trace()
-ax1.plot(times,Med1,'k',linewidth=3.0)
+#ax1.plot(times,Med1,'k',linewidth=3.0)
+ax1.plot(datetime.datetime(2014,1,2),[0])
 axes=plt.gca()
 DumLim=axes.get_ylim()
 ax1.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
@@ -373,7 +374,8 @@ for label in labels:
 Med2=np.zeros(Tspots2.shape[1])
 for I in range(0,Tspots2.shape[1]):
     Med2[I]=np.median(Tspots2[1:,I])
-ax2.plot(times,Med2,'k',linewidth=3.0)
+#ax2.plot(times,Med2,'k',linewidth=3.0)
+ax2.plot(datetime.datetime(2014,1,2),[0])
 axes=plt.gca()
 DumLim=axes.get_ylim()
 ax2.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
@@ -387,7 +389,8 @@ for label in labels:
 Med3=np.zeros(Tspots3.shape[1])
 for I in range(0,Tspots3.shape[1]):
     Med3[I]=np.median(Tspots3[1:,I])
-ax3.plot(times,Med3,'k',linewidth=3.0)
+#ax3.plot(times,Med3,'k',linewidth=3.0)
+ax3.plot(datetime.datetime(2014,1,2),[0])
 axes=plt.gca()
 DumLim=axes.get_ylim()
 ax3.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
@@ -402,7 +405,8 @@ for label in labels:
 Med4=np.zeros(Tspots4.shape[1])
 for I in range(0,Tspots4.shape[1]):
     Med4[I]=np.median(Tspots4[1:,I])
-ax4.plot(times,Med4,'k',linewidth=3.0)
+#ax4.plot(times,Med4,'k',linewidth=3.0)
+ax4.plot(datetime.datetime(2014,1,2),[0])
 axes=plt.gca()
 DumLim=axes.get_ylim()
 ax4.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
@@ -417,7 +421,8 @@ for label in labels:
 Med5=np.zeros(Tspots5.shape[1])
 for I in range(0,Tspots5.shape[1]):
     Med5[I]=np.median(Tspots5[1:,I])
-ax5.plot(times,Med5,'k',linewidth=3.0)
+#ax5.plot(times,Med5,'k',linewidth=3.0)
+ax5.plot(datetime.datetime(2014,1,2),[0])
 axes=plt.gca()
 DumLim=axes.get_ylim()
 ax5.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
