@@ -59,19 +59,6 @@ rbn_df=rbn_lib.read_rbn(sTime, eTime,data_dir='data/rbn')
 epop_df=pd.DataFrame.from_csv(infile)
 import ipdb; ipdb.set_trace()
 
-#callsign=epop_df.Call[i]
-#print callsign
-#import ipdb; ipdb.set_trace()
-#df=pd.DataFrame(callsign, ['Callsign'])
-
-#for n in range(0,len(rbn_df)-1):
-#    if rbn_df.callsign[n]==callsign:
-#        if n=0:
-#            df=rbn_df[n]
-#        else:
-#            df=concat[df, rbn_df[n]]
-#        ['Lat']=rbn_df.de_lat[n]
-
 #Identify ePOP callsigns in RBN data
 i=0
 dx_call=[]
@@ -102,7 +89,7 @@ df2=rbn_df[rbn_df['band']=='40m']
 
 import ipdb; ipdb.set_trace()
 #Export df to text file
-#df.to_csv(outfile, index=False)
+df.to_csv(outfile, index=False)
 
 #Plot on map
 ### Determine the aspect ratio of subplot.
@@ -113,7 +100,7 @@ import ipdb; ipdb.set_trace()
 ## Determine the aspect ratio of subplot.
 xsize       = 6.5
 ysize       = 5.5
-nx_plots    = 2
+nx_plots    = 3
 ny_plots    = 2
 
 #Create Dictionary that defines colors to plot the callsign contacts with
@@ -126,7 +113,7 @@ dx_dict, dxlist=rbn_lib.set_dx_dict(dx_call, color_array)
 fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
 #Generate Maps
 subplot_nr  = 0 # Counter for the subplot
-letters = 'abcd'
+letters = 'abcdef'
 
 good_count  = 0
 total_count = 0
@@ -138,7 +125,7 @@ map_sTime2=None
 #for kk,map_sTime in enumerate(map_times):
 while map_sTime<eTime:
     plt_inx = kk + 1
-    ax0     = fig.add_subplot(3,2,plt_inx)
+    ax0     = fig.add_subplot(2,3,plt_inx)
 
     print ''
     print '################################################################################'
@@ -167,25 +154,31 @@ while map_sTime<eTime:
     print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
 #    df_map=df[df['Time']
 #    df2_temp=rbn_df2[rbn_df['band']=='40m']
-    m,fig=rbn_lib.rbn_map_byDX(df_map,dx_dict, dxlist, legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlat=0,llcrnrlon=-135,urcrnrlon=45)
+    m,fig=rbn_lib.rbn_map_byDX(df_map,dx_dict, dxlist, legend=True,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlat=0,llcrnrlon=-135,urcrnrlon=45)
     rbn_lib.rbn_map_overlay(df2_map, m,ax=ax0, plot_paths=False, legend=False,scatter_rbn=True)
     title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
     ax0.set_title(title)
     letter_prop = {'weight':'bold','size':20}
     ax0.text(.015,.90,'({0})'.format(letters[kk]),transform=ax0.transAxes,**letter_prop)
-
     kk+=1
-
-    if plt_inx==5 and map_sTime2==None:
+    print plt_inx
+#    import ipdb; ipdb.set_trace()
+    if plt_inx==6 and map_sTime2==None:
+        import ipdb; ipdb.set_trace()
         #ePOP and RBN Map output file
-        filename='ePOP_RBN_40m_'+sTime.strftime('%H%M - ')+'_'+map_eTime.strftime('%H%M UT')+'.jpg'
+#        filename='ePOP_RBN_40m_'+sTime.strftime('%H%M - ')+'_'+map_eTime.strftime('%H%M UT')+'.jpg'
+        title_prop = {'weight':'bold','size':22}
+#        fig.text(0.525,1.025,'Reverse Beacon Network',ha='center',**title_prop)
+#        fig.text(0.525,0.995,'ePOP_pass_2015',ha='center',size=18)
+        fig.tight_layout(h_pad=2.5,w_pad=3.5)
+        filename='ePOP_RBN_40m_1.jpg'
         filepath    = os.path.join(output_dir,filename)
         fig.savefig(filepath,bbox_inches='tight')
         fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
         plt.clf()
         fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
         map_sTime2=map_eTime
-        kk=1
+        kk=0
 
 #    map_sTime = map_eTime
 #    map_eTime = map_eTime + datetime.timedelta(minutes=1)
@@ -199,7 +192,12 @@ print map_sTime
 print eTime
 import ipdb; ipdb.set_trace()
 #ePOP and RBN Map output file
-filename='ePOP_RBN_40m_'+map_sTime2.strftime('%H%M - ')+'_'+map_eTime.strftime('%H%M UT')+'.jpg'
+title_prop = {'weight':'bold','size':22}
+#fig.text(0.525,1.025,'Reverse Beacon Network',ha='center',**title_prop)
+#fig.text(0.525,0.995,'ePOP_pass_2015',ha='center',size=18)
+fig.tight_layout(h_pad=2.5,w_pad=3.5)
+#filename='ePOP_RBN_40m_'+map_sTime2.strftime('%H%M - ')+'_'+map_eTime.strftime('%H%M UT')+'.jpg'
+filename='ePOP_RBN_40m_2.jpg'
 filepath    = os.path.join(output_dir,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
