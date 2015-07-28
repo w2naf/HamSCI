@@ -37,10 +37,10 @@ dt          = datetime.datetime(2014,1,2)
 ymd         = dt.strftime('%Y%m%d')
 
 plot_dict       = {}
-plot_dict[0]    = {'sTime': datetime.datetime(2014,1,2), 'eTime': datetime.datetime(2014,1,2,1)}
-plot_dict[1]    = {'sTime': datetime.datetime(2014,1,2,6), 'eTime': datetime.datetime(2014,1,2,7)}
-plot_dict[2]    = {'sTime': datetime.datetime(2014,1,2,12), 'eTime': datetime.datetime(2014,1,2,13)}
-plot_dict[3]    = {'sTime': datetime.datetime(2014,1,2,18), 'eTime': datetime.datetime(2014,1,2,19)}
+plot_dict[0]    = {'sTime': datetime.datetime(2014,10,25,16,45), 'eTime': datetime.datetime(2014,10,25,17)}
+plot_dict[1]    = {'sTime': datetime.datetime(2014,10,25,17,15), 'eTime': datetime.datetime(2014,10,25,17,30)}
+plot_dict[2]    = {'sTime': datetime.datetime(2015,3,11,15,55), 'eTime': datetime.datetime(2015,3,11,16,10)}
+plot_dict[3]    = {'sTime': datetime.datetime(2015,3,11,16,30), 'eTime': datetime.datetime(2015,3,11,16,45)}
 
 #Using os.path.join uses the correct path delimiters regardless of OS
 #e.g., Linux/Mac = '/' while Windows = '\'

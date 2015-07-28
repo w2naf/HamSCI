@@ -27,8 +27,8 @@ nx_plots    = 1
 ny_plots    = 1
 plot_nr     = 0
 
-map_sTime = datetime.datetime(2015,3,11,15,55)
-map_eTime = datetime.datetime(2015,3,11,16,10)
+map_sTime = datetime.datetime(2014,10,25,17,15)
+map_eTime = datetime.datetime(2014,10,25,17,30)
 
 filename    = map_sTime.strftime('rbn_fof2_%Y%m%d_%H%M.png')
 filepath    = os.path.join(output_path,filename)

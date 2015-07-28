@@ -34,6 +34,8 @@ freq2=21000
 sat_nr= 15
 Local=1
 NA=1
+
+#Constraints on latitude and longitude
 latMin=30
 latMax=80
 lonMin=-130
@@ -54,15 +56,6 @@ unit='minutes'
 #specify filename for output graph's file
 #graphfile='rbnCount_timeStep_'+str(dt)+' '+unit
 
-#specify times
-#Flar=datetime.datetime(2015,3,10,16,22)
-#Delt=datetime.timedelta(hours=3)
-#sTime=Flar-Delt
-#eTime=Flar+Delt
-#sTime=datetime.datetime(2015,3,10,13,22)
-#eTime=datetime.datetime(2015,3,10,19,22)
-#sTime=datetime.datetime(2014,9,10,16,45)
-#eTime=datetime.datetime(2014, 9,10, 18, 30)
 #specify time interval for spot counts
 tDelta=datetime.timedelta(minutes=dt)
 #Specify whether to include eTime in the count if tDelta results in an end time greater than eTime
@@ -82,7 +75,7 @@ ax5=plt.subplot(gs[4,:],sharex=ax1)
 sT=datetime.datetime(2013,1,1)
 eT=datetime.datetime(2015,5,30)
 
-graphfile='SPA no scale: ' + str(sT) +' to '+str(eT)
+graphfile='SPA no scale norm: ' + str(sT) +' to '+str(eT)
 Tspots1=np.zeros(36)
 Tspots2=np.zeros(36)
 Tspots3=np.zeros(36)
@@ -105,15 +98,9 @@ for T in range(0,len(flares)):
     #else:
         #graphfile=str(Flar)+' Local '+'('+str(latMin)+','+str(latMax)+')'+' ['+str(lonMin)+','+str(lonMax)+']'
 
-    #CARSON FIND FLARE TIME AND GET sTime and eTime from
-    #sT=datetime.datetime(2014,1,1)
-    #eT=datetime.datetime(2014,12,30)
-    #goes_data   = gme.sat.read_goes(sT,eT,sat_nr)
-    #flares      = gme.sat.find_flares(goes_data,min_class='X1',window_minutes=60)
+    #CARSON FIND FLARE TIME AND GET sTime and eTime
     #import ipdb; ipdb.set_trace()
 
-
-    #Flar=flares.index[T]
     Delt=datetime.timedelta(hours=3)
     sTime=Flar-Delt
     eTime=Flar+Delt
@@ -125,15 +112,8 @@ for T in range(0,len(flares)):
     Hour=int(str.split(Var)[3])
     Min=int(str.split(Var)[4])
     #import ipdb;ipdb.set_trace()                     
-    #if Hour>=20:
-    #    D=Day+1
-    #    H=Hour-23
-    #else:
-    #    D=Day
-    #    H=Hour
-    #sTime=datetime.datetime(Year,Month,Day,H-3)
-    #eTime=datetime.datetime(Year,Month,D, H+3)
 
+    #Constrain valid flares based on UTC
     if Hour<21 and Hour>13:
 
 
@@ -185,34 +165,25 @@ for T in range(0,len(flares)):
             #times[I]=datetime.time[times[I]]
             Dum=str(times[I])
             #import ipdb;ipdb.set_trace()
+
+            #Reorder flare time to standard time
             if times[I].days==-1:
                 Secs=times[I].total_seconds()+86400
                 hours, remainder = divmod(Secs, 3600)
                 minutes, seconds = divmod(remainder, 60)
                 times[I]=datetime.datetime(2014,1,1,int(hours),int(minutes),int(seconds))
-                #if times[I].hours==0:
-                    #times[I]=datetime.datetime.strptime(Dum,'-%d days %H:%M:%S')
-                #else:
-                    #times[I]=datetime.datetime.strptime(Dum,'-%d days +%H:%M:%S')
             else:
                 Secs=times[I].total_seconds()
                 hours, remainder = divmod(Secs, 3600)
                 minutes, seconds = divmod(remainder, 60)
                 times[I]=datetime.datetime(2014,1,2,int(hours),int(minutes),int(seconds))
 
-                #if times[I].hours==0:
-                    #times[I]=datetime.datetime.strptime(Dum,'%d days %H:%M:%S')
-                #else:
-                    #times[I]=datetime.datetime.strptime(Dum,'%d days +%H:%M:%S')
-            #if times[I].day==1:
-                #times[I].day=0
         goes_data   = gme.sat.read_goes(sTime+tDelta,t_end,sat_nr)
         #END FOR NOw
 
         #import ipdb; ipdb.set_trace()
 
         #Group counts together by unit time
-        #index=0
         #define array to hold spot count
         spots=np.zeros(len(times))
 
@@ -247,6 +218,7 @@ for T in range(0,len(flares)):
             #store spot count for the given time interval in an array 
             spots[index]=len(df2)
 
+            #Constrain spot location if want local #'s
             for I in range(0,len(df2)-1):
                 DumLatx=df2.dx_lat.iloc[I]
                 DumLonx=df2.dx_lon.iloc[I]
@@ -276,6 +248,7 @@ for T in range(0,len(flares)):
             cTime=endTime
             index=index+1
 
+        #Normalized Spots #'s,if don't want to use then leave off 'n' below
         nspots1=(spots1-np.mean(spots1))/np.std(spots1)
         nspots2=(spots2-np.mean(spots2))/np.std(spots2)
         nspots3=(spots3-np.mean(spots3))/np.std(spots3)
@@ -285,11 +258,11 @@ for T in range(0,len(flares)):
         
         #create Data Frame from spots and times vectors
         spot_df=pd.DataFrame(data=times, columns=['dates'])
-        spot_df['Count_F1']= spots1
-        spot_df['Count_F2']= spots2
-        spot_df['Count_F3']= spots3
-        spot_df['Count_F4']= spots4
-        spot_df['Count_F5']= spots5
+        spot_df['Count_F1']= nspots1
+        spot_df['Count_F2']= nspots2
+        spot_df['Count_F3']= nspots3
+        spot_df['Count_F4']= nspots4
+        spot_df['Count_F5']= nspots5
         #spot_df=pd.DataFrame(data=spots, columns=['Count'])
         #import ipdb; ipdb.set_trace()
 
@@ -299,46 +272,26 @@ for T in range(0,len(flares)):
         Tspots4=np.vstack((Tspots4,nspots4))
         Tspots5=np.vstack((Tspots5,nspots5))
         
-        
+        #If you need the total spot #'s for each flare
         sFac1+=sum(spots1)
         sFac2+=sum(spots2)
         sFac3+=sum(spots3)
         sFac4+=sum(spots4)
         sFac5+=sum(spots5)
 
-
-
-        #now isolate those on the day side
-        #now we need to constrain the data to those contacts that are only on the day side 
-        #will need to make this more elegant and universal
-        #I just wrote a quick code to isolate it for ONE EXAMPLE
-
         #FLARE TIME
-        #Flar=datetime.datetime(2014,9,10,17,45)
         ARR=np.array([datetime.datetime(2014,1,2),datetime.datetime(2014,1,2)])
         #END
 
         #Plot figures
         #================================================================================================================================
         #================================================================================================================================
-        #fig=plt.figure(figsize=(11,15))#generate a figure
-        #gs=grd.GridSpec(7,1)#specify grid squares for plots to populate
-
-        #fig, ((ax0),(ax1),(ax2),(ax3))=plt.subplots(4,1,sharex=True,sharey=False)
-        #ax.plot(spot_df['dates'], spot_df['Count_F1'],'r*-',spot_df['dates'],spot_df['Count_F2'],'b*-',spot_df['dates'],spot_df['Count_F3'],'g*-')
-        #import ipdb; ipdb.set_trace()
-        #Flare=datetime.datetime.strptime(str(Flar),'%Y-%m-%d %H:%M:%S')
-        #for I in range(0,len(spot_df['dates'])):
-            #spot_df['dates'][I]=datetime.datetime.strptime(str(spot_df['dates'][I]),'%Y-%m-%d %H:%M:%S')-Flare
-        #Plotting for the highest frequency==============================================================================================
-        #ax1=plt.subplot(gs[2,:])
-        #gme.sat.goes_plot(goes_data,ax=ax0,sTime=sTime,eTime=t_end)
         
-        ax1.plot(times,spot_df['Count_F1'])
-        ax2.plot(times,spot_df['Count_F2'])
-        ax3.plot(times,spot_df['Count_F3'])
-        ax4.plot(times,spot_df['Count_F4'])
-        ax5.plot(times,spot_df['Count_F5'])
+        ax1.plot(times,spot_df['Count_F1'],linewidth=3.0)
+        ax2.plot(times,spot_df['Count_F2'],linewidth=3.0)
+        ax3.plot(times,spot_df['Count_F3'],linewidth=3.0)
+        ax4.plot(times,spot_df['Count_F4'],linewidth=3.0)
+        ax5.plot(times,spot_df['Count_F5'],linewidth=3.0)
 
 
 
@@ -347,7 +300,7 @@ Med1=np.zeros(Tspots1.shape[1])
 for I in range(0,Tspots1.shape[1]):
     Med1[I]=np.median(Tspots1[1:,I])
 #import ipdb;ipdb.set_trace()
-#ax1.plot(times,Med1,'k',linewidth=3.0)
+#ax1.plot(times,Med1,'k',linewidth=3.0) --for median lines if you so choose
 ax1.plot(datetime.datetime(2014,1,2),[0])
 axes=plt.gca()
 DumLim=axes.get_ylim()
@@ -356,17 +309,9 @@ ax1.grid(b=True, which='major', color='k', linestyle='--')
 labels=ax1.get_xticklabels()
 for label in labels:
     label.set_visible(False)
-
-#Plotting for the GOES data======================================================================================================
-#ax0=plt.subplot(gs[:2,:],sharex=ax1)
-#gme.sat.goes_plot(goes_data,ax=ax0,sTime=sTime,eTime=t_end)
-#axes=plt.gca()
-#DumLim=axes.get_ylim()
-#ax0.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
-##gme.sat.goes_plot(goes_data,ax=ax0,sTime=sTime,eTime=t_end)
-#labels=ax0.get_xticklabels()
-#for label in labels:
-    #label.set_visible(False)
+labels=ax1.get_yticklabels()
+for label in labels:
+    label.set_fontsize(25)
 
 #================================================================================================================================
 #ax2=plt.subplot(gs[3,:],sharex=ax1)
@@ -383,6 +328,9 @@ ax2.grid(b=True, which='major', color='k', linestyle='--')
 labels=ax2.get_xticklabels()
 for label in labels:
     label.set_visible(False)
+labels=ax2.get_yticklabels()
+for label in labels:
+    label.set_fontsize(25)
 
 #================================================================================================================================
 #ax3=plt.subplot(gs[4,:],sharex=ax1)
@@ -398,6 +346,9 @@ ax3.grid(b=True, which='major', color='k', linestyle='--')
 labels=ax3.get_xticklabels()
 for label in labels:
     label.set_visible(False)
+labels=ax3.get_yticklabels()
+for label in labels:
+    label.set_fontsize(25)
 
 #================================================================================================================================
 #ax4=plt.subplot(gs[5,:],sharex=ax1)
@@ -414,10 +365,11 @@ ax4.grid(b=True,which='major',color='k',linestyle='--')
 labels=ax4.get_xticklabels()
 for label in labels:
     label.set_visible(False)
+labels=ax4.get_yticklabels()
+for label in labels:
+    label.set_fontsize(25)
 
 #===============================================================================================================================
-#ax5=plt.subplot(gs[6,:],sharex=ax1)
-#ax5.plot(spot_df['dates'], spot_df['Count_F5'],'g*-')
 Med5=np.zeros(Tspots5.shape[1])
 for I in range(0,Tspots5.shape[1]):
     Med5[I]=np.median(Tspots5[1:,I])
@@ -427,52 +379,37 @@ axes=plt.gca()
 DumLim=axes.get_ylim()
 ax5.plot(ARR,np.array([DumLim[0],DumLim[1]]),'k-',linewidth=2.0)
 ax5.grid(b=True,which='major',color='k',linestyle='--')
+labels=[item.get_text() for item in ax5.get_xticklabels()]
+T=-2
+for I in range(0,len(labels)):
+    labels[I]=str(T)+':00'
+    T+=1
+ax5.set_xticklabels(labels)
 labels=ax5.get_xticklabels()
 for label in labels:
     label.set_rotation(30)
-#ax0.set_yticks(np.arange(min(Mag)/2, max(Mag)*1.2, (max(Mag)-min(Mag))/4))
-#ax1.set_yticks(np.arange(min(spot_df['Count_F1'])/2,max(spot_df['Count_F1'])*1.2,(max(spot_df['Count_F1'])-min(spot_df['Count_F1']))/5))
-
-#ax1.set_yticks(np.arange(200,19400,200))
-#ax2.set_yticks(np.arange(400,1200,200))
-#ax3.set_yticks(np.arange(0,350,50))
+    label.set_fontsize(25)
+labels=ax5.get_yticklabels()
+for label in labels:
+    label.set_fontsize(25)
 
 
 
 #================================================================================================================================
 #Set subplot and axis labels
 ax1.set_title('RBN Spots for \n'+sT.strftime('%d %b %Y %H%M UT - ')+eT.strftime('%d %b %Y %H%M UT'),fontsize=28)
-#ax0.set_xlabel('')
-ax1.set_ylabel(str(freq1/1000)+' MHz, '+str(sFac1)+' spots')
-ax2.set_ylabel(str(freq2/1000)+' MHz, '+str(sFac2)+' spots')
-ax3.set_ylabel(str(freq3/1000)+' MHz, '+str(sFac3)+' spots')
-ax4.set_ylabel(str(freq4/1000)+' MHz, '+str(sFac4)+' spots')
-ax5.set_ylabel(str(freq5/1000)+' MHz, '+str(sFac5)+' spots')
+ax1.set_ylabel(str(freq1/1000)+' MHz',fontsize=28)
+ax2.set_ylabel(str(freq2/1000)+' MHz',fontsize=28)
+ax3.set_ylabel(str(freq3/1000)+' MHz',fontsize=28)
+ax4.set_ylabel(str(freq4/1000)+' MHz',fontsize=28)
+ax5.set_ylabel(str(freq5/1000)+' MHz',fontsize=28)
 ax5.set_xlabel('Epoch Time, Hrs',fontsize=28)
 
-#labels = ax3.get_xticklabels()
-#for label in labels:
-#        label.set_rotation(30) 
-#ax1.set_xlabel('Time [UT]')
-
-
-#ax0.set_xticklabels([])
-#ax1.set_xticklabels([])
-#ax2.set_xticklabels([])
-#ax0.xaxis.set_visible(False)
-#ax1.xaxis.set_visible(False)
-#ax2.xaxis.set_visible(False)
-#plt.legend(['3 MHz','14 MHz','28 MHz'])
-
-#ax.text(spot_df.dates.min(),spot_df.Count.min(),'Unit Time: '+str(dt)+' '+unit)
-#ax.text(spot_df.dates[10],spot_df.Count.max(),'Unit Time: '+str(dt)+' '+unit)
-#fig.text(0.06, 0.5, '[NR. Spots]', ha='center', va='center', rotation='vertical')
 
 fig.tight_layout()
 filename=os.path.join(output_dir, graphfile)
 # 'rbnCount_5min_line1.png')
 fig.savefig(filename)
 
-#count=np.ones((len(df1['date']),1))
 
 #import ipdb; ipdb.set_trace()
