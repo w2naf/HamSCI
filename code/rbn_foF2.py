@@ -17,13 +17,11 @@ import datetime
 import rbn_lib
 import handling
 
-#ePOP data input file
-inPath="data/epop"
-fname="Callsigns_7MHz.csv"
-infile = os.path.join(inPath,fname)
-print infile
+#Specify output filename
+outFile=''
 #create output directory if none exists
 output_dir='output/epop'
+output_path = os.path.join('output','rbn')
 #handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
 #try: 
 #    os.makedirs(output_dir)

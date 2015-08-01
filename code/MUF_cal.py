@@ -17,7 +17,36 @@ import datetime
 import rbn_lib
 import handling
 
+#def MUF_calc(foF2, theta=None, phi=None):
+#    if phi!=None: 
+#        MUF=foF2/cos(phi)
+#    else:
+#        if theta!=None:
+#            MUF=foF2/np.cos(2*np.pi-theta)
+#        else:
+#            print "Error: No angle specified"
+#
+#
+#    return MUF
+
 def MUF_calc(foF2, theta=None, phi=None):
+    """Calculate Maximum Usable Frequency (MUF)
+
+    **Args**:
+        * **[freq]**: datetime.datetime object for start of plotting.
+    """
+
+    import sys
+    import os
+    import matplotlib
+    matplotlib.use('Agg')
+    from matplotlib import pyplot as plt
+    import numpy as np
+    import pandas as pd
+    from davitpy import gme
+    import datetime
+    import handling
+
     if phi!=None: 
         MUF=foF2/cos(phi)
     else:
@@ -28,7 +57,6 @@ def MUF_calc(foF2, theta=None, phi=None):
 
 
     return MUF
-
 
 #Main loop
 def find_MUF(f_start,gamma, useTheta=True, f_end=None, f_step=None, incl_fend=True, iterGamma=False, gamma_end=None, g_step=None, g_inclEnd=False):
