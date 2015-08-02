@@ -736,4 +736,5 @@ def rbn_map_overlay(df,m=None, scatter_rbn=False, ax=None,legend=True,tick_font_
 
     return m,fig
 
- 
+def rbn_region( 
+
