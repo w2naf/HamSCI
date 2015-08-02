@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from davitpy import gme
+from davitpy.utils import *
 import datetime
 
 import rbn_lib
@@ -37,13 +38,18 @@ except:
 sTime = datetime.datetime(2015,6,28,01,12)
 eTime = datetime.datetime(2015,6,28,01,22)
 
+map_sTime=sTime
+map_eTime=eTime
+
 #Read RBN data 
 rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
 
 #Select Region
 
 #Evaluate each link
-for :
+#for i in range():
+    #Isolate the ith link
+    
     #Calculate the midpoint and the distance between the two stations
 
     #Find Kp, Ap, and SSN for that location and time

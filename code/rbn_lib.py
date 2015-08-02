@@ -736,5 +736,34 @@ def rbn_map_overlay(df,m=None, scatter_rbn=False, ax=None,legend=True,tick_font_
 
     return m,fig
 
-def rbn_region( 
+def rbn_region( ):
 
+    return
+
+def path_mid():
+  """Find the latitude and longitude of the midpoint between the de and dx stations
+    **Args**:
+        * **[de_lat]:Latitude of the RBN reciever   
+        * **[de_lon]:Longitude of the RBN reciever   
+        * **[dx_lat]:Latitude of the dx station   
+        * **[dx_lon]:Longitude of the dx station   
+    **Returns**:
+        * **[mid_lat]: Midpoint Latitude
+        * **[mid_lon]: Midpoint Longitude
+        
+    .. note:: Untested!
+    
+    Written by Magda Moses 2015 August 02
+    """
+    from davitpy.utils import *
+
+    import numpy as np      #Numerical python - provides array types and operations
+    import pandas as pd     #This is a nice utility for working with time-series type data.
+
+    #Calculate the midpoint and the distance between the two stations
+    d=greatCircleDist(de_lat, de_lon, dx_lat, dx_lon)
+    azm=greatCircleAzm(de_lat, de_lon, dx_lat, dx_lon)
+    mid=d/2
+    mlat, mlon=greatCircleMov(de_lat, de_lon, mid, az)
+
+    return mlat, mlon
