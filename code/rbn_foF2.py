@@ -75,6 +75,9 @@ import ipdb; ipdb.set_trace()
 midLon=np.zeros([len(rbn_df2), 1])
 dist=np.zeros([len(rbn_df2), 1])
 m_dist=np.zeros([len(rbn_df2), 1])
+theta=np.zeros([len(rbn_df2), 1])
+fp=np.zeros([len(rbn_df2), 1])
+
 #midLon=[]
 #dist=[]
 #m_dist=[]
@@ -89,19 +92,24 @@ for i in range(0, len(rbn_df2)-1):
     #Calculate the midpoint and the distance between the two stations
     midLat[i], midLon[i],dist[i],m_dist[i] =rbn_lib.path_mid(deLat, deLon, dxLat, dxLon)
 #    import ipdb; ipdb.set_trace()
-#Test of path_mid function
 
     #Find Kp, Ap, and SSN for that location and time
 
     #Get hmF2 from the IRI using geomagnetic indices 
 
-    #Get 
+    #Calculate theta (radians) from h=hmF2 and distance
+#    theta[i]=np.arctan(h[i]/m_dist[i])
+
+    #Calculate foF2 from link frequency (MUF) and theta
+#    fp[i]=rbn_df.freq.iloc[i]/np.sec(theta[i])
 
 #Save information in data frame
 rbn_df2['midLat']=midLat
 rbn_df2['midLon']=midLon
 rbn_df2['link_dist']=dist
 rbn_df2['m_dist']=m_dist
+#rbn_df2['Elev_Ang(rad)']=theta
+#rbn_df2['Freq_plasma']=fp
 
 
 
