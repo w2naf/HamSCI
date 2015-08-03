@@ -122,6 +122,8 @@ import ipdb; ipdb.set_trace()
 fig = plt.figure(figsize=(8,4))
 ax0  = fig.add_subplot(1,1,1)
 df=rbn_df2
+#df=rbn_df2.head(1)
+import ipdb; ipdb.set_trace()
 m, fig=rbn_lib.rbn_map_plot(df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
 color='m'
 for i in range(0, len(rbn_df2)-1): 
