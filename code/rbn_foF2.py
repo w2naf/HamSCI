@@ -43,8 +43,11 @@ map_eTime=eTime
 
 #Read RBN data 
 rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
+import ipdb; ipdb.set_trace()
 
 #Select Region
+rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=0, latMax=90, lonMin=-135, lonMax=-45, constr_de=True, constr_dx=True)
+import ipdb; ipdb.set_trace()
 
 #Evaluate each link
 #for i in range():
@@ -57,3 +60,17 @@ rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
     #Get hmF2 from the IRI using geomagnetic indices 
 
     #Get 
+
+
+#Test plots
+#Plot on map
+fig = plt.figure(figsize=(8,4))
+ax0  = fig.add_subplot(1,1,1)
+m, fig=rbn_lib.rbn_map_plot(rbn_df2,legend=False,ax=ax0,tick_font_size=9,ncdxf=True)
+#leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
+filename='RBN_linkLimit_test1.jpg'
+filepath    = os.path.join(output_path,filename)
+fig.savefig(filepath,bbox_inches='tight')
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+plt.clf()
+import ipdb; ipdb.set_trace()

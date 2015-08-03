@@ -736,12 +736,70 @@ def rbn_map_overlay(df,m=None, scatter_rbn=False, ax=None,legend=True,tick_font_
 
     return m,fig
 
-def rbn_region( ):
+def rbn_region(df, latMin, lonMin, latMax, lonMax, constr_de=True, constr_dx=True):
+    import numpy as np
+    import pandas as pd
+    """Limit the RBN links to a specific region
+    **Args**:
+        * **[df]: Data Frame with the format output by read_rbn  
+        * **[latMin]: Lower Latitude Limit
+        * **[lonMin]: Lower Longitude Limit
+        * **[latMax]: Upper Latitude Limit
+        * **[lonMax]: Upper Longitude Limit
+        * **[constr_de]: Constrain the RBN recievers to the specified Lat/Lon limits
+        * **[constr_dx]: Constrain the dx stations to the specified Lat/Lon limits
+    **Returns**:
+        * **[df2]: Dataframe containing only those links within the specified limits
+    .. note:: Untested! By default constrains links to a given region but can be used to constrain only the de or dx stations by changing the args
+    Written by Magda Moses and Carson Squibb 2015 August 03
+    """
+    import numpy as np
+    import pandas as pd
+    #Select which locations to constrain
+    #Constrain Links
+    if constr_de and constr_dx:
+#        for i in range(0, len(df)-1): 
+#        df2=df[latMin<=df['de_lat']<=latMax and lonMin<=df['de_lon']<=lonMax and latMin<=df['dx_lat']<=latMax and lonMin<=df['dx_lon']<=lonMax] 
+#        df2=df[latMin<df['de_lat']<latMax and lonMin<df['de_lon']<lonMax and latMin<=df['dx_lat']<=latMax and lonMin<=df['dx_lon']<=lonMax] 
+#        df2=df[latMin<=df['de_lat']<=latMax] 
+#        df2=df2[lonMin<=df['de_lon']<=lonMax]
+#        df2=df2[latMin<=df['dx_lat']<=latMax] 
+#        df2=df2[lonMin<=df['dx_lon']<=lonMax] 
 
-    return
+        df2=df[df['de_lat']>latMin] 
+        df2=df2[df2['de_lat']<latMax] 
+        df2=df2[df2['de_lon']>lonMin]
+        df2=df2[df2['de_lon']<lonMax]
+        df2=df2[df2['dx_lat']>latMin] 
+        df2=df2[df2['dx_lat']<latMax] 
+        df2=df2[df2['dx_lon']>lonMin]
+        df2=df2[df2['dx_lon']<lonMax]
+    #Constrain RBN recievers only
+    elif constr_de and constr_dx==False:
+        df2=df[df['de_lat']>latMin] 
+        df2=df2[df2['de_lat']<latMax] 
+        df2=df2[df2['de_lon']>lonMin]
+        df2=df2[df2['de_lon']<lonMax]
+#        for i in range(0, len(df)-1):
+#        df2=df[latMin<=df['de_lat']<=latMax and lonMin<=df['de_lon']<=lonMax]
 
-def path_mid():
-  """Find the latitude and longitude of the midpoint between the de and dx stations
+    #Constrain dx stations only
+    elif constr_de==False and constr_dx:
+        df2=df2[df2['dx_lat']>latMin] 
+        df2=df2[df2['dx_lat']<latMax] 
+        df2=df2[df2['dx_lon']>lonMin]
+        df2=df2[df2['dx_lon']<lonMax]
+#        for i in range(0, len(df)-1):
+#        df2=df[latMin<=df['dx_lat']<=latMax and lonMin<=df['dx_lon']<=lonMax]
+
+    #Cannnot constrain
+    elif constr_de==False and constr_dx==False:
+        print "Constraint False"
+        
+    return df2
+
+def path_mid(de_lat, de_lon, dx_lat, dx_lon):
+    """Find the latitude and longitude of the midpoint between the de and dx stations
     **Args**:
         * **[de_lat]:Latitude of the RBN reciever   
         * **[de_lon]:Longitude of the RBN reciever   
@@ -752,9 +810,10 @@ def path_mid():
         * **[mid_lon]: Midpoint Longitude
         
     .. note:: Untested!
-    
+
     Written by Magda Moses 2015 August 02
     """
+
     from davitpy.utils import *
 
     import numpy as np      #Numerical python - provides array types and operations
