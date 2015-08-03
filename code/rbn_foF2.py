@@ -23,6 +23,24 @@ outFile=''
 rbnMap=''
 fof2Map=''
 
+#Specify spatial limits for links 
+latMin=25
+latMax=52  
+lonMin=-130
+lonMax=-65
+
+#Map Properties 
+#define map projection 
+mapProj='cyl'
+llcrnrlon=lonMin-5 
+llcrnrlat=latMin-5
+urcrnrlon=lonMax+5
+urcrnrlat=latMax+5
+#llcrnrlon=-130 
+#llcrnrlat=25
+#urcrnrlon=-65
+#urcrnrlat=52 
+
 #create output directory if none exists
 #output_dir='output'
 output_path = os.path.join('output','rbn','foF2')
@@ -35,8 +53,10 @@ except:
 #Specify start and end times
 #sTime = datetime.datetime(2015,9,10)
 #eTime = datetime.datetime(2015,9,15)
-sTime = datetime.datetime(2015,6,28,01,12)
-eTime = datetime.datetime(2015,6,28,01,22)
+#sTime = datetime.datetime(2015,6,28,01,12)
+#eTime = datetime.datetime(2015,6,28,01,22)
+sTime = datetime.datetime(2015,6,28,01,16)
+eTime = datetime.datetime(2015,6,28,01,18)
 
 map_sTime=sTime
 map_eTime=eTime
@@ -46,7 +66,7 @@ rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
 import ipdb; ipdb.set_trace()
 
 #Select Region
-rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=0, latMax=90, lonMin=-135, lonMax=-45, constr_de=True, constr_dx=True)
+rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
 import ipdb; ipdb.set_trace()
 
 #Evaluate each link
@@ -54,6 +74,14 @@ import ipdb; ipdb.set_trace()
     #Isolate the ith link
     
     #Calculate the midpoint and the distance between the two stations
+#Test of path_mid function
+#i=0
+#test_deLat=rbn_df2.de_lat.iloc[i]
+#test_deLon=rbn_df2.de_lon.iloc[i]
+#test_dxLat=rbn_df2.dx_lat.iloc[i]
+#test_dxLon=rbn_df2.dx_lon.iloc[i]
+#import ipdb; ipdb.set_trace()
+#[midLat, midLon]=rbn_lib.path_mid(test_deLat, test_deLon, test_dxLat, test_dxLon)
 
     #Find Kp, Ap, and SSN for that location and time
 
@@ -66,7 +94,7 @@ import ipdb; ipdb.set_trace()
 #Plot on map
 fig = plt.figure(figsize=(8,4))
 ax0  = fig.add_subplot(1,1,1)
-m, fig=rbn_lib.rbn_map_plot(rbn_df2,legend=False,ax=ax0,tick_font_size=9,ncdxf=True)
+m, fig=rbn_lib.rbn_map_plot(rbn_df2,legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
 #leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
 filename='RBN_linkLimit_test1.jpg'
 filepath    = os.path.join(output_path,filename)
@@ -74,3 +102,16 @@ fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
 import ipdb; ipdb.set_trace()
+
+##Test of path_mid function
+#fig2 = plt.figure(figsize=(8,4))
+#ax0  = fig2.add_subplot(1,1,1)
+#m, fig2=rbn_lib.rbn_map_plot(rbn_df2[i],legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+#color='m'
+#line, = m.drawgreatcircle(dx_lon,dx_lat,de_lon,de_lat,color=color, alpha=path_alpha)
+#filename='RBN_linkMidpoint_test1.jpg'
+#filepath    = os.path.join(output_path,filename)
+#fig.savefig(filepath,bbox_inches='tight')
+#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+#plt.clf()
+#import ipdb; ipdb.set_trace()

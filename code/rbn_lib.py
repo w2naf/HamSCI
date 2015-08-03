@@ -750,7 +750,7 @@ def rbn_region(df, latMin, lonMin, latMax, lonMax, constr_de=True, constr_dx=Tru
         * **[constr_dx]: Constrain the dx stations to the specified Lat/Lon limits
     **Returns**:
         * **[df2]: Dataframe containing only those links within the specified limits
-    .. note:: Untested! By default constrains links to a given region but can be used to constrain only the de or dx stations by changing the args
+    .. note:: Only Default conditions tested! By default constrains links to a given region but can be used to constrain only the de or dx stations by changing the args
     Written by Magda Moses and Carson Squibb 2015 August 03
     """
     import numpy as np
@@ -823,6 +823,7 @@ def path_mid(de_lat, de_lon, dx_lat, dx_lon):
     d=greatCircleDist(de_lat, de_lon, dx_lat, dx_lon)
     azm=greatCircleAzm(de_lat, de_lon, dx_lat, dx_lon)
     mid=d/2
-    mlat, mlon=greatCircleMov(de_lat, de_lon, mid, az)
+    import ipdb; ipdb.set_trace()
+    (mlat, mlon)=greatCircleMove(de_lat, de_lon, mid, azm)
 
-    return mlat, mlon
+    return [mlat, mlon]
