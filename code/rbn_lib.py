@@ -846,7 +846,11 @@ def path_mid(de_lat, de_lon, dx_lat, dx_lon):
     ret_lat = numpy.degrees(lat2)
     ret_lon = numpy.degrees(lon2)
     
+#    ret_lon = ret_lon % 360. 
+#
+#    tf = ret_lon > 180.
+#    ret_lon[tf] = ret_lon - 360.
     mlat=ret_lat
     mlon=ret_lon
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     return mlat, mlon, linkDist, dist
