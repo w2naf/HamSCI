@@ -823,7 +823,30 @@ def path_mid(de_lat, de_lon, dx_lat, dx_lon):
     d=greatCircleDist(de_lat, de_lon, dx_lat, dx_lon)
     azm=greatCircleAzm(de_lat, de_lon, dx_lat, dx_lon)
     mid=d/2
-    import ipdb; ipdb.set_trace()
-    (mlat, mlon)=greatCircleMove(de_lat, de_lon, mid, azm)
+#    (mlat, mlon)=greatCircleMove(de_lat, de_lon, mid, azm)
+    #The following is a slightly modified form of greatCircleMove from davitpy.utils.geoPack
+    alt=0
+    Re=6371.
+    Re_tot = (Re + alt) * 1e3
+    dist=mid*Re_tot
+    linkDist=dist*2
+    origLat=de_lat
+    origLon=de_lon
+    az=azm
+#    dist = dist * 1e3
+    lat1 = numpy.radians(origLat) 
+    lon1 = numpy.radians(origLon)
+    az = numpy.radians(az)
+    
+    lat2 = numpy.arcsin(numpy.sin(lat1)*numpy.cos(dist/Re_tot) +\
+    numpy.cos(lat1)*numpy.sin(dist/Re_tot)*numpy.cos(az))
+    lon2 = lon1 + numpy.arctan2(numpy.sin(az)*numpy.sin(dist/Re_tot)*numpy.cos(lat1),\
+    numpy.cos(dist/Re_tot)-numpy.sin(lat1)*numpy.sin(lat2))
 
-    return [mlat, mlon]
+    ret_lat = numpy.degrees(lat2)
+    ret_lon = numpy.degrees(lon2)
+    
+    mlat=ret_lat
+    mlon=ret_lon
+    import ipdb; ipdb.set_trace()
+    return mlat, mlon, linkDist, dist

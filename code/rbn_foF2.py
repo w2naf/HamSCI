@@ -75,13 +75,14 @@ import ipdb; ipdb.set_trace()
     
     #Calculate the midpoint and the distance between the two stations
 #Test of path_mid function
-#i=0
-#test_deLat=rbn_df2.de_lat.iloc[i]
-#test_deLon=rbn_df2.de_lon.iloc[i]
-#test_dxLat=rbn_df2.dx_lat.iloc[i]
-#test_dxLon=rbn_df2.dx_lon.iloc[i]
-#import ipdb; ipdb.set_trace()
-#[midLat, midLon]=rbn_lib.path_mid(test_deLat, test_deLon, test_dxLat, test_dxLon)
+i=0
+test_deLat=rbn_df2.de_lat.iloc[i]
+test_deLon=rbn_df2.de_lon.iloc[i]
+test_dxLat=rbn_df2.dx_lat.iloc[i]
+test_dxLon=rbn_df2.dx_lon.iloc[i]
+import ipdb; ipdb.set_trace()
+midLat, midLon,d,m =rbn_lib.path_mid(test_deLat, test_deLon, test_dxLat, test_dxLon)
+import ipdb; ipdb.set_trace()
 
     #Find Kp, Ap, and SSN for that location and time
 
@@ -103,15 +104,16 @@ fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
 import ipdb; ipdb.set_trace()
 
-##Test of path_mid function
-#fig2 = plt.figure(figsize=(8,4))
-#ax0  = fig2.add_subplot(1,1,1)
-#m, fig2=rbn_lib.rbn_map_plot(rbn_df2[i],legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
-#color='m'
-#line, = m.drawgreatcircle(dx_lon,dx_lat,de_lon,de_lat,color=color, alpha=path_alpha)
-#filename='RBN_linkMidpoint_test1.jpg'
-#filepath    = os.path.join(output_path,filename)
-#fig.savefig(filepath,bbox_inches='tight')
-#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
-#plt.clf()
-#import ipdb; ipdb.set_trace()
+#Test of path_mid function
+fig = plt.figure(figsize=(8,4))
+ax0  = fig.add_subplot(1,1,1)
+df=rbn_df2.head(1)
+m, fig=rbn_lib.rbn_map_plot(df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+color='m'
+line, = m.drawgreatcircle(test_deLon,test_deLat, midLon, midLat, color=color)
+filename='RBN_linkMidpoint_test1.jpg'
+filepath    = os.path.join(output_path,filename)
+fig.savefig(filepath,bbox_inches='tight')
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+plt.clf()
+import ipdb; ipdb.set_trace()
