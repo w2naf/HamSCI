@@ -854,3 +854,7 @@ def path_mid(de_lat, de_lon, dx_lat, dx_lon):
     mlon=ret_lon
 #    import ipdb; ipdb.set_trace()
     return mlat, mlon, linkDist, dist
+
+def get_geomagInd():
+
+    return kp, ap, ssn

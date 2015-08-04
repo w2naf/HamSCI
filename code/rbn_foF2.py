@@ -55,8 +55,10 @@ except:
 #eTime = datetime.datetime(2015,9,15)
 #sTime = datetime.datetime(2015,6,28,01,12)
 #eTime = datetime.datetime(2015,6,28,01,22)
-sTime = datetime.datetime(2015,6,28,01,16)
-eTime = datetime.datetime(2015,6,28,01,18)
+#sTime = datetime.datetime(2015,6,28,01,16)
+#eTime = datetime.datetime(2015,6,28,01,18)
+sTime = datetime.datetime(2015,6,28,01,17, 00)
+eTime = datetime.datetime(2015,6,28,01,17, 05)
 
 map_sTime=sTime
 map_eTime=eTime
@@ -119,7 +121,7 @@ fig = plt.figure(figsize=(8,4))
 ax0  = fig.add_subplot(1,1,1)
 m, fig=rbn_lib.rbn_map_plot(rbn_df2,legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
 #leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
-filename='RBN_linkLimit_test2.jpg'
+filename='RBN_linkLimit_test3.jpg'
 filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
@@ -129,20 +131,22 @@ import ipdb; ipdb.set_trace()
 #Test of path_mid function
 fig = plt.figure(figsize=(8,4))
 ax0  = fig.add_subplot(1,1,1)
-df=rbn_df2
+#df=rbn_df2
 #df=rbn_df2.head(1)
+df=rbn_df2.head(15)
+df=rbn_df2.tail(15)
 import ipdb; ipdb.set_trace()
 m, fig=rbn_lib.rbn_map_plot(df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
 color='m'
-for i in range(0, len(rbn_df2)-1): 
+for i in range(0, len(df)-1): 
     #Isolate the ith link
-    deLat=rbn_df2.de_lat.iloc[i]
-    deLon=rbn_df2.de_lon.iloc[i]
-    midLat=rbn_df2.midLat.iloc[i]
-    midLon=rbn_df2.midLon.iloc[i]
+    deLat=df.de_lat.iloc[i]
+    deLon=df.de_lon.iloc[i]
+    midLat=df.midLat.iloc[i]
+    midLon=df.midLon.iloc[i]
     line, = m.drawgreatcircle(deLon,deLat, midLon, midLat, color=color)
 
-filename='RBN_linkMidpoint_test2.jpg'
+filename='RBN_linkMidpoint_test3.jpg'
 filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
