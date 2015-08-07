@@ -946,7 +946,7 @@ def get_hmF2(sTime,lat, lon,):
     alati = lat 
     along = lon
     # IYYYY: Year as YYYY, e.g. 1985
-    iyyyy = int(sTime.year)
+    iyyyy = sTime.year
     import ipdb; ipdb.set_trace()
     #MMDD (-DDD): DATE (OR DAY OF YEAR AS A NEGATIVE NUMBER)
     t0 = sTime.timetuple()
@@ -954,7 +954,8 @@ def get_hmF2(sTime,lat, lon,):
     doy=t0.tm_yday
     mmdd = -doy 
     #DHOUR: LOCAL TIME (OR UNIVERSAL TIME + 25) IN DECIMAL HOURS
-    dhour=sTime.hour+sTime.minute/60+sTime.second/3600
+    decHour=sTime.hour+sTime.minute/60+sTime.second/3600
+    dhour=
     #HEIBEG,HEIEND,HEISTP: HEIGHT RANGE IN KM; maximal 100 heights, i.e. int((heiend-heibeg)/heistp)+1.le.100
 #    heibeg, heiend, heistp = 80., 500., 10. 
     heibeg, heiend, heistp = 350, 350., 0. 
