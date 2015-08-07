@@ -855,6 +855,112 @@ def path_mid(de_lat, de_lon, dx_lat, dx_lon):
 #    import ipdb; ipdb.set_trace()
     return mlat, mlon, linkDist, dist
 
-def get_geomagInd():
+def get_geomagInd(sTime, eTime=None):
+    """Get KP, AP, and SSN data for a date
+    **Args**:
+        * **[sTime]:The earliest time you want data for 
+        * **[eTime]:The latest time you want data for (for our puposes it should be same as sTime)
+    **Returns**:
+        * **[]: 
+        
+    .. note:: Untested!
 
-    return kp, ap, ssn
+    Written by Magda Moses 2015 August 06
+    """
+    import numpy as np
+    import pandas as pd
+
+    from davitpy import gme
+    import datetime
+
+#get Data
+    aa=gme.ind.kp.readKp(sTime, eTime)
+#    aa=gme.ind.kp.readKp(sTime, eTime)
+#    =gme.ind.kp.readKp(dt.datetime(2015, 6, 28),dt.datetime(2015,  6, 28))
+#    date=dt.datetime(2015, 6, 28)
+
+#Check if the data was found by usual methods or by ftp and assign accordingly
+    temp=aa[0]
+    norm_sTime=sTime.replace(hour=0, minute=0, second=0)
+    if norm_sTime == temp.time:
+            bb=temp
+    else:
+            t0 = sTime.timetuple()
+            t1 = eTime.timetuple()
+            b=t0.tm_yday
+            c=t1.tm_yday
+            day=b-1
+            bb=aa[day]
+#            day=c-1
+#            cc=aa[day]
+# Extract kp, ap and ssn values as integers
+    kp=int(bb.kp)
+    ap=int(bb.ap)
+    kpSum=int(bb.kpSum)
+    apMean=int(bb.apMean)
+    if bb.sunspot==None:
+        print "No Sunspot Data Avalible from this source"
+        ssn=None
+    else:
+        ssn=int(bb.sunspot)
+
+    return kp, ap, kpSum, apMean, ssn
+
+def get_hmF2(sTime,lat, lon,):
+    """Get hmF2 data for midpoint of RBN link
+    **Args**:
+        * **[sTime]:The earliest time you want data for 
+        * **[eTime]:The latest time you want data for (for our puposes it should be same as sTime)
+        * **[lat]: Latitude
+        * **[lon]: Longitude
+        * **[]: 
+    **Returns**:
+        * **[hmF2]: The height of the F2 layer 
+        * **[outf]: And array with the output of irisub.for 
+        * **[oarr]: Additional array with additional output of irisub.for
+        
+    .. note:: Untested!
+
+    Written by Magda Moses 2015 August 06
+    """
+    import numpy as np
+    import pandas as pd
+
+
+    from davitpy.models import *
+    from davitpy import utils
+    import datetime
+
+    # Inputs
+    jf = [True]*50
+    #jf[1]=False
+    jf[2:6] = [False]*4
+    jf[20] = False
+    jf[22] = False
+    jf[27:30] = [False]*3
+    jf[32] = False
+    jf[34] = False
+#    geographic   = 1 geomagnetic coordinates
+    jmag = 0.
+    #ALATI,ALONG: LATITUDE NORTH AND LONGITUDE EAST IN DEGREES
+    alati = lat 
+    along = lon
+    # IYYYY: Year as YYYY, e.g. 1985
+    iyyyy = int(sTime.year)
+    import ipdb; ipdb.set_trace()
+    #MMDD (-DDD): DATE (OR DAY OF YEAR AS A NEGATIVE NUMBER)
+    t0 = sTime.timetuple()
+    #Day of Year (doy)
+    doy=t0.tm_yday
+    mmdd = -doy 
+    #DHOUR: LOCAL TIME (OR UNIVERSAL TIME + 25) IN DECIMAL HOURS
+    dhour=sTime.hour+sTime.minute/60+sTime.second/3600
+    #HEIBEG,HEIEND,HEISTP: HEIGHT RANGE IN KM; maximal 100 heights, i.e. int((heiend-heibeg)/heistp)+1.le.100
+#    heibeg, heiend, heistp = 80., 500., 10. 
+    heibeg, heiend, heistp = 350, 350., 0. 
+    oarr = np.zeros(100)
+    outf=np.zeros(20)
+    outf,oarr = iri.iri_sub(jf,jmag,alati,along,iyyyy,mmdd,dhour,heibeg,heiend,heistp,oarr)
+    hmF2=oarr[2]
+    return hmF2, outf, oarr
+

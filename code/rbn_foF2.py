@@ -65,15 +65,15 @@ map_eTime=eTime
 
 #Read RBN data 
 rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 
 #Select Region
 rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 
 #Evaluate each link
 midLat=np.zeros([len(rbn_df2), 1])
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 midLon=np.zeros([len(rbn_df2), 1])
 dist=np.zeros([len(rbn_df2), 1])
 m_dist=np.zeros([len(rbn_df2), 1])
@@ -96,8 +96,12 @@ for i in range(0, len(rbn_df2)-1):
 #    import ipdb; ipdb.set_trace()
 
     #Find Kp, Ap, and SSN for that location and time
+#    norm_sTime=sTime-sTime.hour-sTime.minute
+    import ipdb; ipdb.set_trace()
+    kp, ap, kpSum, apMean, ssn=get_geomag(sTime, eTime)
 
     #Get hmF2 from the IRI using geomagnetic indices 
+    outf,oarr = iri.iri_sub(jf,jmag,alati,along,iyyyy,mmdd,dhour,heibeg,heiend,heistp,oarr)
 
     #Calculate theta (radians) from h=hmF2 and distance
 #    theta[i]=np.arctan(h[i]/m_dist[i])
@@ -121,12 +125,12 @@ fig = plt.figure(figsize=(8,4))
 ax0  = fig.add_subplot(1,1,1)
 m, fig=rbn_lib.rbn_map_plot(rbn_df2,legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
 #leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
-filename='RBN_linkLimit_test3.jpg'
+filename='RBN_linkLimit_test4.jpg'
 filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 
 #Test of path_mid function
 fig = plt.figure(figsize=(8,4))
@@ -135,18 +139,25 @@ ax0  = fig.add_subplot(1,1,1)
 #df=rbn_df2.head(1)
 df=rbn_df2.head(15)
 df=rbn_df2.tail(15)
+#j=(len(rbn_df2)-1)/2
+#15)
+j=(len(rbn_df2)-1)/2+4
+k=j+1
+#import ipdb; ipdb.set_trace()
+df=rbn_df2.iloc[j:k]
 import ipdb; ipdb.set_trace()
 m, fig=rbn_lib.rbn_map_plot(df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
 color='m'
-for i in range(0, len(df)-1): 
+for i in range(0, len(df)): 
     #Isolate the ith link
     deLat=df.de_lat.iloc[i]
     deLon=df.de_lon.iloc[i]
     midLat=df.midLat.iloc[i]
     midLon=df.midLon.iloc[i]
     line, = m.drawgreatcircle(deLon,deLat, midLon, midLat, color=color)
+    midpoint    = m.scatter(midLon, midLat,color='r',marker='o',s=2,zorder=100)
 
-filename='RBN_linkMidpoint_test3.jpg'
+filename='RBN_linkMidpoint_test4.jpg'
 filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
