@@ -77,6 +77,7 @@ midLat=np.zeros([len(rbn_df2), 1])
 midLon=np.zeros([len(rbn_df2), 1])
 dist=np.zeros([len(rbn_df2), 1])
 m_dist=np.zeros([len(rbn_df2), 1])
+h=np.zeros([len(rbn_df2), 1])
 theta=np.zeros([len(rbn_df2), 1])
 fp=np.zeros([len(rbn_df2), 1])
 
@@ -89,6 +90,7 @@ for i in range(0, len(rbn_df2)-1):
     deLon=rbn_df2.de_lon.iloc[i]
     dxLat=rbn_df2.dx_lat.iloc[i]
     dxLon=rbn_df2.dx_lon.iloc[i]
+    time=rbn_df2.date.iloc[i]
 #    import ipdb; ipdb.set_trace()
     
     #Calculate the midpoint and the distance between the two stations
@@ -98,24 +100,31 @@ for i in range(0, len(rbn_df2)-1):
     #Find Kp, Ap, and SSN for that location and time
 #    norm_sTime=sTime-sTime.hour-sTime.minute
     import ipdb; ipdb.set_trace()
-    kp, ap, kpSum, apMean, ssn=get_geomag(sTime, eTime)
+    kp, ap, kpSum, apMean, ssn=rbn_lib.get_geomagInd(sTime, eTime)
 
     #Get hmF2 from the IRI using geomagnetic indices 
-    outf,oarr = iri.iri_sub(jf,jmag,alati,along,iyyyy,mmdd,dhour,heibeg,heiend,heistp,oarr)
+#    outf,oarr = iri.iri_sub(jf,jmag,alati,along,iyyyy,mmdd,dhour,heibeg,heiend,heistp,oarr)
+    #outf and oarr are output and stored but right now they are changed each loop and not saved (Can change this in the future)
+    h[i],outf,oarr=rbn_lib.get_hmF2(sTime=time, lat=midLat[i], lon=midLon[i],ssn=None)
+    import ipdb; ipdb.set_trace()
+    #test foF2
+#    iri_fof2=np.sqrt(oarr[0]/(1.24e10))
+
 
     #Calculate theta (radians) from h=hmF2 and distance
-#    theta[i]=np.arctan(h[i]/m_dist[i])
+    theta[i]=np.arctan(h[i]/m_dist[i])
 
     #Calculate foF2 from link frequency (MUF) and theta
-#    fp[i]=rbn_df.freq.iloc[i]/np.sec(theta[i])
+    fp[i]=rbn_df.freq.iloc[i]*np.cos(theta[i])
 
 #Save information in data frame
 rbn_df2['midLat']=midLat
 rbn_df2['midLon']=midLon
 rbn_df2['link_dist']=dist
 rbn_df2['m_dist']=m_dist
-#rbn_df2['Elev_Ang(rad)']=theta
-#rbn_df2['Freq_plasma']=fp
+rbn_df2['hmF2']=h
+rbn_df2['Elev_Ang(rad)']=theta
+rbn_df2['Freq_plasma(kHz)']=fp
 
 
 

@@ -873,51 +873,80 @@ def get_geomagInd(sTime, eTime=None):
     from davitpy import gme
     import datetime
 
+##Normalize Time and correct day
+##    realday=sTime.day-1
+#    import ipdb; ipdb.set_trace()
+##    norm_sTime=sTime.replace(day=realday, hour=0, minute=0, second=0)
+#    norm_sTime=sTime.replace(hour=0, minute=0, second=0)
+#    import ipdb; ipdb.set_trace()
+#    if eTime==None:
+#        norm_eTime=eTime
+#    else:
+#        realday=eTime.day-1
+#        norm_eTime=eTime.replace(day=realday, hour=0, minute=0, second=0)
+#        import ipdb; ipdb.set_trace()
+
 #get Data
+    
+#    aa=gme.ind.kp.readKp(norm_sTime, norm_eTime)
     aa=gme.ind.kp.readKp(sTime, eTime)
-#    aa=gme.ind.kp.readKp(sTime, eTime)
 #    =gme.ind.kp.readKp(dt.datetime(2015, 6, 28),dt.datetime(2015,  6, 28))
 #    date=dt.datetime(2015, 6, 28)
 
 #Check if the data was found by usual methods or by ftp and assign accordingly
     temp=aa[0]
-    norm_sTime=sTime.replace(hour=0, minute=0, second=0)
+    import ipdb; ipdb.set_trace()
+    realday=sTime.day+1
+    import ipdb; ipdb.set_trace()
+    norm_sTime=sTime.replace(day=realday, hour=0, minute=0, second=0)
+    import ipdb; ipdb.set_trace()
     if norm_sTime == temp.time:
+            print 'Found by usual methods'
             bb=temp
     else:
+            #Convert sTime and eTime date into day of year
             t0 = sTime.timetuple()
-            t1 = eTime.timetuple()
+#            t1 = eTime.timetuple()
+            import ipdb; ipdb.set_trace()
             b=t0.tm_yday
-            c=t1.tm_yday
+#            c=t1.tm_yday
+            import ipdb; ipdb.set_trace()
             day=b-1
+            #Get data for desired day (sTime only for now!)
             bb=aa[day]
+            import ipdb; ipdb.set_trace()
 #            day=c-1
 #            cc=aa[day]
 # Extract kp, ap and ssn values as integers
-    kp=int(bb.kp)
-    ap=int(bb.ap)
+    kp=bb.kp
+    ap=bb.ap
     kpSum=int(bb.kpSum)
     apMean=int(bb.apMean)
+    import ipdb; ipdb.set_trace()
+    #Check if Sunspot data is availible or not for given sTime
     if bb.sunspot==None:
         print "No Sunspot Data Avalible from this source"
         ssn=None
+        import ipdb; ipdb.set_trace()
     else:
         ssn=int(bb.sunspot)
+        import ipdb; ipdb.set_trace()
 
     return kp, ap, kpSum, apMean, ssn
 
-def get_hmF2(sTime,lat, lon,):
+def get_hmF2(sTime,lat, lon, ssn=None):
     """Get hmF2 data for midpoint of RBN link
     **Args**:
         * **[sTime]:The earliest time you want data for 
         * **[eTime]:The latest time you want data for (for our puposes it should be same as sTime)
         * **[lat]: Latitude
         * **[lon]: Longitude
+        * **[ssn]: Rz12 sunspot number
         * **[]: 
     **Returns**:
         * **[hmF2]: The height of the F2 layer 
-        * **[outf]: And array with the output of irisub.for 
-        * **[oarr]: Additional array with additional output of irisub.for
+        * **[outf]: An array with the output of irisub.for 
+        * **[oarr]: Array with input parameters and array with additional output of irisub.for
         
     .. note:: Untested!
 
@@ -934,12 +963,24 @@ def get_hmF2(sTime,lat, lon,):
     # Inputs
     jf = [True]*50
     #jf[1]=False
+    #uncomment next line to input ssn
     jf[2:6] = [False]*4
     jf[20] = False
     jf[22] = False
     jf[27:30] = [False]*3
     jf[32] = False
     jf[34] = False
+
+    #Create Array for input variables(will also hold output values later) 
+    oarr = np.zeros(100)
+
+    #Decide if to have user input ssn
+    if ssn!=None:
+        jf[16]=False
+        oarr[32]=ssn
+    else: 
+        jf[17]=True
+    import ipdb; ipdb.set_trace()
 #    geographic   = 1 geomagnetic coordinates
     jmag = 0.
     #ALATI,ALONG: LATITUDE NORTH AND LONGITUDE EAST IN DEGREES
@@ -954,14 +995,21 @@ def get_hmF2(sTime,lat, lon,):
     doy=t0.tm_yday
     mmdd = -doy 
     #DHOUR: LOCAL TIME (OR UNIVERSAL TIME + 25) IN DECIMAL HOURS
-    decHour=sTime.hour+sTime.minute/60+sTime.second/3600
-    dhour=
+    decHour=float(sTime.hour)+float(sTime.minute)/60+float(sTime.second)/3600
+    #Acording to the irisub.for comments, this should be equivilent to local time input
+    #Need Testing !!!!!!
+#    dhour=12+decHour-5
+    dhour=decHour+25
+    import ipdb; ipdb.set_trace()
     #HEIBEG,HEIEND,HEISTP: HEIGHT RANGE IN KM; maximal 100 heights, i.e. int((heiend-heibeg)/heistp)+1.le.100
-#    heibeg, heiend, heistp = 80., 500., 10. 
-    heibeg, heiend, heistp = 350, 350., 0. 
-    oarr = np.zeros(100)
+    heibeg, heiend, heistp = 80., 500., 10. 
+#    heibeg, heiend, heistp = 350, 350., 0. 
     outf=np.zeros(20)
     outf,oarr = iri.iri_sub(jf,jmag,alati,along,iyyyy,mmdd,dhour,heibeg,heiend,heistp,oarr)
-    hmF2=oarr[2]
+    hmF2=oarr[1]
+#    foF2=np.sqrt(oarr[0]/(1.24e10))
+    import ipdb; ipdb.set_trace()
     return hmF2, outf, oarr
 
+#def rbn_fof2():
+    
