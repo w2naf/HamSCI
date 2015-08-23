@@ -58,7 +58,13 @@ eTime = datetime.datetime(2015,6,28,01,17, 05)
 #delta=datetime.timedelta(=1)
 #sTime = datetime.datetime(2015,6,28,01,17, 00)
 syear=datetime.datetime(2010,6,27,01,17, 00)
-eyear=sTime
+eyear=datetime.datetime(2010,9,27,01,17, 00)
+#eyear=sTime
+
+mon=5
+year=[]
+while mon<=10:
+    year.append(datetime.datetime(2010,mon,27,01,17, 00))
 #year=np.arange(syear,eyear)
 #year=np.arrange(syear,eyear,timedelta)
 
@@ -122,7 +128,7 @@ for y in year:
     deLon=rbn_df2.de_lon.iloc[0]
     dxLat=rbn_df2.dx_lat.iloc[0]
     dxLon=rbn_df2.dx_lon.iloc[0]
-    #    import ipdb; ipdb.set_trace()
+    import ipdb; ipdb.set_trace()
     #Calculate the midpoint and the distance between the two stations
     midLat[i], midLon[i],dist[i],m_dist[i] =rbn_lib.path_mid(deLat, deLon, dxLat, dxLon)
     #    import ipdb; ipdb.set_trace()
