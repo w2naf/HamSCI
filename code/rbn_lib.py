@@ -117,6 +117,125 @@ def read_rbn(sTime,eTime=None,data_dir=None,
         #import ipdb; ipdb.set_trace()
         return df
 
+def k4kdj_rbn(sTime,eTime=None,data_dir=None,
+             qrz_call='km4ege',qrz_passwd='ProjectEllie_2014'):
+    import os               # Provides utilities that help us do os-level operations like create directories
+    import datetime         # Really awesome module for working with dates and times.
+    import zipfile
+    import urllib2          # Used to automatically download data files from the web.
+    import pickle
+
+    import numpy as np      #Numerical python - provides array types and operations
+    import pandas as pd     #This is a nice utility for working with time-series type data.
+
+    from hamtools import qrz
+
+    #import ipdb; ipdb.set_trace()
+    if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
+
+    qz      = qrz.Session(qrz_call,qrz_passwd)
+
+    ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
+    eDay        =  datetime.datetime(eTime.year,eTime.month,eTime.day)
+    while ymd_list[-1] < eDay:
+        ymd_list.append(ymd_list[-1] + datetime.timedelta(days=1))
+
+    for ymd_dt in ymd_list:
+        ymd         = ymd_dt.strftime('%Y%m%d')
+        data_file   = '{0}.zip'.format(ymd)
+        data_path   = os.path.join(data_dir,data_file)  
+
+        time_0      = datetime.datetime.now()
+        print 'Starting RBN processing on <%s> at %s.' % (data_file,str(time_0))
+
+        ################################################################################
+        # Make sure the data file exists.  If not, download it and open it.
+        if not os.path.exists(data_path):
+             try:    # Create the output directory, but fail silently if it already exists
+                 os.makedirs(data_dir) 
+             except:
+                 pass
+             # File downloading code from: http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
+             url = 'http://www.reversebeacon.net/raw_data/dl.php?f='+ymd
+
+             #import ipdb; ipdb.set_trace()
+             u = urllib2.urlopen(url)
+             f = open(data_path, 'wb')
+             meta = u.info()
+             file_size = int(meta.getheaders("Content-Length")[0])
+             print "Downloading: %s Bytes: %s" % (data_path, file_size)
+         
+             file_size_dl = 0
+             block_sz = 8192
+             while True:
+                 buffer = u.read(block_sz)
+                 if not buffer:
+                     break
+         
+                 file_size_dl += len(buffer)
+                 f.write(buffer)
+                 status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+                 status = status + chr(8)*(len(status)+1)
+                 print status,
+             f.close()
+             status = 'Done downloading!  Now converting to Pandas dataframe and plotting...'
+             print status
+
+        p_filename = 'rbn_'+sTime.strftime('%Y%m%d%H%M-')+eTime.strftime('%Y%m%d%H%M.p')
+        p_filepath = os.path.join(data_dir,p_filename)
+        if not os.path.exists(p_filepath):
+            # Load data into dataframe here. ###############################################
+            with zipfile.ZipFile(data_path,'r') as z:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
+                with z.open(ymd+'.csv') as fl:
+                    df          = pd.read_csv(fl,parse_dates=[10])
+
+#            # Create columns for storing geolocation data.
+#            df['dx_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+#            df['dx_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+#            df['de_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+#            df['de_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+
+            # Trim dataframe to just the entries we need.
+            df = df[np.logical_and(df['date'] >= sTime,df['date'] < eTime)]
+            # Limit to stations heard by K4KDJ 
+            import ipdb; ipdb.set_trace()
+            df = df[df['callsign']=='K4KDJ']
+            import ipdb; ipdb.set_trace()
+
+#            # Look up lat/lons in QRZ.com
+#            errors  = 0
+#            success = 0
+#            for index,row in df.iterrows():
+#                if index % 50   == 0:
+#                    print index,datetime.datetime.now()-time_0,row['date']
+#                de_call = row['callsign']
+#                dx_call = row['dx']
+#                try:
+#                    de      = qz.qrz(de_call)
+#                    dx      = qz.qrz(dx_call)
+#
+#                    row['de_lat'] = de['lat']
+#                    row['de_lon'] = de['lon']
+#                    row['dx_lat'] = dx['lat']
+#                    row['dx_lon'] = dx['lon']
+#                    df.loc[index] = row
+#    #                print '{index:06d} OK - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
+#                    success += 1
+#                except:
+#    #                print '{index:06d} LOOKUP ERROR - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
+#                    errors += 1
+#            total   = success + errors
+#            pct     = success / float(total) * 100.
+#            print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
+            df.to_pickle(p_filepath)
+        else:
+            with open(p_filepath,'rb') as fl:
+                df = pickle.load(fl)
+
+        #import ipdb; ipdb.set_trace()
+        return df
+
+
 # Set up a dictionary which identifies which bands we want and some plotting attributes for each band
 band_dict       = {}
 band_dict[28]   = {'name': '10 m',  'freq': '28 MHz',  'color':'red'}
@@ -1013,3 +1132,153 @@ def get_hmF2(sTime,lat, lon, ssn=None):
 
 #def rbn_fof2():
     
+#    return
+def count_band(sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=10,unit='minutes'):
+    import sys
+    import os
+
+    import matplotlib
+    matplotlib.use('Agg')
+    from matplotlib import pyplot as plt
+    from matplotlib import patches
+
+    import numpy as np
+    import pandas as pd
+
+    from davitpy import gme
+    import datetime
+
+    import rbn_lib
+    tDelta=datetime.timedelta(minutes=dt)
+    index=0
+    #Generate a time/date vector
+    curr_time=sTime
+    #Two ways to have time labels for each count for the graph of counts  vs time: 
+        #1) the number of counts and the time at which that count started 
+        #2) the number of counts and the time at which that count ended [the number of counts in a 5min interval stamped with the time the interval ended and the next interval began]
+    #For option 1: uncomment line 48 and comment line 49 (uncomment the line after these notes and comment the one after it)
+    #For option 2: uncomment line 49 and comment line 48 (comment the following line and uncomment the one after it)
+    #times=[sTime]
+    curr_time += tDelta
+    times=[curr_time]
+    #if using option 2 then delete "=" sign in the following line!!!!
+    while curr_time < eTime:
+    #    times.append(curr_time)
+        curr_time+=tDelta
+        times.append(curr_time)
+
+    #added the following code to ensure times does not contain any values > eTime
+    i_tmax=len(times)
+    #if the last time in the time array is greater than the end Time (eTime)  originally specified
+    #Then must decide whether to expand time range (times) to include eTime or clip times to exclude times greater than eTime
+    #This situation arises when the time step results in the final value in the times array that is greater than eTime
+    #times_max=times[len(times-1)]#times_max is the maximum time value in the list
+    import ipdb; ipdb.set_trace()
+    if times[len(times)-1]>=eTime:
+        import ipdb; ipdb.set_trace()
+        if Inc_eTime==True:
+            print 'Choice Include Endpoint=True'
+            #must do so all contacts in the last time interval are counted, if not then it will skew data by not including a portion of the count in the final interval
+            t_end=times[len(times)-1]
+        else:
+            print 'Choice Include Endpoint=False'
+            #The end time is now the second to last value in the times array
+            #Change t_end and clip times array
+            t_end=times[len(times)-2]
+            times.remove(times[len(times-1)])
+
+    #import ipdb; ipdb.set_trace()
+    
+    #Group counts together by unit time
+    #index=0
+    #define array to hold spot count
+    spots=np.zeros(len(times))
+    
+    #CARSON VARIABLES: Spot counters for previous frequencies
+    #spots0=np.zeros(len(times))
+    spots1=np.zeros(len(times))
+    spots2=np.zeros(len(times))
+    spots3=np.zeros(len(times))
+    #END
+
+    #import ipdb; ipdb.set_trace()
+    cTime=sTime
+    endTime=cTime
+    #Read RBN data for given dates/times
+    #call function to get rbn data, find de_lat, de_lon, dx_lat, dx_lon for the data
+    rbn_df=rbn_lib.k4kdj_rbn(sTime, t_end, data_dir='data/rbn')
+    #create data frame for the loop
+    df1=rbn_df[rbn_df['callsign']=='K4KDJ']
+    import ipdb; ipdb.set_trace()
+    rbn_df2=rbn_df
+    #import ipdb; ipdb.set_trace()
+    J=0
+
+    while cTime < t_end:
+        endTime += tDelta
+       # import ipdb; ipdb.set_trace()
+        #rbn_df2=rbn_df
+        df1['Lower']=cTime
+        df1['Upper']=endTime
+        #import ipdb; ipdb.set_trace()
+        #Clip according to the range of time for this itteration
+        df2=df1[(df1.Lower <= df1.date) & (df1.date < df1.Upper)]
+        #store spot count for the given time interval in an array 
+        spots[index]=len(df2)
+
+        for I in range(0,len(df2)-1):
+            if df2.freq.iloc[I]>(freq1-500) and df2.freq.iloc[I]<(freq1+500):
+                J=J+1
+                spots1[index]+=1
+            elif df2.freq.iloc[I]>(freq2-500) and df2.freq.iloc[I]<(freq2+500): 
+                J=J+1
+                spots2[index]+=1
+            elif df2.freq.iloc[I]>(freq3-500) and df2.freq.iloc[I]<(freq3+500):
+                J=J+1
+                spots3[index]+=1
+           # elif df2.freq.iloc[I]>(freq0-500) and df2.freq.iloc[I]<(freq0+500):
+           #     spots0[index]+=1
+        #Itterate current time value and index
+        cTime=endTime
+        index=index+1
+
+    #create Data Frame from spots and times vectors
+    spot_df=pd.DataFrame(data=times, columns=['dates'])
+    #spot_df['Count_F0']=spots0
+    spot_df['Count_F1']=spots1
+    spot_df['Count_F2']=spots2
+    spot_df['Count_F3']=spots3
+    #spot_df=pd.DataFrame(data=spots, columns=['Count'])
+    #import ipdb; ipdb.set_trace()
+
+    #now isolate those on the day side
+    #now we need to constrain the data to those contacts that are only on the day side 
+    #will need to make this more elegant and universal
+    #I just wrote a quick code to isolate it for ONE EXAMPLE
+
+
+
+    #Plot figures
+    #fig=plt.figure()#generate a figure
+    fig, ((ax1),(ax2),(ax3))=plt.subplots(3,1,sharex=True,sharey=False)
+    #ax.plot(spot_df['dates'], spot_df['Count_F1'],'r*-',spot_df['dates'],spot_df['Count_F2'],'b*-',spot_df['dates'],spot_df['Count_F3'],'g*-')
+    #ax0.plot(spot_df['dates'], spot_df['Count_F0'],'y*-')
+    ax1.plot(spot_df['dates'], spot_df['Count_F1'],'r*-')
+    ax2.plot(spot_df['dates'], spot_df['Count_F2'],'b*-')
+    ax3.plot(spot_df['dates'], spot_df['Count_F3'],'g*-')
+
+    ax1.set_title('RBN Spots per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+    #ax0.set_ylabel(str(freq0/1000)+' MHz')
+    ax1.set_ylabel(str(freq1/1000)+' MHz')
+    ax2.set_ylabel(str(freq2/1000)+' MHz')
+    ax3.set_ylabel(str(freq3/1000)+' MHz')
+    ax3.set_xlabel('Time [UT]')
+    #Freq1=patches.Patch(color='red',label='3 MHz')
+    #Freq2=patches.Patch(color='blue',label='14 MHz')
+    #Freq3=patches.Patch(color='green',label='28 MHz')
+    #plt.legend(['3 MHz','14 MHz','28 MHz'])
+
+    #ax.text(spot_df.dates.min(),spot_df.Count.min(),'Unit Time: '+str(dt)+' '+unit)
+    #ax.text(spot_df.dates[10],spot_df.Count.max(),'Unit Time: '+str(dt)+' '+unit)
+
+    return fig
