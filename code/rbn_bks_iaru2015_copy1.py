@@ -42,46 +42,18 @@ index=0
 #Note: to change units of unit time then change the expression in tDelta assignment!
 dt=10
 unit='minutes'
-#Specify whether to rotate the x labels on the plots
-xRot=True
 ##specify filename for output graph's file
 #graphfile='K4KDJ_rbnCount_'+eTime.strftime()+str(index)
 
 #specify times
-sTime=datetime.datetime(2015,7,11,10)
-eTime=datetime.datetime(2015, 7,12, 20)
+sTime=datetime.datetime(2015,7,11,10,00)
+eTime=datetime.datetime(2015, 7,12, 20, 00)
 #specify time interval for plots
 plotDelta=datetime.timedelta(hours=5)
 
 #Specify Test times
-#start_time[datetime.datetime(2015,7)
-fname='/home/km4ege/HamSCI/code/bks_test.csv'
-bks_df=pd.DataFrame.from_csv(fname, parse_dates=True)
-#bks_df=pd.read_csv(fname,parse_dates=[10])
-sTest=datetime.datetime(2015, 7,11, 15, 00, 00)
-eTest=datetime.datetime(2015, 7,12, 15, 30, 00)
-testDelta=datetime.timedelta(hours=1)
-curr_time=sTest
-bks_test=[curr_time]
-while curr_time < eTest:
-#    Times.append(curr_time)
-    bks_test.append(curr_time)
-    curr_time+=testDelta
-#if bks_test[len(bks_test)-1]>=eTest:
-##    import ipdb; ipdb.set_trace()
-#    if Inc_eTime==True:
-#print 'Choice Include Endpoint=True'
-#bks_test.remove(bks_test[len(bks_test-1)])
-bks_test.append(eTest)
-##        t_end=bks_test[len(bks_test)-1]
-#    else:
-#        print 'Choice Include Endpoint=False'
-#        #The end time is now the second to last value in the Times array
-#        #Change t_end and clip Times array
-##        t_end=bks_test[len(bks_test)-2]
-#        bks_test.remove(bks_test[len(bks_test-1)])
-bks_df=bks_test
-import ipdb; ipdb.set_trace()
+start_time[datetime.datetime(2015,7,
+
 
 ##Specify whether to include eTime in the count if tDelta results in an end time greater than eTime
 Inc_eTime=True
@@ -107,13 +79,7 @@ if Times[len(Times)-1]>=eTime:
 
 #import ipdb; ipdb.set_trace()
 #Read RBN data for given dates/times
-rbn_df=rbn_lib.k4kdj_rbn(sTime, datetime.datetime(2015, 07, 12, 00), data_dir='data/rbn')
-import ipdb; ipdb.set_trace()
-df=rbn_lib.k4kdj_rbn(datetime.datetime(2015, 07, 12, 00), t_end, data_dir='data/rbn')
-import ipdb; ipdb.set_trace()
-rbn_df=pd.concat([rbn_df, df])
-#rbn_df=rbn_lib.k4kdj_rbn(sTime, t_end, data_dir='data/rbn')
-import ipdb; ipdb.set_trace()
+rbn_df=rbn_lib.k4kdj_rbn(sTime, t_end, data_dir='data/rbn')
 ##create data frame for the loop
 #df1=rbn_df[rbn_df['callsign']=='K4KDJ']
 #import ipdb; ipdb.set_trace()
@@ -127,9 +93,7 @@ while plot_sTime < Times[len(Times)-1]:
     plot_eTime=Times[index+1]
 
     #Get count plot
-    fig,ax1, ax2, ax3=rbn_lib.count_band(df1=rbn_df,sTime=plot_sTime, eTime=plot_eTime, freq1=freq1,freq2=freq2, freq3=freq3,dt=dt, unit=unit,xRot=xRot) 
-
-    plt.xticks(rotation=30)
+    fig=rbn_lib.count_band(df1=rbn_df,sTime=plot_sTime, eTime=plot_eTime, freq1=freq1,freq2=freq2, freq3=freq3,dt=dt, unit=unit) 
 
     #specify filename for output graph's file
     graphfile='Plot'+str(index)+'K4KDJ_rbnCount_'+plot_sTime.strftime('%H_%M')+'-'+plot_eTime.strftime('%H_%M')+'Plot'
@@ -139,31 +103,11 @@ while plot_sTime < Times[len(Times)-1]:
     filename=os.path.join(output_dir, graphfile)
     # 'rbnCount_5min_line1.png')
     fig.savefig(filename)
-#    import ipdb; ipdb.set_trace()
-
+  
     #increment 
     index=index+1
     plot_sTime=Times[index]
 #    import ipdb; ipdb.set_trace()
-
-
-#Get count plot
-fig,ax1, ax2, ax3=rbn_lib.count_band(df1=rbn_df,sTime=sTime, eTime=eTime, freq1=freq1,freq2=freq2, freq3=freq3,dt=dt, unit=unit,xRot=xRot) 
-ax1.vlines(bks_df['t_on'],[0],[90],color='g')
-ax1.vlines(bks_df['t_off'],[0],[90],color='r')
-ax2.vlines(bks_df['t_on'],[0],[90],color='g')
-ax2.vlines(bks_df['t_off'],[0],[90],color='r')
-ax3.vlines(bks_df['t_on'],[0],[90],color='g')
-ax3.vlines(bks_df['t_off'],[0],[90],color='r')
-#specify filename for output graph's file
-graphfile='Plot'+str(index)+'FullTime_K4KDJ_rbnCount_'+sTime.strftime('%H_%M')+'-'+eTime.strftime('%H_%M')+'Plot'
-
-#Save Figure
-fig.tight_layout()
-filename=os.path.join(output_dir, graphfile)
-# 'rbnCount_5min_line1.png')
-fig.savefig(filename)
-  
 
 ##Redundant/old Code (next two lines)
 ##specify filename for output graph's file
@@ -262,7 +206,7 @@ fig.savefig(filename)
 #    index=index+1
 #
 ##create Data Frame from spots and times vectors
-#spot_df=pcolor=d.DataFrame(data=times, columns=['dates'])
+#spot_df=pd.DataFrame(data=times, columns=['dates'])
 ##spot_df['Count_F0']=spots0
 #spot_df['Count_F1']=spots1
 #spot_df['Count_F2']=spots2

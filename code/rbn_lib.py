@@ -1133,7 +1133,7 @@ def get_hmF2(sTime,lat, lon, ssn=None):
 #def rbn_fof2():
     
 #    return
-def count_band(sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=10,unit='minutes'):
+def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=10,unit='minutes',xRot=False):
     import sys
     import os
 
@@ -1173,9 +1173,9 @@ def count_band(sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,
     #Then must decide whether to expand time range (times) to include eTime or clip times to exclude times greater than eTime
     #This situation arises when the time step results in the final value in the times array that is greater than eTime
     #times_max=times[len(times-1)]#times_max is the maximum time value in the list
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     if times[len(times)-1]>=eTime:
-        import ipdb; ipdb.set_trace()
+#        import ipdb; ipdb.set_trace()
         if Inc_eTime==True:
             print 'Choice Include Endpoint=True'
             #must do so all contacts in the last time interval are counted, if not then it will skew data by not including a portion of the count in the final interval
@@ -1204,13 +1204,13 @@ def count_band(sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,
     #import ipdb; ipdb.set_trace()
     cTime=sTime
     endTime=cTime
-    #Read RBN data for given dates/times
-    #call function to get rbn data, find de_lat, de_lon, dx_lat, dx_lon for the data
-    rbn_df=rbn_lib.k4kdj_rbn(sTime, t_end, data_dir='data/rbn')
-    #create data frame for the loop
-    df1=rbn_df[rbn_df['callsign']=='K4KDJ']
-    import ipdb; ipdb.set_trace()
-    rbn_df2=rbn_df
+#    #Read RBN data for given dates/times
+#    #call function to get rbn data, find de_lat, de_lon, dx_lat, dx_lon for the data
+#    rbn_df=rbn_lib.k4kdj_rbn(sTime, t_end, data_dir='data/rbn')
+#    #create data frame for the loop
+#    df1=rbn_df[rbn_df['callsign']=='K4KDJ']
+#    import ipdb; ipdb.set_trace()
+#    rbn_df2=rbn_df
     #import ipdb; ipdb.set_trace()
     J=0
 
@@ -1261,6 +1261,8 @@ def count_band(sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,
     #Plot figures
     #fig=plt.figure()#generate a figure
     fig, ((ax1),(ax2),(ax3))=plt.subplots(3,1,sharex=True,sharey=False)
+    if xRot==True:
+        plt.xticks(rotation=30)
     #ax.plot(spot_df['dates'], spot_df['Count_F1'],'r*-',spot_df['dates'],spot_df['Count_F2'],'b*-',spot_df['dates'],spot_df['Count_F3'],'g*-')
     #ax0.plot(spot_df['dates'], spot_df['Count_F0'],'y*-')
     ax1.plot(spot_df['dates'], spot_df['Count_F1'],'r*-')
@@ -1281,4 +1283,4 @@ def count_band(sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,
     #ax.text(spot_df.dates.min(),spot_df.Count.min(),'Unit Time: '+str(dt)+' '+unit)
     #ax.text(spot_df.dates[10],spot_df.Count.max(),'Unit Time: '+str(dt)+' '+unit)
 
-    return fig
+    return fig, ax1, ax2, ax3
