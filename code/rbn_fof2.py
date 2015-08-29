@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
-import gme
+from davitpy import gme
 import datetime
 
 import rbn_lib
@@ -27,8 +27,8 @@ nx_plots    = 1
 ny_plots    = 1
 plot_nr     = 0
 
-map_sTime = datetime.datetime(2013,5,13,15,5)
-map_eTime = datetime.datetime(2013,5,13,15,20)
+map_sTime = datetime.datetime(2014,10,25,17,15)
+map_eTime = datetime.datetime(2014,10,25,17,30)
 
 filename    = map_sTime.strftime('rbn_fof2_%Y%m%d_%H%M.png')
 filepath    = os.path.join(output_path,filename)
@@ -76,4 +76,4 @@ good_pct = float(good_count)/total_count * 100.
 print ''
 print 'Final stats for: {0}'.format(filepath)
 print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count,total_count,good_pct)
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
