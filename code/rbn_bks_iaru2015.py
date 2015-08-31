@@ -56,13 +56,14 @@ plotDelta=datetime.timedelta(hours=5)
 #Specify Test times
 #start_time[datetime.datetime(2015,7)
 fname='/home/km4ege/HamSCI/code/bks_test.csv'
-bks_df=pd.DataFrame.from_csv(fname, parse_dates=True)
+#bks_df=pd.DataFrame.from_csv(fname, parse_dates=True)
 #bks_df=pd.read_csv(fname,parse_dates=[10])
 sTest=datetime.datetime(2015, 7,11, 15, 00, 00)
 eTest=datetime.datetime(2015, 7,12, 15, 30, 00)
 testDelta=datetime.timedelta(hours=1)
 curr_time=sTest
 bks_test=[curr_time]
+curr_time+=testDelta
 while curr_time < eTest:
 #    Times.append(curr_time)
     bks_test.append(curr_time)
@@ -72,6 +73,7 @@ while curr_time < eTest:
 #    if Inc_eTime==True:
 #print 'Choice Include Endpoint=True'
 #bks_test.remove(bks_test[len(bks_test-1)])
+
 bks_test.append(eTest)
 ##        t_end=bks_test[len(bks_test)-1]
 #    else:
@@ -82,7 +84,19 @@ bks_test.append(eTest)
 #        bks_test.remove(bks_test[len(bks_test-1)])
 bks_df=bks_test
 import ipdb; ipdb.set_trace()
+#Even values of inx point to the time the radar is on and Odd values point/index the times it is off
+inx=0
+bks_off=[bks_test[inx]]
+inx=1
+bks_on=[bks_test[inx]]
+inx=2
+while inx<len(bks_test)-1:
+    bks_off.append(bks_test[inx])
+    inx=inx+1
+    bks_on.append(bks_test[inx])
+    inx=inx+1
 
+import ipdb; ipdb.set_trace()
 ##Specify whether to include eTime in the count if tDelta results in an end time greater than eTime
 Inc_eTime=True
 curr_time=sTime
@@ -123,6 +137,10 @@ import ipdb; ipdb.set_trace()
 plot_sTime=Times[0]
 plot_eTime=Times[1]
 
+#Index for radar
+sInx=0
+eInx=0
+
 while plot_sTime < Times[len(Times)-1]:
     plot_eTime=Times[index+1]
 
@@ -148,21 +166,67 @@ while plot_sTime < Times[len(Times)-1]:
 
 
 #Get count plot
-fig,ax1, ax2, ax3=rbn_lib.count_band(df1=rbn_df,sTime=sTime, eTime=eTime, freq1=freq1,freq2=freq2, freq3=freq3,dt=dt, unit=unit,xRot=xRot) 
-ax1.vlines(bks_df['t_on'],[0],[90],color='g')
-ax1.vlines(bks_df['t_off'],[0],[90],color='r')
-ax2.vlines(bks_df['t_on'],[0],[90],color='g')
-ax2.vlines(bks_df['t_off'],[0],[90],color='r')
-ax3.vlines(bks_df['t_on'],[0],[90],color='g')
-ax3.vlines(bks_df['t_off'],[0],[90],color='r')
+fig,ax1, ax2, ax3,DumLim1, DumLim2, DumLim3=rbn_lib.count_band(df1=rbn_df,sTime=sTime, eTime=eTime, freq1=freq1,freq2=freq2, freq3=freq3,dt=dt, unit=unit,xRot=xRot,ret_lim=True) 
+import ipdb; ipdb.set_trace()
 #specify filename for output graph's file
 graphfile='Plot'+str(index)+'FullTime_K4KDJ_rbnCount_'+sTime.strftime('%H_%M')+'-'+eTime.strftime('%H_%M')+'Plot'
 
-#Save Figure
 fig.tight_layout()
-filename=os.path.join(output_dir, graphfile)
 # 'rbnCount_5min_line1.png')
 fig.savefig(filename)
+DumLim1=ax1.get_ylim()
+DumLim2=ax2.get_ylim()
+DumLim3=ax3.get_ylim()
+#Draw lines for times off and on
+#Even values of inx point to the time the radar is on and Odd values point/index the times it is off
+ax1.vlines(bks_on,DumLim1[0],DumLim1[1],color='g')
+ax2.vlines(bks_on,DumLim2[0],DumLim2[1],color='g')
+ax3.vlines(bks_on,DumLim3[0],DumLim3[1],color='g')
+#ax2.plot(bks_on,np.array(DumLim2[0],DumLim2[1]),color='r')
+#ax3.plot(bks_on,np.array(DumLim3[0],DumLim3[1]),color='r')
+
+#Plot When radar turned off
+ax1.vlines(bks_off ,DumLim1[0],DumLim1[1],color='r')
+ax2.vlines(bks_off ,DumLim2[0],DumLim2[1],color='r')
+ax3.vlines(bks_off ,DumLim3[0],DumLim3[1],color='r')
+#Save Figure
+filename=os.path.join(output_dir, graphfile)
+#ax1.plot(bks_off,np.array(DumLim1[0],DumLim1[1]),color='g')
+#ax2.plot(bks_off,np.array(DumLim2[0],DumLim2[1]),color='g')
+#ax3.plot(bks_off,np.array(DumLim3[0],DumLim3[1]),color='g')
+#while inx<len(bks_test)-1:
+#    #Plot When radar turned off
+#    ax1.plot(bks_test[inx],np.array(DumLim1[0],DumLim1[1]),color='r')
+#    ax2.plot(bks_test[inx],np.array(DumLim2[0],DumLim2[1]),color='r')
+#    ax3.plot(bks_test[inx],np.array(DumLim3[0],DumLim3[1]),color='r')
+#    
+#    #Now Increase inx so that we can get the time that the radar is turned on 
+#    inx=inx+1
+#    
+#    #Plot When radar turned on
+#    ax1.plot(bks_test[inx],np.array(DumLim1[0],DumLim1[1]),color='g')
+#    ax2.plot(bks_test[inx],np.array(DumLim2[0],DumLim2[1]),color='g')
+#    ax3.plot(bks_test[inx],np.array(DumLim3[0],DumLim3[1]),color='g')
+#
+#    #Increment inx so that it points to the next "turn on" time
+##    import ipdb; ipdb.set_trace()
+#    inx=inx+1
+#    import ipdb; ipdb.set_trace()
+#
+#ax1.vlines(bks_df['t_on'],[0],[90],color='g')
+#ax1.vlines(bks_df['t_off'],[0],[90],color='r')
+#ax2.vlines(bks_df['t_on'],[0],[90],color='g')
+#ax2.vlines(bks_df['t_off'],[0],[90],color='r')
+#ax3.vlines(bks_df['t_on'],[0],[90],color='g')
+#ax3.vlines(bks_df['t_off'],[0],[90],color='r')
+##specify filename for output graph's file
+#graphfile='Plot'+str(index)+'FullTime_K4KDJ_rbnCount_'+sTime.strftime('%H_%M')+'-'+eTime.strftime('%H_%M')+'Plot'
+#
+##Save Figure
+#fig.tight_layout()
+#filename=os.path.join(output_dir, graphfile)
+## 'rbnCount_5min_line1.png')
+#fig.savefig(filename)
   
 
 ##Redundant/old Code (next two lines)

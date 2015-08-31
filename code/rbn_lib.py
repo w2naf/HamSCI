@@ -1133,7 +1133,7 @@ def get_hmF2(sTime,lat, lon, ssn=None):
 #def rbn_fof2():
     
 #    return
-def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=10,unit='minutes',xRot=False):
+def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=10,unit='minutes',xRot=False, ret_lim=False):
     import sys
     import os
 
@@ -1266,7 +1266,19 @@ def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=2
     #ax.plot(spot_df['dates'], spot_df['Count_F1'],'r*-',spot_df['dates'],spot_df['Count_F2'],'b*-',spot_df['dates'],spot_df['Count_F3'],'g*-')
     #ax0.plot(spot_df['dates'], spot_df['Count_F0'],'y*-')
     ax1.plot(spot_df['dates'], spot_df['Count_F1'],'r*-')
+    axes=plt.gca()
+#    import ipdb; ipdb.set_trace()
+#    DumLim1=[0,spot_df['Count_F1'].max()]
+    DumLim1=ax1.get_ylim()
     ax2.plot(spot_df['dates'], spot_df['Count_F2'],'b*-')
+#    import ipdb; ipdb.set_trace()
+#    axes=plt.gca()
+#    import ipdb; ipdb.set_trace()
+#    DumLim2=[0,spot_df['Count_F2'].max()]
+    DumLim2=ax2.get_ylim()
+#    axes=plt.gca()
+#    DumLim3=[0,spot_df['Count_F3'].max()]
+    DumLim3=ax3.get_ylim()
     ax3.plot(spot_df['dates'], spot_df['Count_F3'],'g*-')
 
     ax1.set_title('RBN Spots per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
@@ -1282,5 +1294,7 @@ def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=2
 
     #ax.text(spot_df.dates.min(),spot_df.Count.min(),'Unit Time: '+str(dt)+' '+unit)
     #ax.text(spot_df.dates[10],spot_df.Count.max(),'Unit Time: '+str(dt)+' '+unit)
-
-    return fig, ax1, ax2, ax3
+    if ret_lim==True: 
+        return fig, ax1, ax2, ax3, DumLim1, DumLim2, DumLim3
+    else:
+        return fig, ax1, ax2, ax3
