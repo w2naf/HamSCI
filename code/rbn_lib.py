@@ -1006,19 +1006,18 @@ def get_geomagInd(sTime, eTime=None):
 #        import ipdb; ipdb.set_trace()
 
 #get Data
-    
-#    aa=gme.ind.kp.readKp(norm_sTime, norm_eTime)
     aa=gme.ind.kp.readKp(sTime, eTime)
+#    aa=gme.ind.kp.readKp(norm_sTime, norm_eTime)
 #    =gme.ind.kp.readKp(dt.datetime(2015, 6, 28),dt.datetime(2015,  6, 28))
 #    date=dt.datetime(2015, 6, 28)
 
 #Check if the data was found by usual methods or by ftp and assign accordingly
     temp=aa[0]
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     realday=sTime.day+1
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     norm_sTime=sTime.replace(day=realday, hour=0, minute=0, second=0)
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     if norm_sTime == temp.time:
             print 'Found by usual methods'
             bb=temp
@@ -1026,14 +1025,14 @@ def get_geomagInd(sTime, eTime=None):
             #Convert sTime and eTime date into day of year
             t0 = sTime.timetuple()
 #            t1 = eTime.timetuple()
-            import ipdb; ipdb.set_trace()
+#            import ipdb; ipdb.set_trace()
             b=t0.tm_yday
 #            c=t1.tm_yday
-            import ipdb; ipdb.set_trace()
+#            import ipdb; ipdb.set_trace()
             day=b-1
             #Get data for desired day (sTime only for now!)
             bb=aa[day]
-            import ipdb; ipdb.set_trace()
+#            import ipdb; ipdb.set_trace()
 #            day=c-1
 #            cc=aa[day]
 # Extract kp, ap and ssn values as integers
@@ -1041,15 +1040,15 @@ def get_geomagInd(sTime, eTime=None):
     ap=bb.ap
     kpSum=int(bb.kpSum)
     apMean=int(bb.apMean)
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     #Check if Sunspot data is availible or not for given sTime
     if bb.sunspot==None:
         print "No Sunspot Data Avalible from this source"
         ssn=None
-        import ipdb; ipdb.set_trace()
+#        import ipdb; ipdb.set_trace()
     else:
         ssn=int(bb.sunspot)
-        import ipdb; ipdb.set_trace()
+#        import ipdb; ipdb.set_trace()
 
     return kp, ap, kpSum, apMean, ssn
 
@@ -1099,7 +1098,7 @@ def get_hmF2(sTime,lat, lon, ssn=None):
         oarr[32]=ssn
     else: 
         jf[17]=True
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
 #    geographic   = 1 geomagnetic coordinates
     jmag = 0.
     #ALATI,ALONG: LATITUDE NORTH AND LONGITUDE EAST IN DEGREES
@@ -1107,7 +1106,7 @@ def get_hmF2(sTime,lat, lon, ssn=None):
     along = lon
     # IYYYY: Year as YYYY, e.g. 1985
     iyyyy = sTime.year
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     #MMDD (-DDD): DATE (OR DAY OF YEAR AS A NEGATIVE NUMBER)
     t0 = sTime.timetuple()
     #Day of Year (doy)
@@ -1119,7 +1118,7 @@ def get_hmF2(sTime,lat, lon, ssn=None):
     #Need Testing !!!!!!
 #    dhour=12+decHour-5
     dhour=decHour+25
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     #HEIBEG,HEIEND,HEISTP: HEIGHT RANGE IN KM; maximal 100 heights, i.e. int((heiend-heibeg)/heistp)+1.le.100
     heibeg, heiend, heistp = 80., 500., 10. 
 #    heibeg, heiend, heistp = 350, 350., 0. 
@@ -1127,13 +1126,13 @@ def get_hmF2(sTime,lat, lon, ssn=None):
     outf,oarr = iri.iri_sub(jf,jmag,alati,along,iyyyy,mmdd,dhour,heibeg,heiend,heistp,oarr)
     hmF2=oarr[1]
 #    foF2=np.sqrt(oarr[0]/(1.24e10))
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     return hmF2, outf, oarr
 
 #def rbn_fof2():
     
 #    return
-def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=10,unit='minutes',xRot=False, ret_lim=False):
+def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=10,unit='minutes',xRot=False, ret_lim=False, rti_plot=None):
     import sys
     import os
 
@@ -1260,7 +1259,10 @@ def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=2
 
     #Plot figures
     #fig=plt.figure()#generate a figure
-    fig, ((ax1),(ax2),(ax3))=plt.subplots(3,1,sharex=True,sharey=False)
+    if rti_plot==None:
+        fig, ((ax1),(ax2),(ax3))=plt.subplots(3,1,sharex=True,sharey=False)
+    elif rti_plot==True:
+        fig, ((ax1),(ax2),(ax3),ax4)=plt.subplots(4,1,sharex=True,sharey=False)
     if xRot==True:
         plt.xticks(rotation=30)
     #ax.plot(spot_df['dates'], spot_df['Count_F1'],'r*-',spot_df['dates'],spot_df['Count_F2'],'b*-',spot_df['dates'],spot_df['Count_F3'],'g*-')
@@ -1294,6 +1296,9 @@ def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=2
 
     #ax.text(spot_df.dates.min(),spot_df.Count.min(),'Unit Time: '+str(dt)+' '+unit)
     #ax.text(spot_df.dates[10],spot_df.Count.max(),'Unit Time: '+str(dt)+' '+unit)
+    #Need to Rewrite the return statements
+    if rti_plot==True:
+        return fig, ax1, ax2, ax3, ax4
     if ret_lim==True: 
         return fig, ax1, ax2, ax3, DumLim1, DumLim2, DumLim3
     else:

@@ -67,6 +67,10 @@ map_eTime=eTime
 rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
 #import ipdb; ipdb.set_trace()
 
+#Get Geomagnetic Indicies Data
+#NEED to add code to make sure that multiple days of data can be processed!
+kp, ap, kpSum, apMean, ssn=rbn_lib.get_geomagInd(sTime, eTime)
+
 #Select Region
 rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
 #import ipdb; ipdb.set_trace()
@@ -97,16 +101,15 @@ for i in range(0, len(rbn_df2)-1):
     midLat[i], midLon[i],dist[i],m_dist[i] =rbn_lib.path_mid(deLat, deLon, dxLat, dxLon)
 #    import ipdb; ipdb.set_trace()
 
-    #Find Kp, Ap, and SSN for that location and time
-#    norm_sTime=sTime-sTime.hour-sTime.minute
-    import ipdb; ipdb.set_trace()
-    kp, ap, kpSum, apMean, ssn=rbn_lib.get_geomagInd(sTime, eTime)
+#    #Find Kp, Ap, and SSN for that location and time
+##    norm_sTime=sTime-sTime.hour-sTime.minute
+#    import ipdb; ipdb.set_trace()
 
     #Get hmF2 from the IRI using geomagnetic indices 
 #    outf,oarr = iri.iri_sub(jf,jmag,alati,along,iyyyy,mmdd,dhour,heibeg,heiend,heistp,oarr)
     #outf and oarr are output and stored but right now they are changed each loop and not saved (Can change this in the future)
-    h[i],outf,oarr=rbn_lib.get_hmF2(sTime=time, lat=midLat[i], lon=midLon[i],ssn=None)
-    import ipdb; ipdb.set_trace()
+    h[i],outf,oarr=rbn_lib.get_hmF2(sTime=time, lat=midLat[i], lon=midLon[i],ssn=ssn)
+#    import ipdb; ipdb.set_trace()
     #test foF2
 #    iri_fof2=np.sqrt(oarr[0]/(1.24e10))
 
@@ -123,12 +126,39 @@ rbn_df2['midLon']=midLon
 rbn_df2['link_dist']=dist
 rbn_df2['m_dist']=m_dist
 rbn_df2['hmF2']=h
-rbn_df2['Elev_Ang(rad)']=theta
-rbn_df2['Freq_plasma(kHz)']=fp
+#Elevation Angle in Radians
+rbn_df2['Elev_Ang']=theta
+#Plasma Frequency in kHz
+rbn_df2['Freq_plasma']=fp
 
 
 
 #Test plots
+#Generate Graph of foF2 Values
+fig = plt.figure(figsize=(8,4))
+num_bins=len(rbn_df2)-1
+## the histogram of the data
+#freq=rbn_df2['Freq_plasma(kHz)']
+freq=rbn_df2['Freq_plasma']
+import ipdb; ipdb.set_trace()
+#n, bins, patches = plt.hist(rbn_df2.Freq_plasma, num_bins, normed=1, facecolor='green', alpha=0.5)
+n, bins, patches = plt.hist(fp, num_bins, normed=1, facecolor='green', alpha=0.5)
+import ipdb; ipdb.set_trace()
+# add a 'best fit' line
+#y = mlab.normpdf(bins, mu, sigma)
+#plt.plot(bins, y, 'r--')
+plt.xlabel('foF2')
+plt.ylabel('Counts')
+plt.title('Histogram of Plasma Frequency from RBN')
+import ipdb; ipdb.set_trace()
+
+# Tweak spacing to prevent clipping of ylabel
+plt.subplots_adjust(left=0.15)
+filename='RBN_foF2_test1.jpg'
+filepath    = os.path.join(output_path,filename)
+fig.savefig(filepath,bbox_inches='tight')
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+
 #Plot on map
 fig = plt.figure(figsize=(8,4))
 ax0  = fig.add_subplot(1,1,1)
@@ -171,4 +201,5 @@ filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
+
 import ipdb; ipdb.set_trace()

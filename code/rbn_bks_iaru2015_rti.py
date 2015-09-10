@@ -16,6 +16,7 @@ from davitpy import gme
 import datetime
 
 import rbn_lib
+import rti_magda
 
 #create output directory if none exists
 output_dir='output/bks_rbn'
@@ -31,13 +32,18 @@ freq2=14000
 freq3=28000
 #END
 
+#Specify using Blackstone Radar
+radars=['bks']
+#plot groundscatter in gray (True) or in color (False)
+gs=False
+
 #check this line! It may not be what I want to use
 #output path=os.path.join('output', 'rbn_counts')
 #data_dir=os.path.join('data','rbn')
 #import ipdb; ipdb.set_trace()
 #Specify Several Inputs for the code
-#specify index for vectors later in the code
-index=0
+##specify index for vectors later in the code
+#index=0
 #specify unit time (in minutes) to make count/unit time
 #Note: to change units of unit time then change the expression in tDelta assignment!
 dt=10
@@ -83,7 +89,7 @@ bks_test.append(eTest)
 ##        t_end=bks_test[len(bks_test)-2]
 #        bks_test.remove(bks_test[len(bks_test-1)])
 bks_df=bks_test
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 #Even values of inx point to the time the radar is on and Odd values point/index the times it is off
 inx=0
 bks_off=[bks_test[inx]]
@@ -96,13 +102,13 @@ while inx<len(bks_test)-1:
     bks_on.append(bks_test[inx])
     inx=inx+1
 
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 ##Specify whether to include eTime in the count if tDelta results in an end time greater than eTime
 Inc_eTime=True
 curr_time=sTime
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 Times=[curr_time]
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 
 while curr_time < eTime:
 #    Times.append(curr_time)
@@ -124,18 +130,20 @@ if Times[len(Times)-1]>=eTime:
 #import ipdb; ipdb.set_trace()
 #Read RBN data for given dates/times
 rbn_df=rbn_lib.k4kdj_rbn(sTime, datetime.datetime(2015, 07, 12, 00), data_dir='data/rbn')
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 df=rbn_lib.k4kdj_rbn(datetime.datetime(2015, 07, 12, 00), t_end, data_dir='data/rbn')
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 rbn_df=pd.concat([rbn_df, df])
 #rbn_df=rbn_lib.k4kdj_rbn(sTime, t_end, data_dir='data/rbn')
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 ##create data frame for the loop
 #df1=rbn_df[rbn_df['callsign']=='K4KDJ']
 #import ipdb; ipdb.set_trace()
 #rbn_df2=rbn_df
 
 #start conditions for loop
+index=0
+#import ipdb; ipdb.set_trace()
 plot_sTime=Times[0]
 plot_eTime=Times[1]
 
@@ -149,9 +157,16 @@ while plot_sTime < Times[len(Times)-1]:
     plot_eTime=Times[index+1]
 
     #Get count plot
-    fig, ax1, ax2, ax3=rbn_lib.count_band(df1=rbn_df,sTime=plot_sTime, eTime=plot_eTime, freq1=freq1,freq2=freq2, freq3=freq3,dt=dt, unit=unit,xRot=xRot) 
+#    import ipdb; ipdb.set_trace()
+    fig, ax1, ax2, ax3, ax4=rbn_lib.count_band(df1=rbn_df,sTime=plot_sTime, eTime=plot_eTime, freq1=freq1,freq2=freq2, freq3=freq3,dt=dt, unit=unit,xRot=xRot, rti_plot=True) 
+#    import ipdb; ipdb.set_trace()
 
-    plt.xticks(rotation=30)
+#    plt.xticks(rotation=30)
+
+    #Make RTI plot for Blackstone
+#    import ipdb; ipdb.set_trace()
+    rti_magda.plotRti(sTime=plot_sTime, eTime=plot_eTime, ax=ax4, rad=radars[0], params=['power'],yrng=[0,40], gsct=gs, cax=None, xtick_size=10,ytick_size=10)
+#    import ipdb; ipdb.set_trace()
     
     #get axis limits
     DumLim1=ax1.get_ylim()
@@ -204,16 +219,16 @@ while plot_sTime < Times[len(Times)-1]:
     #    import ipdb; ipdb.set_trace()
 
 
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 #Get arrays reset
 bks_off.remove(bks_off[len(bks_off)-1])
 bks_on.remove(bks_on[len(bks_on)-1])
 #Get count plot
-fig,ax1, ax2, ax3,DumLim1, DumLim2, DumLim3=rbn_lib.count_band(df1=rbn_df,sTime=sTime, eTime=eTime, freq1=freq1,freq2=freq2, freq3=freq3,dt=dt, unit=unit,xRot=xRot,ret_lim=True) 
-import ipdb; ipdb.set_trace()
+fig,ax1, ax2, ax3,ax4=rbn_lib.count_band(df1=rbn_df,sTime=sTime, eTime=eTime, freq1=freq1,freq2=freq2, freq3=freq3,dt=dt, unit=unit,xRot=xRot,ret_lim=False, rti_plot=True) 
+#import ipdb; ipdb.set_trace()
 #specify filename for output graph's file
 graphfile='Plot'+str(index)+'FullTime_K4KDJ_rbnCount_and_RTI_'+sTime.strftime('%H_%M')+'-'+eTime.strftime('%H_%M')+'Plot'
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 
 DumLim1=ax1.get_ylim()
 DumLim2=ax2.get_ylim()
@@ -230,6 +245,9 @@ ax3.vlines(bks_on,DumLim3[0],DumLim3[1],color='g')
 ax1.vlines(bks_off ,DumLim1[0],DumLim1[1],color='r')
 ax2.vlines(bks_off ,DumLim2[0],DumLim2[1],color='r')
 ax3.vlines(bks_off ,DumLim3[0],DumLim3[1],color='r')
+#Make RTI plots for Blackstone Radar
+#ax      = fig.add_axes(ax_dim)
+rti_magda.plotRti(sTime=sTime, eTime=eTime, ax=ax4, rad=radars[0], params=['power'],yrng=[0,40], gsct=gs, cax=None, xtick_size=10,ytick_size=10)
 #Save Figure
 fig.tight_layout()
 # 'rbnCount_5min_line1.png')
