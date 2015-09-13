@@ -88,7 +88,8 @@ fp=np.zeros([len(rbn_df2), 1])
 #midLon=[]
 #dist=[]
 #m_dist=[]
-for i in range(0, len(rbn_df2)-1): 
+#for i in range(0, len(rbn_df2)-1): 
+for i in range(0, len(rbn_df2)): 
     #Isolate the ith link
     deLat=rbn_df2.de_lat.iloc[i]
     deLon=rbn_df2.de_lon.iloc[i]
@@ -130,10 +131,17 @@ rbn_df2['hmF2']=h
 rbn_df2['Elev_Ang']=theta
 #Plasma Frequency in kHz
 rbn_df2['Freq_plasma']=fp
+import ipdb; ipdb.set_trace()
+
+#Group plasma frequencies by band/frequency Range
 
 
+#df_temp=df_temp[df_temp['band']=='40m']
 
 #Test plots
+#Plot foF2 values on map
+#Working on new function to plot foF2 over the US
+#rbn_lib.rbn_map_foF2()
 #Generate Graph of foF2 Values
 fig = plt.figure(figsize=(8,4))
 num_bins=len(rbn_df2)-1
@@ -154,7 +162,7 @@ import ipdb; ipdb.set_trace()
 
 # Tweak spacing to prevent clipping of ylabel
 plt.subplots_adjust(left=0.15)
-filename='RBN_foF2_test1.jpg'
+filename='RBN_foF2_test2.jpg'
 filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
