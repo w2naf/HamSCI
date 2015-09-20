@@ -130,11 +130,18 @@ rbn_df2['hmF2']=h
 #Elevation Angle in Radians
 rbn_df2['Elev_Ang']=theta
 #Plasma Frequency in kHz
-rbn_df2['Freq_plasma']=fp
+#rbn_df2['Freq_plasma']=fp
+rbn_df2['foP']=fp
 import ipdb; ipdb.set_trace()
 
 #Group plasma frequencies by band/frequency Range
 
+#Seperate by band
+#40m
+df_40m=rbn_df2[rbn_df2['foP']<=]
+df_40m=df_40m[df_40m['foP']=>]
+#for I in range(0,len(df2)-1):
+#    if df2.freq.iloc[I]>(freq1-500) and df2.freq.iloc[I]<(freq1+500):
 
 #df_temp=df_temp[df_temp['band']=='40m']
 
@@ -147,7 +154,8 @@ fig = plt.figure(figsize=(8,4))
 num_bins=len(rbn_df2)-1
 ## the histogram of the data
 #freq=rbn_df2['Freq_plasma(kHz)']
-freq=rbn_df2['Freq_plasma']
+#freq=rbn_df2['Freq_plasma']
+freq=rbn_df2['foP']
 import ipdb; ipdb.set_trace()
 #n, bins, patches = plt.hist(rbn_df2.Freq_plasma, num_bins, normed=1, facecolor='green', alpha=0.5)
 n, bins, patches = plt.hist(fp, num_bins, normed=1, facecolor='green', alpha=0.5)
@@ -166,6 +174,7 @@ filename='RBN_foF2_test2.jpg'
 filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+
 
 #Plot on map
 fig = plt.figure(figsize=(8,4))
