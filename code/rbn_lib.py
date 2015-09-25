@@ -636,6 +636,7 @@ def rbn_map_byDX(df,dx_dict=None, dxlist=None,dx_call=None, color_array=None,ax=
 
         for index,row in this_group.iterrows():
             #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
+#            import ipdb; ipdb.set_trace()
             de_lat = row['de_lat']
             de_lon = row['de_lon']
             dx_lat = row['dx_lat']
@@ -841,7 +842,7 @@ def rbn_map_overlay(df,m=None, scatter_rbn=False, ax=None,legend=True,tick_font_
          #   df_cl=eclipse_lib.eclipse_get_path(fname='ds_CL.csv')
          #   m.plot(df_cl['eLon'],df_cl['eLat'],'m--',label='2017 Eclipse Central Line', linewidth=2, latlon=True)
 
-        import ipdb; ipdb.set_trace()
+#        import ipdb; ipdb.set_trace()
         text = []
         text.append('TX Stations: {0:d}'.format(len(dx_list)))
         text.append('RX Stations: {0:d}'.format(len(de_list)))
@@ -855,7 +856,7 @@ def rbn_map_overlay(df,m=None, scatter_rbn=False, ax=None,legend=True,tick_font_
 
     return m,fig
 
-def rbn_map_foF2(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_paths=True,
+def rbn_map_foF2(df,ax=None,legend=True,ssn='', kp='', tick_font_size=None,ncdxf=False,plot_paths=True,
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,eclipse=False,path_alpha=None):
     """Plot foF2 values derived from Reverse Beacon Network data for the midpoints between two stations.
 
@@ -897,6 +898,13 @@ def rbn_map_foF2(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
     
     #If spliting up into sub-bands
     #Write Code later
+    #Drop NaNs (QSOs without Lat/Lons)
+    df = df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+
+    ##Sort the data by band and time, then group by band.
+    df['band']  = np.array((np.floor(df['foP']/1000.)),dtype=np.int)
+    srt         = df.sort(['band','date'])
+    grouped     = srt.groupby('band')
     
     sTime       = df['date'].min()
     eTime       = df['date'].max()
@@ -913,7 +921,7 @@ def rbn_map_foF2(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
 
 #    title = sTime.strftime('%H%M - ')+eTime.strftime('%H%M UT')
 #    title = sTime.strftime('Reverse Beacon Network %Y %b %d %H%M UT - ')+eTime.strftime('%Y %b %d %H%M UT')
-    title = sTime.strftime('RBN: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
+    title = sTime.strftime('RBN Derived Plasma Frequency: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
     ax.set_title(title)
 
     # draw parallels and meridians.
@@ -927,7 +935,42 @@ def rbn_map_foF2(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
         m.drawcountries(color='0.65')#np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
         m.drawstates(color='0.65')
 #    fof2_pt    = m.scatter(Lon,Lat,color=color,s=2,zorder=100)
+#    Lat = row['midLat']
+#    Lon = row['midLon']
+    de_list = []
+    dx_list = []
+    for band in bandlist:
+        try:
+            this_group = grouped.get_group(band)
+        except:
+            continue
 
+        color = band_dict[band]['color']
+        label = band_dict[band]['name']
+
+        for index,row in this_group.iterrows():
+            #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
+            Lat = row['midLat']
+            Lon = row['midLon']
+
+            if row['callsign'] not in de_list: de_list.append(row['callsign'])
+            if row['dx'] not in dx_list: dx_list.append(row['dx'])
+
+            fof2_pt    = m.scatter(Lon,Lat,color=color,marker='s', s=2,zorder=100)
+
+    text = []
+    text.append('TX Stations: {0:d}'.format(len(dx_list)))
+    text.append('RX Stations: {0:d}'.format(len(de_list)))
+    text.append('Plotted Paths: {0:d}'.format(len(df)))
+#    text.append('KP: '+kp[0])
+    text.append('SSN: '+str(ssn))
+
+    props = dict(facecolor='white', alpha=0.9,pad=6)
+    ax.text(0.02,0.05,'\n'.join(text),transform=ax.transAxes,ha='left',va='bottom',size=9,bbox=props)
+
+    if legend:
+        band_legend()
+#
     return m,fig
 
 def rbn_region(df, latMin, lonMin, latMax, lonMax, constr_de=True, constr_dx=True):

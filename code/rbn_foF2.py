@@ -57,6 +57,13 @@ except:
 #eTime = datetime.datetime(2015,6,28,01,22)
 #sTime = datetime.datetime(2015,6,28,01,16)
 #eTime = datetime.datetime(2015,6,28,01,18)
+#Test of Code on Field Days at the same time for different years 
+#sTime = datetime.datetime(2013,6,23,01,17, 00)
+#eTime = datetime.datetime(2013,6,23,01,17, 05)
+#sTime = datetime.datetime(2014,6,29,01,17, 00)
+#eTime = datetime.datetime(2014,6,29,01,17, 05)
+#sTime = datetime.datetime(2015,6,28,01,17, 00)
+#eTime = datetime.datetime(2015,6,28,01,17, 05)
 sTime = datetime.datetime(2015,6,28,01,17, 00)
 eTime = datetime.datetime(2015,6,28,01,17, 05)
 
@@ -127,6 +134,9 @@ rbn_df2['midLon']=midLon
 rbn_df2['link_dist']=dist
 rbn_df2['m_dist']=m_dist
 rbn_df2['hmF2']=h
+#rbn_df2['ssn']=ssn*np.ones(len(fp),1)
+#rbn_df2['kp']=kp*np.ones(len(fp),1)
+#rbn_df2['ap']=ap*np.ones(len(fp),1)
 #Elevation Angle in Radians
 rbn_df2['Elev_Ang']=theta
 #Plasma Frequency in kHz
@@ -137,18 +147,48 @@ import ipdb; ipdb.set_trace()
 #Group plasma frequencies by band/frequency Range
 
 #Seperate by band
+#freq1=
+#df_freq1=rbn_df2[rbn_df2['foP']<=freq1+1000]
+#df_freq1=df_freq1[df_freq1['foP']=>freq1+1000]
+
 #40m
-df_40m=rbn_df2[rbn_df2['foP']<=]
-df_40m=df_40m[df_40m['foP']=>]
+df_40m=rbn_df2[rbn_df2['foP']<=8000]
+df_40m=df_40m[6000<=df_40m['foP']]
+df_80m=rbn_df2[rbn_df2['foP']<=4000]
+df_80m=df_80m[2000<=df_80m['foP']]
+
 #for I in range(0,len(df2)-1):
 #    if df2.freq.iloc[I]>(freq1-500) and df2.freq.iloc[I]<(freq1+500):
 
 #df_temp=df_temp[df_temp['band']=='40m']
 
 #Test plots
+
 #Plot foF2 values on map
 #Working on new function to plot foF2 over the US
 #rbn_lib.rbn_map_foF2()
+fig = plt.figure(figsize=(8,4))
+ax0  = fig.add_subplot(1,1,1)
+#m, fig=rbn_lib.rbn_map_foF2(df_40m,legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+m, fig=rbn_lib.rbn_map_foF2(rbn_df2,legend=True,ssn=ssn, kp=kp,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+
+#for i in range(0, len(df_40m)): 
+#    midLat=df_40m.midLat.iloc[i]
+#    midLon=df_40m.midLon.iloc[i]
+##    midpoint    = m.scatter(midLon, midLat,color='r',marker='o',s=2,zorder=100)
+#    fof2_pt    = m.scatter(midLon,midLat,color='r',marker='o',s=2,zorder=100)
+#
+#for i in range(0, len(df_80m)): 
+#    midLat=df_80m.midLat.iloc[i]
+#    midLon=df_80m.midLon.iloc[i]
+##    midpoint    = m.scatter(midLon, midLat,color='r',marker='o',s=2,zorder=100)
+#    fof2_pt    = m.scatter(midLon,midLat,color='b',marker='o',s=2,zorder=100)
+filename='RBN_foF2_map_test4.jpg'
+filepath    = os.path.join(output_path,filename)
+fig.savefig(filepath,bbox_inches='tight')
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+plt.clf()
+
 #Generate Graph of foF2 Values
 fig = plt.figure(figsize=(8,4))
 num_bins=len(rbn_df2)-1
@@ -168,20 +208,39 @@ plt.ylabel('Counts')
 plt.title('Histogram of Plasma Frequency from RBN')
 import ipdb; ipdb.set_trace()
 
-# Tweak spacing to prevent clipping of ylabel
-plt.subplots_adjust(left=0.15)
-filename='RBN_foF2_test2.jpg'
-filepath    = os.path.join(output_path,filename)
-fig.savefig(filepath,bbox_inches='tight')
-fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
-
-
+##Graph foF2 values on 40m
+#fig = plt.figure(figsize=(8,4))
+#num_bins=len(rbn_df2)-1
+### the histogram of the data
+##freq=rbn_df2['Freq_plasma(kHz)']
+##freq=rbn_df2['Freq_plasma']
+#index,row=df_40m.iterrows()
+#freq=row['foP']
+#import ipdb; ipdb.set_trace()
+##n, bins, patches = plt.hist(rbn_df2.Freq_plasma, num_bins, normed=1, facecolor='green', alpha=0.5)
+#n, bins, patches = plt.hist(freq, num_bins, normed=1, facecolor='green', alpha=0.5)
+#import ipdb; ipdb.set_trace()
+## add a 'best fit' line
+##y = mlab.normpdf(bins, mu, sigma)
+##plt.plot(bins, y, 'r--')
+#plt.xlabel('foF2')
+#plt.ylabel('Counts')
+#plt.title('Histogram of foF2 from RBN')
+#import ipdb; ipdb.set_trace()
+## Tweak spacing to prevent clipping of ylabel
+#plt.subplots_adjust(left=0.15)
+#filename='RBN_foF2_40m_test1.jpg'
+#filepath    = os.path.join(output_path,filename)
+#fig.savefig(filepath,bbox_inches='tight')
+#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+#
+#
 #Plot on map
 fig = plt.figure(figsize=(8,4))
 ax0  = fig.add_subplot(1,1,1)
 m, fig=rbn_lib.rbn_map_plot(rbn_df2,legend=False,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
 #leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
-filename='RBN_linkLimit_test4.jpg'
+filename='RBN_linkLimit_test5.jpg'
 filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
@@ -213,7 +272,7 @@ for i in range(0, len(df)):
     line, = m.drawgreatcircle(deLon,deLat, midLon, midLat, color=color)
     midpoint    = m.scatter(midLon, midLat,color='r',marker='o',s=2,zorder=100)
 
-filename='RBN_linkMidpoint_test4.jpg'
+filename='RBN_linkMidpoint_test5.jpg'
 filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
