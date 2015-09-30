@@ -64,8 +64,8 @@ except:
 #eTime = datetime.datetime(2014,6,29,01,17, 05)
 #sTime = datetime.datetime(2015,6,28,01,17, 00)
 #eTime = datetime.datetime(2015,6,28,01,17, 05)
-sTime = datetime.datetime(2015,6,28,01,17, 00)
-eTime = datetime.datetime(2015,6,28,01,17, 05)
+sTime = datetime.datetime(2015,7,12,01,17, 00)
+eTime = datetime.datetime(2015,7,12,01,22, 00)
 
 map_sTime=sTime
 map_eTime=eTime
