@@ -1043,9 +1043,15 @@ def path_mid(de_lat, de_lon, dx_lat, dx_lon):
         * **[dx_lat]:Latitude of the dx station   
         * **[dx_lon]:Longitude of the dx station   
     **Returns**:
-        * **[mid_lat]: Midpoint Latitude
-        * **[mid_lon]: Midpoint Longitude
-        
+        * **[mlat]: Midpoint Latitude
+        * **[mlon]: Midpoint Longitude
+        * **[linkDist]: Link distance in meters  
+        * **[dist]: Midpoint distance in meters
+  
+    .. note:: Untested!
+
+     dist
+  
     .. note:: Untested!
 
     Written by Magda Moses 2015 August 02
@@ -1091,6 +1097,37 @@ def path_mid(de_lat, de_lon, dx_lat, dx_lon):
     mlon=ret_lon
 #    import ipdb; ipdb.set_trace()
     return mlat, mlon, linkDist, dist
+
+def greatCircleKm(lat1,lon1,lat2,lon2):
+#    """Find the distance in km between two points the latitude and longitude of the midpoint between the de and dx stations
+    """Calculates the distance in km along a great circle path between two points.
+    **Args**:
+        * **lat1**:  latitude [deg]
+        * **lon1**:  longitude [deg]
+        * **lat2**:  latitude [deg]
+        * **lon2**:  longitude [deg]
+    **Returns**:
+        * **kmDist**:  distance [km]
+  
+    .. note:: Untested!
+
+    Written by Magda Moses 2015 October 05
+    """
+
+    from davitpy.utils import *
+
+    import numpy as np      #Numerical python - provides array types and operations
+    import pandas as pd     #This is a nice utility for working with time-series type data.
+    
+#    (mlat, mlon)=greatCircleMove(de_lat, de_lon, mid, azm)
+    #The following is an expansion of the davitpy util greatCircleDist using parts of a slightly modified form of greatCircleMove from davitpy.utils.geoPack
+    d=greatCircleDist(de_lat, de_lon, dx_lat, dx_lon)
+    alt=0
+    Re=6371.
+    Re_tot = (Re + alt) * 1e3
+    kmDist=d*Re_tot
+
+    return kmDist
 
 def get_geomagInd(sTime, eTime=None):
     """Get KP, AP, and SSN data for a date
@@ -1421,3 +1458,4 @@ def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=2
         return fig, ax1, ax2, ax3, DumLim1, DumLim2, DumLim3
     else:
         return fig, ax1, ax2, ax3
+#def 

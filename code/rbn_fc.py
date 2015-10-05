@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-#Code to calcuate and make contour plots of foF2 from RBN data over a specified region and time
+#Code to calcuate and make contour plots of the critical frequency (fc) from RBN data over a specified region and time
+#Based on foF2.py code
 
 import sys
 import os
@@ -23,7 +24,7 @@ outFile=''
 rbnMap=''
 fof2Map=''
 
-#Specify spatial limits for links 
+#Specify regional/spatial limits for links 
 latMin=25
 latMax=52  
 lonMin=-130
@@ -41,9 +42,12 @@ urcrnrlat=latMax+5
 #urcrnrlon=-65
 #urcrnrlat=52 
 
+#Specify Ionosonde that the calculated critical frequencies will be compared to 
+Isond=[]
+
 #create output directory if none exists
 #output_dir='output'
-output_path = os.path.join('output','rbn','foF2')
+output_path = os.path.join('output','rbn','foF2', 'ver2')
 #handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
 try: 
     os.makedirs(output_path)
@@ -62,10 +66,11 @@ except:
 #eTime = datetime.datetime(2013,6,23,01,17, 05)
 #sTime = datetime.datetime(2014,6,29,01,17, 00)
 #eTime = datetime.datetime(2014,6,29,01,17, 05)
-#sTime = datetime.datetime(2015,6,28,01,17, 00)
-#eTime = datetime.datetime(2015,6,28,01,17, 05)
-sTime = datetime.datetime(2015,7,12,01,17, 00)
-eTime = datetime.datetime(2015,7,12,01,22, 00)
+sTime = datetime.datetime(2015,6,28,01,17, 00)
+eTime = datetime.datetime(2015,6,28,01,17, 05)
+#Test of Code during the IARU at the same time 
+#sTime = datetime.datetime(2015,7,12,01,17, 00)
+#eTime = datetime.datetime(2015,7,12,01,22, 00)
 
 map_sTime=sTime
 map_eTime=eTime
@@ -74,9 +79,9 @@ map_eTime=eTime
 rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
 #import ipdb; ipdb.set_trace()
 
-#Get Geomagnetic Indicies Data
-#NEED to add code to make sure that multiple days of data can be processed!
-kp, ap, kpSum, apMean, ssn=rbn_lib.get_geomagInd(sTime, eTime)
+##Get Geomagnetic Indicies Data
+##NEED to add code to make sure that multiple days of data can be processed!
+#kp, ap, kpSum, apMean, ssn=rbn_lib.get_geomagInd(sTime, eTime)
 
 #Select Region
 rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
@@ -86,8 +91,9 @@ rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin
 midLat=np.zeros([len(rbn_df2), 1])
 #import ipdb; ipdb.set_trace()
 midLon=np.zeros([len(rbn_df2), 1])
-dist=np.zeros([len(rbn_df2), 1])
+l_dist=np.zeros([len(rbn_df2), 1])
 m_dist=np.zeros([len(rbn_df2), 1])
+dist=np.zeros([len(rbn_df2), 1])
 h=np.zeros([len(rbn_df2), 1])
 theta=np.zeros([len(rbn_df2), 1])
 fp=np.zeros([len(rbn_df2), 1])
@@ -106,42 +112,49 @@ for i in range(0, len(rbn_df2)):
 #    import ipdb; ipdb.set_trace()
     
     #Calculate the midpoint and the distance between the two stations
-    midLat[i], midLon[i],dist[i],m_dist[i] =rbn_lib.path_mid(deLat, deLon, dxLat, dxLon)
+    midLat[i], midLon[i],l_dist[i],m_dist[i] =rbn_lib.path_mid(deLat, deLon, dxLat, dxLon)
+    #Convert l_dist and m_dist to km
+    l_dist[i]=(l_dist[1])/1e3
+    m_dist[i]=(m_dist[1])/1e3
+
+    #Calculate the distance of the midpoint from the ionosonde/center of the reference area
+    dist[i]=rbn_lib.greatCircleKm(Isond[1],Isond[2], midLat[i],midLon[i])
 #    import ipdb; ipdb.set_trace()
 
 #    #Find Kp, Ap, and SSN for that location and time
 ##    norm_sTime=sTime-sTime.hour-sTime.minute
 #    import ipdb; ipdb.set_trace()
 
-    #Get hmF2 from the IRI using geomagnetic indices 
-#    outf,oarr = iri.iri_sub(jf,jmag,alati,along,iyyyy,mmdd,dhour,heibeg,heiend,heistp,oarr)
-    #outf and oarr are output and stored but right now they are changed each loop and not saved (Can change this in the future)
-    h[i],outf,oarr=rbn_lib.get_hmF2(sTime=time, lat=midLat[i], lon=midLon[i],ssn=ssn)
-#    import ipdb; ipdb.set_trace()
-    #test foF2
-#    iri_fof2=np.sqrt(oarr[0]/(1.24e10))
-
-
-    #Calculate theta (radians) from h=hmF2 and distance
-    theta[i]=np.arctan(h[i]/m_dist[i])
-
-    #Calculate foF2 from link frequency (MUF) and theta
-    fp[i]=rbn_df.freq.iloc[i]*np.cos(theta[i])
+#    #Get hmF2 from the IRI using geomagnetic indices 
+##    outf,oarr = iri.iri_sub(jf,jmag,alati,along,iyyyy,mmdd,dhour,heibeg,heiend,heistp,oarr)
+#    #outf and oarr are output and stored but right now they are changed each loop and not saved (Can change this in the future)
+#    h[i],outf,oarr=rbn_lib.get_hmF2(sTime=time, lat=midLat[i], lon=midLon[i],ssn=ssn)
+##    import ipdb; ipdb.set_trace()
+#    #test foF2
+##    iri_fof2=np.sqrt(oarr[0]/(1.24e10))
+#
+#
+#    #Calculate theta (radians) from h=hmF2 and distance
+#    theta[i]=np.arctan(h[i]/m_dist[i])
+#
+#    #Calculate foF2 from link frequency (MUF) and theta
+#    fp[i]=rbn_df.freq.iloc[i]*np.cos(theta[i])
 
 #Save information in data frame
 rbn_df2['midLat']=midLat
 rbn_df2['midLon']=midLon
-rbn_df2['link_dist']=dist
+rbn_df2['link_dist']=l_dist
 rbn_df2['m_dist']=m_dist
-rbn_df2['hmF2']=h
+rbn_df2['dist']=dist
+#rbn_df2['hmF2']=h
 #rbn_df2['ssn']=ssn*np.ones(len(fp),1)
 #rbn_df2['kp']=kp*np.ones(len(fp),1)
 #rbn_df2['ap']=ap*np.ones(len(fp),1)
 #Elevation Angle in Radians
-rbn_df2['Elev_Ang']=theta
+#rbn_df2['Elev_Ang']=theta
 #Plasma Frequency in kHz
 #rbn_df2['Freq_plasma']=fp
-rbn_df2['foP']=fp
+#rbn_df2['foP']=fp
 import ipdb; ipdb.set_trace()
 
 #Group plasma frequencies by band/frequency Range
