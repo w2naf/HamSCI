@@ -19,10 +19,6 @@ import datetime
 import rbn_lib
 import handling
 
-#Specify output filename
-outFile=''
-rbnMap='RBN_WAL_1a.png'
-#fof2Map=''
 
 #Specify regional/spatial limits for links 
 latMin=25
@@ -78,6 +74,11 @@ sTime = datetime.datetime(2015,6,28,01,00, 00)
 eTime = datetime.datetime(2015,6,28,02,00, 00)
 map_sTime=sTime+datetime.timedelta(minutes=15)
 map_eTime=map_sTime+datetime.timedelta(minutes=15)
+
+#Specify output filename
+outfile='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
+rbnMap='RBN_WAL_1a.png'
+#fof2Map=''
 
 #Read RBN data 
 rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
@@ -162,6 +163,9 @@ rbn_df2['dist']=dist
 import ipdb; ipdb.set_trace()
 #Limit links to those with a midpoint within the radius of the isond
 rbn_links=rbn_df2[rbn_df2.dist<=radius]
+
+#Export df of `links to csv file
+rbn_links.to_csv(outfile, index=False)
 
 #Plot on map
 fig = plt.figure(figsize=(8,4))
