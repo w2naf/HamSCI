@@ -76,8 +76,9 @@ map_sTime=sTime+datetime.timedelta(minutes=15)
 map_eTime=map_sTime+datetime.timedelta(minutes=15)
 
 #Specify output filename
-outfile='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
-rbnMap='RBN_WAL_2a.png'
+csvfname='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
+outfile=os.path.join(output_path,csvfname)
+rbnMap='RBN_WAL_2b.png'
 #fof2Map=''
 
 #Read RBN data 
