@@ -1098,7 +1098,7 @@ def path_mid(de_lat, de_lon, dx_lat, dx_lon):
 #    import ipdb; ipdb.set_trace()
     return mlat, mlon, linkDist, dist
 
-def greatCircleKm(lat1,lon1,lat2,lon2):
+def greatCircleKm(lat1,lon1,lat2,lon2, alt=0):
 #    """Find the distance in km between two points the latitude and longitude of the midpoint between the de and dx stations
     """Calculates the distance in km along a great circle path between two points.
     **Args**:
@@ -1106,6 +1106,7 @@ def greatCircleKm(lat1,lon1,lat2,lon2):
         * **lon1**:  longitude [deg]
         * **lat2**:  latitude [deg]
         * **lon2**:  longitude [deg]
+        * **alt**:      altitude [km] (added to default Re = 6371 km)(6378.1 km)
     **Returns**:
         * **kmDist**:  distance [km]
   
@@ -1121,10 +1122,11 @@ def greatCircleKm(lat1,lon1,lat2,lon2):
     
 #    (mlat, mlon)=greatCircleMove(de_lat, de_lon, mid, azm)
     #The following is an expansion of the davitpy util greatCircleDist using parts of a slightly modified form of greatCircleMove from davitpy.utils.geoPack
-    d=greatCircleDist(de_lat, de_lon, dx_lat, dx_lon)
+    d=greatCircleDist(lat1,lon1,lat2,lon2)
     alt=0
     Re=6371.
-    Re_tot = (Re + alt) * 1e3
+#    Re_tot = (Re + alt) * 1e3
+    Re_tot = (Re + alt)
     kmDist=d*Re_tot
 
     return kmDist
