@@ -1109,8 +1109,6 @@ def greatCircleKm(lat1,lon1,lat2,lon2, alt=0):
         * **alt**:      altitude [km] (added to default Re = 6371 km)(6378.1 km)
     **Returns**:
         * **kmDist**:  distance [km]
-  
-    .. note:: Untested!
 
     Written by Magda Moses 2015 October 05
     """
@@ -1460,4 +1458,69 @@ def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=2
         return fig, ax1, ax2, ax3, DumLim1, DumLim2, DumLim3
     else:
         return fig, ax1, ax2, ax3
-#def 
+
+def getLinks(df, center, radius): 
+    """Gets links with midpoints within a specified radius of an iononsonde or other reference point
+    **Args**:
+        * **df**:  rbn data frame
+        * **[center]**:  a lat/lon array for the center point [deg]
+        * **radius**:  radius of the region to evaluate[km]
+    **Returns**:
+        * **df**:  data frame with added columns for the midpoint lat/lon, the link distance, the midipoint legnth and the midpoint distance from the center [km]
+        * **link_df**: data frame with only those links whose midpoints fall within the specified radius from center
+  
+    .. note:: Untested!
+
+    Written by Magda Moses 2015 October 05
+    """
+    import numpy as np
+    import pandas as pd
+
+    from davitpy import gme
+    from davitpy.utils import *
+    import datetime
+
+    import rbn_lib
+        #Evaluate each link
+    midLat=np.zeros([len(df), 1])
+    #import ipdb; ipdb.set_trace()
+    midLon=np.zeros([len(df), 1])
+    l_dist=np.zeros([len(df), 1])
+    m_dist=np.zeros([len(df), 1])
+    dist=np.zeros([len(df), 1])
+    h=np.zeros([len(df), 1])
+    theta=np.zeros([len(df), 1])
+    fp=np.zeros([len(df), 1])
+
+    for i in range(0, len(df)): 
+        #Isolate the ith link
+        deLat=df.de_lat.iloc[i]
+        deLon=df.de_lon.iloc[i]
+        dxLat=df.dx_lat.iloc[i]
+        dxLon=df.dx_lon.iloc[i]
+        time=df.date.iloc[i]
+    #    import ipdb; ipdb.set_trace()
+        
+        #Calculate the midpoint and the distance between the two stations
+        midLat[i], midLon[i],l_dist[i],m_dist[i] =rbn_lib.path_mid(deLat, deLon, dxLat, dxLon)
+        #Convert l_dist and m_dist to km
+        l_dist[i]=(l_dist[i])/1e3
+        m_dist[i]=(m_dist[i])/1e3
+
+        #Calculate the distance of the midpoint from the ionosonde/center of the reference area
+        dist[i]=rbn_lib.greatCircleKm(center[0],center[1], midLat[i],midLon[i])
+
+    #Save information in data frame
+    df['midLat']=midLat
+    df['midLon']=midLon
+    df['link_dist']=l_dist
+    df['m_dist']=m_dist
+    df['dist']=dist
+    #Plasma Frequency in kHz
+    #df['Freq_plasma']=fp
+    #df['foP']=fp
+#    import ipdb; ipdb.set_trace()
+
+    #Limit links to those with a midpoint within the radius of the center
+    link_df=df[df.dist<=radius]
+    return df, link_df

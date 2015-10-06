@@ -77,62 +77,92 @@ map_eTime=map_sTime+datetime.timedelta(minutes=15)
 
 #Specify output filename
 outfile='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
-rbnMap='RBN_WAL_2a.png'
+rbnMap='RBN_WAL_1a.png'
 #fof2Map=''
 
 #Read RBN data 
 rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
 #import ipdb; ipdb.set_trace()
 
+##Get Geomagnetic Indicies Data
+##NEED to add code to make sure that multiple days of data can be processed!
+#kp, ap, kpSum, apMean, ssn=rbn_lib.get_geomagInd(sTime, eTime)
+
 #Select Region
 rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
 #import ipdb; ipdb.set_trace()
 
 #Evaluate each link
-#midLat=np.zeros([len(rbn_df2), 1])
-##import ipdb; ipdb.set_trace()
-#midLon=np.zeros([len(rbn_df2), 1])
-#l_dist=np.zeros([len(rbn_df2), 1])
-#m_dist=np.zeros([len(rbn_df2), 1])
-#dist=np.zeros([len(rbn_df2), 1])
-#h=np.zeros([len(rbn_df2), 1])
-#theta=np.zeros([len(rbn_df2), 1])
-#fp=np.zeros([len(rbn_df2), 1])
-#
-#for i in range(0, len(rbn_df2)): 
-#    #Isolate the ith link
-#    deLat=rbn_df2.de_lat.iloc[i]
-#    deLon=rbn_df2.de_lon.iloc[i]
-#    dxLat=rbn_df2.dx_lat.iloc[i]
-#    dxLon=rbn_df2.dx_lon.iloc[i]
-#    time=rbn_df2.date.iloc[i]
-##    import ipdb; ipdb.set_trace()
-#    
-#    #Calculate the midpoint and the distance between the two stations
-#    midLat[i], midLon[i],l_dist[i],m_dist[i] =rbn_lib.path_mid(deLat, deLon, dxLat, dxLon)
-#    #Convert l_dist and m_dist to km
-#    l_dist[i]=(l_dist[i])/1e3
-#    m_dist[i]=(m_dist[i])/1e3
-#
-#    #Calculate the distance of the midpoint from the ionosonde/center of the reference area
-#    dist[i]=rbn_lib.greatCircleKm(isond[0],isond[1], midLat[i],midLon[i])
-##    import ipdb; ipdb.set_trace()
-#
-#
-##Save information in data frame
-#rbn_df2['midLat']=midLat
-#rbn_df2['midLon']=midLon
-#rbn_df2['link_dist']=l_dist
-#rbn_df2['m_dist']=m_dist
-#rbn_df2['dist']=dist
-##Plasma Frequency in kHz
-##rbn_df2['Freq_plasma']=fp
-##rbn_df2['foP']=fp
+midLat=np.zeros([len(rbn_df2), 1])
 #import ipdb; ipdb.set_trace()
+midLon=np.zeros([len(rbn_df2), 1])
+l_dist=np.zeros([len(rbn_df2), 1])
+m_dist=np.zeros([len(rbn_df2), 1])
+dist=np.zeros([len(rbn_df2), 1])
+h=np.zeros([len(rbn_df2), 1])
+theta=np.zeros([len(rbn_df2), 1])
+fp=np.zeros([len(rbn_df2), 1])
+
+#midLon=[]
+#dist=[]
+#m_dist=[]
+#for i in range(0, len(rbn_df2)-1): 
+for i in range(0, len(rbn_df2)): 
+    #Isolate the ith link
+    deLat=rbn_df2.de_lat.iloc[i]
+    deLon=rbn_df2.de_lon.iloc[i]
+    dxLat=rbn_df2.dx_lat.iloc[i]
+    dxLon=rbn_df2.dx_lon.iloc[i]
+    time=rbn_df2.date.iloc[i]
+#    import ipdb; ipdb.set_trace()
+    
+    #Calculate the midpoint and the distance between the two stations
+    midLat[i], midLon[i],l_dist[i],m_dist[i] =rbn_lib.path_mid(deLat, deLon, dxLat, dxLon)
+    #Convert l_dist and m_dist to km
+    l_dist[i]=(l_dist[i])/1e3
+    m_dist[i]=(m_dist[i])/1e3
+
+    #Calculate the distance of the midpoint from the ionosonde/center of the reference area
+    dist[i]=rbn_lib.greatCircleKm(isond[0],isond[1], midLat[i],midLon[i])
+#    import ipdb; ipdb.set_trace()
+
+#    #Find Kp, Ap, and SSN for that location and time
+##    norm_sTime=sTime-sTime.hour-sTime.minute
+#    import ipdb; ipdb.set_trace()
+
+#    #Get hmF2 from the IRI using geomagnetic indices 
+##    outf,oarr = iri.iri_sub(jf,jmag,alati,along,iyyyy,mmdd,dhour,heibeg,heiend,heistp,oarr)
+#    #outf and oarr are output and stored but right now they are changed each loop and not saved (Can change this in the future)
+#    h[i],outf,oarr=rbn_lib.get_hmF2(sTime=time, lat=midLat[i], lon=midLon[i],ssn=ssn)
+##    import ipdb; ipdb.set_trace()
+#    #test foF2
+##    iri_fof2=np.sqrt(oarr[0]/(1.24e10))
 #
-##Limit links to those with a midpoint within the radius of the isond
-#rbn_links=rbn_df2[rbn_df2.dist<=radius]
-rbn_df2, rbn_links=rbn_lib.getLinks(rbn_df2,isond,radius) 
+#
+#    #Calculate theta (radians) from h=hmF2 and distance
+#    theta[i]=np.arctan(h[i]/m_dist[i])
+#
+#    #Calculate foF2 from link frequency (MUF) and theta
+#    fp[i]=rbn_df.freq.iloc[i]*np.cos(theta[i])
+
+#Save information in data frame
+rbn_df2['midLat']=midLat
+rbn_df2['midLon']=midLon
+rbn_df2['link_dist']=l_dist
+rbn_df2['m_dist']=m_dist
+rbn_df2['dist']=dist
+#rbn_df2['hmF2']=h
+#rbn_df2['ssn']=ssn*np.ones(len(fp),1)
+#rbn_df2['kp']=kp*np.ones(len(fp),1)
+#rbn_df2['ap']=ap*np.ones(len(fp),1)
+#Elevation Angle in Radians
+#rbn_df2['Elev_Ang']=theta
+#Plasma Frequency in kHz
+#rbn_df2['Freq_plasma']=fp
+#rbn_df2['foP']=fp
+import ipdb; ipdb.set_trace()
+#Limit links to those with a midpoint within the radius of the isond
+rbn_links=rbn_df2[rbn_df2.dist<=radius]
 
 #Export df of `links to csv file
 rbn_links.to_csv(outfile, index=False)
