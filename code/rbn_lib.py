@@ -418,7 +418,7 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
      #   df_cl=eclipse_lib.eclipse_get_path(fname='ds_CL.csv')
      #   m.plot(df_cl['eLon'],df_cl['eLat'],'m--',label='2017 Eclipse Central Line', linewidth=2, latlon=True)
 
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     text = []
     text.append('TX Stations: {0:d}'.format(len(dx_list)))
     text.append('RX Stations: {0:d}'.format(len(de_list)))

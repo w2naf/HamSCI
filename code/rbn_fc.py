@@ -71,23 +71,111 @@ except:
 #eTime = datetime.datetime(2015,7,12,01,22, 00)
 
 sTime = datetime.datetime(2015,6,28,01,00, 00)
-eTime = datetime.datetime(2015,6,28,02,00, 00)
-map_sTime=sTime+datetime.timedelta(minutes=15)
-map_eTime=map_sTime+datetime.timedelta(minutes=15)
+eTime = datetime.datetime(2015,6,28,03,00, 00)
+#map_sTime=sTime+datetime.timedelta(minutes=15)
+#map_eTime=map_sTime+datetime.timedelta(minutes=15)
 
 #Specify output filename
-csvfname='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
-outfile=os.path.join(output_path,csvfname)
-rbnMap='RBN_WAL_2b.png'
+#csvfname='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
+#outfile=os.path.join(output_path,csvfname)
+rbnMap='RBN_WAL_'
+graphfile='RBN_WAL_count_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
 #fof2Map=''
 
-#Read RBN data 
-rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
-#import ipdb; ipdb.set_trace()
+fig = plt.figure(figsize=(8,4))
+#fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
+#Generate Maps
+subplot_nr  = 0 # Counter for the subplot
+letters = 'abcdef'
 
-#Select Region
-rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
-#import ipdb; ipdb.set_trace()
+good_count  = 0
+total_count = 0
+kk=0
+fig_inx=1
+map_sTime=sTime
+map_eTime=map_sTime+datetime.timedelta(minutes=15)
+
+
+#for kk,map_sTime in enumerate(map_times):
+while map_sTime<eTime:
+    csvfname='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
+    outfile=os.path.join(output_path,csvfname)
+    kk= kk + 1
+
+    #If the maximum number of plots has been placed on the figure then make a new figure
+    if kk>4:
+        filename=rbnMap+str(fig_inx)+'_a.jpg'
+        filepath    = os.path.join(output_path,filename)
+        fig.savefig(filepath,bbox_inches='tight')
+        fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+        plt.clf()
+        kk=1
+        fig = plt.figure(figsize=(8,4))
+        fig_inx=fig_inx+1
+
+    #add subplot
+    ax0     = fig.add_subplot(2,2,kk)
+    #Read RBN data 
+    rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
+#    import ipdb; ipdb.set_trace()
+
+    #Select Region
+    rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
+    #import ipdb; ipdb.set_trace()
+    ##Limit links to those with a midpoint within the radius of the isond
+    #rbn_links=rbn_df2[rbn_df2.dist<=radius]
+    rbn_df2, rbn_links=rbn_lib.getLinks(rbn_df2,isond,radius) 
+
+    #Export df of `links to csv file
+    rbn_links.to_csv(outfile, index=False)
+    #Concatinate in a dataframe
+    if kk==1:
+        df_links=rbn_links
+    else:
+        df_links=pd.concat([df_links, rbn_links])
+
+    #Plot on map
+#    fig = plt.figure(figsize=(8,4))
+#    ax0  = fig.add_subplot(1,1,1)
+    m, fig=rbn_lib.rbn_map_plot(rbn_links,legend=True,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+    midpoint    = m.scatter(rbn_links.midLon, rbn_links.midLat,color='m',marker='s',s=2,zorder=100)
+    loc_isond    = m.scatter(isond[1],isond[0],color='k',marker='*',s=12,zorder=100)
+    #leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
+    map_sTime=map_eTime
+    map_eTime=map_sTime+datetime.timedelta(minutes=15)
+#    import ipdb; ipdb.set_trace()
+
+#    if kk==4:
+#        filename=rbnMap+str(fig_inx)+'_a.jpg'
+#        filepath    = os.path.join(output_path,filename)
+#        fig.savefig(filepath,bbox_inches='tight')
+#        fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+#        plt.clf()
+#        kk=0
+#        fig = plt.figure(figsize=(8,4))
+#        fig_inx=fig_inx+1
+
+filename=rbnMap+str(fig_inx)+'_a.jpg'
+filepath    = os.path.join(output_path,filename)
+fig.savefig(filepath,bbox_inches='tight')
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+plt.clf()
+
+#Make count plot
+fig=rbn_lib.count_band(df_links, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=15,unit='minutes',xRot=False, ret_lim=False, rti_plot=None)
+fig.tight_layout()
+filepath    = os.path.join(output_path,graphfile)
+fig.savefig(filepath)
+#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+plt.clf()
+
+##Read RBN data 
+#rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
+##import ipdb; ipdb.set_trace()
+#
+##Select Region
+#rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
+##import ipdb; ipdb.set_trace()
 
 #Evaluate each link
 #midLat=np.zeros([len(rbn_df2), 1])
@@ -131,26 +219,28 @@ rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin
 ##rbn_df2['foP']=fp
 #import ipdb; ipdb.set_trace()
 #
-##Limit links to those with a midpoint within the radius of the isond
-#rbn_links=rbn_df2[rbn_df2.dist<=radius]
-rbn_df2, rbn_links=rbn_lib.getLinks(rbn_df2,isond,radius) 
-
-#Export df of `links to csv file
-rbn_links.to_csv(outfile, index=False)
-
-#Plot on map
-fig = plt.figure(figsize=(8,4))
-ax0  = fig.add_subplot(1,1,1)
-m, fig=rbn_lib.rbn_map_plot(rbn_links,legend=True,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
-midpoint    = m.scatter(rbn_links.midLon, rbn_links.midLat,color='m',marker='s',s=2,zorder=100)
-loc_isond    = m.scatter(isond[1],isond[0],color='k',marker='*',s=12,zorder=100)
-#leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
-filename=rbnMap
-filepath    = os.path.join(output_path,filename)
-fig.savefig(filepath,bbox_inches='tight')
-fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
-plt.clf()
-
+###Limit links to those with a midpoint within the radius of the isond
+##rbn_links=rbn_df2[rbn_df2.dist<=radius]
+#rbn_df2, rbn_links=rbn_lib.getLinks(rbn_df2,isond,radius) 
+#
+##Export df of `links to csv file
+#rbn_links.to_csv(outfile, index=False)
+#
+##Plot on map
+#fig = plt.figure(figsize=(8,4))
+#ax0  = fig.add_subplot(1,1,1)
+#m, fig=rbn_lib.rbn_map_plot(rbn_links,legend=True,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+#midpoint    = m.scatter(rbn_links.midLon, rbn_links.midLat,color='m',marker='s',s=2,zorder=100)
+#loc_isond    = m.scatter(isond[1],isond[0],color='k',marker='*',s=12,zorder=100)
+##leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
+#filename=rbnMap
+#filepath    = os.path.join(output_path,filename)
+#fig.savefig(filepath,bbox_inches='tight')
+#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+#plt.clf()
+#
+#filename=rbnMap+'1a.jpg'
+#filepath    = os.path.join(output_path,filename)
 
 ##Seperate by band
 ##freq1=
