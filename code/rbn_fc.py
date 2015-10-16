@@ -43,6 +43,11 @@ isond=[37.93, -75.47]
 #Specify radius(km) for the area to evaluate over
 radius=100
 
+
+#Specify frequncies to evaluate at
+freq1=14000
+freq2=7000
+
 #create output directory if none exists
 #output_dir='output'
 output_path = os.path.join('output','rbn','foF2', 'ver2')
@@ -80,6 +85,7 @@ eTime = datetime.datetime(2015,6,28,03,00, 00)
 #outfile=os.path.join(output_path,csvfname)
 rbnMap='RBN_WAL_'
 graphfile='RBN_WAL_count_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
+graphfile1='RBN_WAL_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
 #fof2Map=''
 
 fig = plt.figure(figsize=(8,4))
@@ -95,12 +101,28 @@ fig_inx=1
 map_sTime=sTime
 map_eTime=map_sTime+datetime.timedelta(minutes=15)
 
+i=0
+hv=[]
+hvB=[]
+fc=[]
+fc2=[]
+fcB=[]
+f1=[]
+f2=[]
+d1=[]
+d2=[]
+count=[0,0]
+time=[]
+count1=[]
+count2=[]
+output=[0,0,0,0,0,0]
 
 #for kk,map_sTime in enumerate(map_times):
 while map_sTime<eTime:
     csvfname='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
     outfile=os.path.join(output_path,csvfname)
     kk= kk + 1
+    time.append(map_sTime)
 
     #If the maximum number of plots has been placed on the figure then make a new figure
     if kk>4:
@@ -125,6 +147,49 @@ while map_sTime<eTime:
     ##Limit links to those with a midpoint within the radius of the isond
     #rbn_links=rbn_df2[rbn_df2.dist<=radius]
     rbn_df2, rbn_links=rbn_lib.getLinks(rbn_df2,isond,radius) 
+#    import ipdb; ipdb.set_trace()
+    #Find average frequency and distance/band
+#    df1,df2,count1[i], count2[i], f1[i], f2[i], d1[i], d2[i]=rbn_lib.band_averages(rbn_links, freq1, freq2) 
+#    df1,df2,count1[i], count2[i], f1[i], f2[i], d1[i], d2[i]=rbn_lib.band_averages(rbn_links, freq1, freq2) 
+    df1,df2, count=rbn_lib.band_averages(rbn_links, freq1, freq2) 
+
+    #Save averages in arrays
+    count1.append(count[0])
+    count2.append(count[1])
+    f1.append(df1.freq)
+    f2.append(df2.freq)
+    d1.append(df1.dist)
+    d2.append(df2.dist)
+
+    #See if have enough information to solve for critical frequency
+#    if df1.freq.isempty() or df2.freq.isempty():
+#    if f1==0 or f2==0:
+    if df1.freq==0 or df2.freq==0:
+        fc.append('NA')
+        hv.append('NA')
+    else:
+        #Solve the critical frequency equation
+#        hv.append(abs((np.sqrt((np.square(f2[i]*d1[i])-np.square(f1[i]*d2[i]))))/(np.square(f1[i])-np.square(f2[i])))/2)
+#        height=abs((np.square(f2[i]*d1[i])-np.square(f1[i]*d2[i]))))/(np.square(f1[i])-np.square(f2[i])))/2
+        numer=abs(np.square(f2[i]*d1[i])-np.square(f1[i]*d2[i]))
+        den=abs(np.square(f1[i])-np.square(f2[i]))
+        hv.append(np.sqrt(abs(np.square(f2[i]*d1[i])-np.square(f1[i]*d2[i]))/abs(np.square(f1[i])-np.square(f2[i])))/2)
+        hvB.append(np.sqrt(numer/den)/2)
+#        den=(np.square(f1[i])-np.square(f2[i]))
+#        import ipdb; ipdb.set_trace()
+        fc.append(np.sqrt(np.square(f1[i])/(1+np.square(d1[i]/(2*hv[i])))))
+        fc2.append(np.sqrt(np.square(f2[i])/(1+np.square(d2[i]/(2*hv[i])))))
+        fcB.append(np.sqrt(np.square(f1[i])/(1+np.square(d1[i]/(2*hvB[i])))))
+#        import ipdb; ipdb.set_trace()
+        i=i+1
+#        h[i]=np.sqrt((np.square(df2.freq*df1.dist)-np.square(df1.freq*df2.dist))/(np.square(df1.freq)-np.square(df2.freq)))/2
+#        import ipdb; ipdb.set_trace()
+#        fc[i]=np.sqrt(np.square(df1.freq)/(1+(df1.dist/(2*h[i]))))
+#        import ipdb; ipdb.set_trace()
+#        hv.append(np.sqrt((np.square(df2.freq*df1.dist)-np.square(df1.freq*df2.dist))/(np.square(df1.freq)-np.square(df2.freq)))/2)
+#        import ipdb; ipdb.set_trace()
+#        fc.append(np.sqrt(np.square(df1.freq)/(1+(df1.dist/(2*h[i])))))
+#        import ipdb; ipdb.set_trace()
 
     #Export df of `links to csv file
     rbn_links.to_csv(outfile, index=False)
@@ -155,19 +220,56 @@ while map_sTime<eTime:
 #        fig = plt.figure(figsize=(8,4))
 #        fig_inx=fig_inx+1
 
+df_full=pd.DataFrame({'date':time, 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'fc1': fc,'fc2':fc2})
+csvfname='info_rbn_wal_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
+#Drop NaNs (QSOs without Lat/Lons)
+df = df_full.dropna(subset=['d1', 'd2', 'f1', 'f2'])
+import ipdb; ipdb.set_trace()
 filename=rbnMap+str(fig_inx)+'_a.jpg'
 filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
 
-#Make count plot
-fig=rbn_lib.count_band(df_links, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=15,unit='minutes',xRot=False, ret_lim=False, rti_plot=None)
+#Plot Data and Calculated values
+nx_plots=1
+ny_plots=4
+xsize=8
+ysize=4
+fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
+#plot 
+#ax0     = fig.add_subplot(ny_plots,1)
+#ax1     = fig.add_subplot(1,ny_plots,2)
+#ax2     = fig.add_subplot(1,ny_plots,3)
+#ax3     = fig.add_subplot(1,ny_plots,4)
+fig, ((ax0),(ax1),(ax2),(ax3))=plt.subplots(4,1,sharex=True,sharey=False)
+ax0.plot(df['date'], df['count1'], '-y',df['date'], df['count2'], '-g')
+ax1.plot(df['date'], df['d1'], '-y',df['date'], df['d2'], '-g')
+ax2.plot(df['date'], df['f1'], '-y',df['date'], df['f2'], '-g')
+ax3.plot(df['date'], df['fc1'], '-y',df['date'], df['fc2'], '-g')
+
 fig.tight_layout()
-filepath    = os.path.join(output_path,graphfile)
+filepath    = os.path.join(output_path,graphfile1)
 fig.savefig(filepath)
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+plt.clf()
+
+#Make count plot
+fig2, ax1, ax2, ax3=rbn_lib.count_band(df_links, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=3000,dt=15,unit='minutes',xRot=False, ret_lim=False, rti_plot=False)
+#fig.tight_layout()
+filepath    = os.path.join(output_path,graphfile)
+fig2.savefig(filepath)
 #fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
+
+##Critical Frequency calculation
+#
+##Find average distance of links
+#
+##Find average frequency of links on each band
+#
+##For 20 and 40m 
+
 
 ##Read RBN data 
 #rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')

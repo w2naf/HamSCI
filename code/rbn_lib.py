@@ -1011,6 +1011,7 @@ def rbn_region(df, latMin, lonMin, latMax, lonMax, constr_de=True, constr_dx=Tru
         df2=df2[df2['dx_lat']<latMax] 
         df2=df2[df2['dx_lon']>lonMin]
         df2=df2[df2['dx_lon']<lonMax]
+
     #Constrain RBN recievers only
     elif constr_de and constr_dx==False:
         df2=df[df['de_lat']>latMin] 
@@ -1287,7 +1288,7 @@ def get_hmF2(sTime,lat, lon, ssn=None):
 #def rbn_fof2():
     
 #    return
-def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=10,unit='minutes',xRot=False, ret_lim=False, rti_plot=None):
+def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=10,unit='minutes',xRot=False, ret_lim=False, rti_plot=False):
     import sys
     import os
 
@@ -1414,7 +1415,7 @@ def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=2
 
     #Plot figures
     #fig=plt.figure()#generate a figure
-    if rti_plot==None:
+    if rti_plot==False:
         fig, ((ax1),(ax2),(ax3))=plt.subplots(3,1,sharex=True,sharey=False)
     elif rti_plot==True:
         fig, ((ax1),(ax2),(ax3),ax4)=plt.subplots(4,1,sharex=True,sharey=False)
@@ -1524,3 +1525,116 @@ def getLinks(df, center, radius):
     #Limit links to those with a midpoint within the radius of the center
     link_df=df[df.dist<=radius]
     return df, link_df
+
+def band_averages(df, freq1, freq2):
+    """Divides the rbn link data by band and Gets the average distance and frequency of each band.  
+    **Args**:
+        * **df**:  rbn data frame
+        * **freq1**:  frequencies interested in
+        * **freq2**:  frequencies interested in
+        * **dt**:  time interval averages taken over.
+    **Returns**:
+        * **df_avg**:  data frame with the average frequency and distance for each band
+
+    .. note:: Untested!
+
+    Written by Magda Moses 2015 October 10
+    """
+    import numpy as np
+    import pandas as pd 
+
+    import datetime
+
+    import rbn_lib
+
+#    tDelta=datetime.timedelta(minutes=dt)
+
+    #split into two dataframes based on frequency
+    df1=df[df.freq>freq1-500]
+    df1=df1[df1.freq<freq1+500]
+    df2=df[df.freq>freq2-500]
+    df2=df2[df2.freq<freq2+500]
+#    import ipdb; ipdb.set_trace()
+#    df2=df[df.freq>freq2-500 && df.freq<freq2+500]
+    count1=len(df1)
+    count2=len(df2)
+    df1=df1.mean()
+    df2=df2.mean()
+    f1=df1.freq
+    f2=df2.freq
+    d1=df1.dist
+    d2=df2.dist
+#    output=[count1, count2, f1, f2, d1, d2]
+    count=[count1, count2]
+#    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
+
+#    #Solve the critical frequncy equation
+    
+    
+#    R
+#    spots=np.zeros(len(times))
+#    
+#    #CARSON VARIABLES: Spot counters for previous frequencies
+#    #spots0=np.zeros(len(times))
+#    spots1=np.zeros(len(times))
+#    spots2=np.zeros(len(times))
+#    spots3=np.zeros(len(times))
+#    for I in range(0,len(df)-1):
+#        if df.freq.iloc[I]>(freq1-500) and df.freq.iloc[I]<(freq1+500):
+#            J=J+1
+#            spots1[index]+=1
+#        elif df.freq.iloc[I]>(freq2-500) and df.freq.iloc[I]<(freq2+500): 
+#            J=J+1
+#            spots2[index]+=1
+
+#    #Group by band and get the averages for each band
+#    df_band=df.groupby['band']
+#    d_avg=df_band.dist.mean()
+#    f_avg=df_band.freq.mean()
+#    #create 
+#
+#    df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
+#    srt         = df.sort(['band','date'])
+#    grouped     = srt.groupby('band')
+#
+#    for band in bandlist:
+#        try:
+#            this_group = grouped.get_group(band)
+#        except:
+#            continue
+#
+##    df_avg=pd.DataFrame({'d_avg':[davg.iloc[0],davg.iloc[1],davg.iloc[2]]})
+#    df_avg=
+#    import ipdb; ipdb.set_trace()
+#    df_avg=df.band
+#    #Sort the data by band
+##    for band in bandlist: 
+##        if band==None: 
+#            
+#     
+##    df['']
+##    ##Sort the data by band and time, then group by band.
+##    df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
+##    srt         = df.sort(['band','date'])
+##    grouped     = srt.groupby('band')
+#
+##    for band in grouped:
+##    for band in bandlist:
+##        try:
+##            this_group = grouped.get_group(band)
+##        except:
+##            continue
+##
+##        color = band_dict[band]['color']
+##        label = band_dict[band]['name']
+##
+##        for index,row in this_group.iterrows():
+#    return df_avg
+#    return df1, df2, count1, count2, f1, f2, d1, d2
+#    return df1, df2,output
+    return df1, df2,count
+
+def rbn_crit_freq(df_avg):
+
+    return df_fc
