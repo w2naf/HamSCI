@@ -84,8 +84,9 @@ eTime = datetime.datetime(2015,6,28,03,00, 00)
 #csvfname='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
 #outfile=os.path.join(output_path,csvfname)
 rbnMap='RBN_WAL_'
-graphfile='RBN_WAL_count_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
-graphfile1='RBN_WAL_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
+graphfile='RBN_WAL_count_v3_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
+graphfile1='RBN_WAL_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v2'
+graphfile2='RBN_WAL_freq_division_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v2'
 #fof2Map=''
 
 fig = plt.figure(figsize=(8,4))
@@ -122,7 +123,7 @@ while map_sTime<eTime:
     csvfname='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
     outfile=os.path.join(output_path,csvfname)
     kk= kk + 1
-    time.append(map_sTime)
+    time.append(map_eTime)
 
     #If the maximum number of plots has been placed on the figure then make a new figure
     if kk>4:
@@ -220,38 +221,135 @@ while map_sTime<eTime:
 #        fig = plt.figure(figsize=(8,4))
 #        fig_inx=fig_inx+1
 
-df_full=pd.DataFrame({'date':time, 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'fc1': fc,'fc2':fc2})
-csvfname='info_rbn_wal_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
-#Drop NaNs (QSOs without Lat/Lons)
-df = df_full.dropna(subset=['d1', 'd2', 'f1', 'f2'])
-import ipdb; ipdb.set_trace()
+#Plot last map
 filename=rbnMap+str(fig_inx)+'_a.jpg'
 filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
+import ipdb; ipdb.set_trace()
+
+df_full=pd.DataFrame({'date':time, 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'hv': hv, 'fc1': fc,'fc2':fc2})
+csvfname='info_rbn_wal_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
+#Drop NaNs (QSOs without Lat/Lons)
+df = df_full.dropna(subset=['d1', 'd2', 'f1', 'f2'])
+import ipdb; ipdb.set_trace()
 
 #Plot Data and Calculated values
 nx_plots=1
-ny_plots=4
+ny_plots=5
+#xsize=8
+#ysize=8
 xsize=8
-ysize=4
+ysize=2
 fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
 #plot 
-#ax0     = fig.add_subplot(ny_plots,1)
-#ax1     = fig.add_subplot(1,ny_plots,2)
+ax0     = fig.add_subplot(ny_plots,nx_plots,1)
+ax1     = fig.add_subplot(ny_plots,nx_plots,2)
+ax2     = fig.add_subplot(ny_plots,nx_plots,3)
+ax3     = fig.add_subplot(ny_plots,nx_plots,4)
+ax4     = fig.add_subplot(ny_plots,nx_plots,5)
+#ax1     = fig.add_subplot(ny_plots,1,2)
 #ax2     = fig.add_subplot(1,ny_plots,3)
 #ax3     = fig.add_subplot(1,ny_plots,4)
-fig, ((ax0),(ax1),(ax2),(ax3))=plt.subplots(4,1,sharex=True,sharey=False)
+#fig, ((ax0),(ax1),(ax2),(ax3))=plt.subplots(4,1,sharex=True,sharey=False)
+#fig, ((ax0),(ax1),(ax2),(ax3), (ax4))=plt.subplots(5,1,sharex=True,sharey=False)
+#fig, ((ax5),(ax0),(ax1),(ax2),(ax3))=plt.subplots(5,1,sharex=True,sharey=False)
+#m, fig=rbn_lib.rbn_map_plot(df_links,legend=True,ax=ax5,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+#plot data on the same figure
 ax0.plot(df['date'], df['count1'], '-y',df['date'], df['count2'], '-g')
 ax1.plot(df['date'], df['d1'], '-y',df['date'], df['d2'], '-g')
 ax2.plot(df['date'], df['f1'], '-y',df['date'], df['f2'], '-g')
-ax3.plot(df['date'], df['fc1'], '-y',df['date'], df['fc2'], '-g')
+ax3.plot(df['date'], df['hv'], '-m')
+ax4.plot(df['date'], df['fc1'], '-y',df['date'], df['fc2'], '-g')
+#ax3.plot(df['date'], df['fc1'], '-y',df['date'], df['fc2'], '-g')
+#Alternate color plots
+#ax0.plot(df['date'], df['count1'], '-r',df['date'], df['count2'], '-b')
+#ax1.plot(df['date'], df['d1'], '-r',df['date'], df['d2'], '-b')
+#ax2.plot(df['date'], df['f1'], '-r',df['date'], df['f2'], '-b')
+#ax3.plot(df['date'], df['hv'], '-g')
+#ax4.plot(df['date'], df['fc1'], '-r',df['date'], df['fc2'], '-b')
+##ax3.plot(df['date'], df['fc1'], '-r',df['date'], df['fc2'], '-b')
 
+#Set the title and labels for the plots
+ax0.set_title('RBN Spots per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+#ax1.set_title('Average Link Distance per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+#ax2.set_title('Average Link Frequency per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+###ax3.set_title('Calculated Virtual Height per unit timeper Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+###ax4.set_title('Calculated Critical Frequency per unit timeper Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+###ax4.set_xlabel('Time [UT]')
+#ax3.set_title('Calculated Critical Frequency per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+#ax3.set_xlabel('Time [UT]')
+
+#ax0.set_title('RBN Spots per Unit Time')
+ax1.set_title('Average Link Distance per Unit Time')
+ax2.set_title('Average Link Frequency per Unit Time')
+ax3.set_title('Calculated Virtual Height per Unit Time')
+ax4.set_title('Calculated Critical Frequency per Unit Time')
+#ax3.set_title('Calculated Critical Frequency per Unit Time')
+
+#set labels
+ax0.set_ylabel('Count')
+ax1.set_ylabel('Distance (km)')
+ax2.set_ylabel('Freqency (kHz)')
+ax3.set_ylabel('Height (km)')
+ax4.set_ylabel('Freqency (kHz)')
+ax4.set_xlabel('Time [UT]')
+#ax3.set_xlabel('Time [UT]')
+#ax0.set_legend(
+#legend=plt.legend(handles=[ax0], loc=1)
+legend=plt.legend([line1, line2],['20m','40m'],loc=1)
+import ipdb; ipdb.set_trace()
+ax = plt.gca().add_artist(legend)
+#title_prop = {'weight':'bold','size':22}
+##fig.text(0.525,1.025,'HF Communication Paths',ha='center',**title_prop)
+#fig.text(0.525,1.000,'Reverse Beacon Network\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'),ha='center',**title_prop)
 fig.tight_layout()
 filepath    = os.path.join(output_path,graphfile1)
 fig.savefig(filepath)
-fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+fig.savefig(filepath[:-3]+'.pdf',bbox_inches='tight')
+plt.clf()
+
+#Make plot of fc and hv only
+#fig         = plt.figure(figsize=(8,4)) # Create figure with the appropriate size.
+##line1=plt.plot(df['date'], df['fc1'], '-y', label='14MHz')
+#line2=plt.plot(df['date'], df['fc2'], '-g', label='7MHz')
+##legend=plt.legend([line1, line2],['20m','40m'],loc=1)
+#filepath    = os.path.join(output_path,'Critical Frequency.png')
+
+#make plots seperated by frequency
+nx_plots=1
+nx2=nx_plots+1
+ny_plots=5
+#xsize=8
+#ysize=8
+xsize=8
+ysize=2
+fig         = plt.figure(figsize=(nx2*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
+#plot 
+ax0     = fig.add_subplot(ny_plots,nx_plots,1)
+ax1     = fig.add_subplot(ny_plots,nx_plots,2)
+ax2     = fig.add_subplot(ny_plots,nx_plots,3)
+ax3     = fig.add_subplot(ny_plots,nx_plots,4)
+ax4     = fig.add_subplot(ny_plots,nx_plots,5)
+ax5     = fig.add_subplot(ny_plots,nx2,6)
+ax6     = fig.add_subplot(ny_plots,nx2,7)
+ax7     = fig.add_subplot(ny_plots,nx2,8)
+ax8     = fig.add_subplot(ny_plots,nx2,9)
+ax9     = fig.add_subplot(ny_plots,nx2,10)
+ax0.plot(df['date'], df['count1'], '-y')
+ax1.plot(df['date'], df['d1'], '-y')
+ax2.plot(df['date'], df['f1'], '-y')
+ax3.plot(df['date'], df['hv'], '-m')
+ax4.plot(df['date'], df['fc1'], '-y')
+ax5.plot(df['date'], df['count2'], '-g')
+ax6.plot(df['date'], df['d2'], '-g')
+ax7.plot(df['date'], df['f2'], '-g')
+ax8.plot(df['date'], df['hv'], '-m')
+ax9.plot(df['date'], df['fc2'], '-g')
+filepath    = os.path.join(output_path,graphfile2)
+fig.savefig(filepath)
+#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
 
 #Make count plot
