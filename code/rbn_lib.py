@@ -1634,7 +1634,127 @@ def band_averages(df, freq1, freq2):
 #    return df1, df2, count1, count2, f1, f2, d1, d2
 #    return df1, df2,output
     return df1, df2,count
+def fc_stack_plot(df, xsize=8, ysize=4, ncol=None):
+    """Creates stack plots of the average values used in the critical frequency calculations and the virtual height and critical frequency obtained from the rbn data
+    **Args**:
+        * **df**:  critical frequncy output dataframe
+        * **xsize**:  size of the x axis of the plots 
+        * **ysize**:  size of the y axis of the plots 
+        * **ncol**:  the number of columns for the legend (should only be 2) 
+    **Returns**:
+        * **fig**: figure with stack plots 
+
+    .. note:: Untested!
+
+    Written by Magda Moses and Nathaniel Frissell 2015 October 20
+    """
+    from matplotlib import pyplot as plt
+    import matplotlib.patches as mpatches
+    import matplotlib.markers as mmarkers
+
+    import numpy as np
+    import pandas as pd
+
+    ##Sort the data by band to determine color 
+    band1=[]
+    band2=[]
+    band1.append(np.array((np.floor(df['f1']/1000.)),dtype=np.int))
+    band2.append(np.array((np.floor(df['f2']/1000.)),dtype=np.int))
+#    band1  = np.floor(df['f1']/1000.)
+#    band2  = np.floor(df['f2']/1000.)
+
+    color1 = band_dict[band1]['color']
+    color2 = band_dict[band2]['color']
+#    label1 = band_dict[band1]['name']
+#    label2 = band_dict[band2]['name']
+    label1 = band_dict[band1]['freq']
+    label2 = band_dict[band2]['freq']
+
+    fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
+    #plot 
+    ax0     = fig.add_subplot(ny_plots,nx_plots,1)
+    ax1     = fig.add_subplot(ny_plots,nx_plots,2)
+    ax2     = fig.add_subplot(ny_plots,nx_plots,3)
+    ax3     = fig.add_subplot(ny_plots,nx_plots,4)
+    ax4     = fig.add_subplot(ny_plots,nx_plots,5)
+    #ax1     = fig.add_subplot(ny_plots,1,2)
+    #ax2     = fig.add_subplot(1,ny_plots,3)
+    #ax3     = fig.add_subplot(1,ny_plots,4)
+    #fig, ((ax0),(ax1),(ax2),(ax3))=plt.subplots(4,1,sharex=True,sharey=False)
+    #fig, ((ax0),(ax1),(ax2),(ax3), (ax4))=plt.subplots(5,1,sharex=True,sharey=False)
+    #fig, ((ax5),(ax0),(ax1),(ax2),(ax3))=plt.subplots(5,1,sharex=True,sharey=False)
+    #m, fig=rbn_lib.rbn_map_plot(df_links,legend=True,ax=ax5,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+
+    #plot data on the same figure
+    ax0.plot(df['date'], df['count1'], color1,df['date'], df['count2'], color2)
+    ax1.plot(df['date'], df['d1'], color1,df['date'], df['d2'], color2)
+    ax2.plot(df['date'], df['f1'], color1,df['date'], df['f2'], color2)
+    ax3.plot(df['date'], df['hv'], '-m')
+    ax4.plot(df['date'], df['fc1'], color1,df['date'], df['fc2'], color2)
+    
+    #Set the title and labels for the plots
+    ax0.set_title('RBN Spots per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+    #ax1.set_title('Average Link Distance per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+    #ax2.set_title('Average Link Frequency per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+    ###ax3.set_title('Calculated Virtual Height per unit timeper Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+    ###ax4.set_title('Calculated Critical Frequency per unit timeper Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+    ###ax4.set_xlabel('Time [UT]')
+    #ax3.set_title('Calculated Critical Frequency per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+    #ax3.set_xlabel('Time [UT]')
+    #ax0.set_title('RBN Spots per Unit Time')
+    ax1.set_title('Average Link Distance per Unit Time')
+    ax2.set_title('Average Link Frequency per Unit Time')
+    ax3.set_title('Calculated Virtual Height per Unit Time')
+    ax4.set_title('Calculated Critical Frequency per Unit Time')
+    #ax3.set_title('Calculated Critical Frequency per Unit Time')
+
+    #set labels
+    ax0.set_ylabel('Count')
+    ax1.set_ylabel('Distance (km)')
+    ax2.set_ylabel('Freqency (kHz)')
+    ax3.set_ylabel('Height (km)')
+    ax4.set_ylabel('Freqency (kHz)')
+    ax4.set_xlabel('Time [UT]')
+    #ax3.set_xlabel('Time [UT]')
+    
+    #Add Legend
+    handles=[]
+    labels=[]
+    if legend:
+#        if fig is None: fig = plt.gcf() 
+        handles.append(mpatches.patch(color=color1,label=label1))
+        labels.append(label1)
+        handles.append(mpatches.patch(color=color2,label=label2))
+        labels.append(label2)
+
+        fig_tmp = plt.figure()
+        ax_tmp = fig_tmp.add_subplot(111)
+        ax_tmp.set_visible(False)
+        if ncol is None:
+            ncol = len(labels)
+        
+        legend = fig.legend(handles,labels,ncol=ncol,loc=loc,markerscale=markerscale,prop=prop,title=title,bbox_to_anchor=bbox_to_anchor,scatterpoints=1)
+
+    return fig
+
+#def freq_legend():
+#    if fig is None: fig = plt.gcf() 
+#    handles.append(mpatches.patch(color=color1,label=label1))
+#    labels.append(label1)
+#    handles.append(mpatches.patch(color=color2,label=label2))
+#    labels.append(label2)
+#
+#    fig_tmp = plt.figure()
+#    ax_tmp = fig_tmp.add_subplot(111)
+#    ax_tmp.set_visible(False)
+#    if ncol is None:
+#        ncol = len(labels)
+#    
+#    legend = fig.legend(handles,labels,ncol=ncol,loc=loc,markerscale=markerscale,prop=prop,title=title,bbox_to_anchor=bbox_to_anchor,scatterpoints=1)
+#
+#    return legend
 
 def rbn_crit_freq(df_avg):
 
     return df_fc
+

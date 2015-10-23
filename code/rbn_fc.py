@@ -8,6 +8,9 @@ import os
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
+import matplotlib.patches as mpatches
+import matplotlib.markers as mmarkers
+
 
 import numpy as np
 import pandas as pd
@@ -229,9 +232,11 @@ fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
 import ipdb; ipdb.set_trace()
 
+#Compile Calculated values into a new dataframe
 df_full=pd.DataFrame({'date':time, 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'hv': hv, 'fc1': fc,'fc2':fc2})
 csvfname='info_rbn_wal_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
-#Drop NaNs (QSOs without Lat/Lons)
+
+#Drop NaNs (times that did not have enough data to preform the calculations)
 df = df_full.dropna(subset=['d1', 'd2', 'f1', 'f2'])
 import ipdb; ipdb.set_trace()
 
@@ -242,6 +247,8 @@ ny_plots=5
 #ysize=8
 xsize=8
 ysize=2
+#fig=rbn_lib.fc_stack_plot(df, xsize, ysize, ncol=None)
+#Uncomment the next 57 lines to get original plotting code
 fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
 #plot 
 ax0     = fig.add_subplot(ny_plots,nx_plots,1)
@@ -297,8 +304,36 @@ ax4.set_ylabel('Freqency (kHz)')
 ax4.set_xlabel('Time [UT]')
 #ax3.set_xlabel('Time [UT]')
 #ax0.set_legend(
-#legend=plt.legend(handles=[ax0], loc=1)
-legend=plt.legend([line1, line2],['20m','40m'],loc=1)
+
+##legend=plt.legend(handles=[ax0], loc=1)
+#legend=plt.legend([line1, line2],['20m','40m'],loc=1)
+
+#Add Legend
+color1='y'
+color2='g'
+label1='14MHz'
+label2='7MHz'
+handles=[]
+labels=[]
+#if fig is None: fig = plt.gcf() 
+handles.append(mpatches.Patch(color=color1,label=label1))
+labels.append(label1)
+handles.append(mpatches.Patch(color=color2,label=label2))
+labels.append(label2)
+fig_tmp = plt.figure()
+ax_tmp = fig_tmp.add_subplot(111)
+ax_tmp.set_visible(False)
+#if ncol is None:
+ncol = len(labels)
+#loc='lower center'
+loc='lower_right'
+markerscale=0.5
+prop={'size':10}
+title=None
+bbox_to_anchor=None
+legend = fig.legend(handles,labels,ncol=ncol,loc=loc,markerscale=markerscale,prop=prop,title=title,bbox_to_anchor=bbox_to_anchor,scatterpoints=1)
+#57 uncomment for original
+
 import ipdb; ipdb.set_trace()
 ax = plt.gca().add_artist(legend)
 #title_prop = {'weight':'bold','size':22}
@@ -317,56 +352,48 @@ plt.clf()
 ##legend=plt.legend([line1, line2],['20m','40m'],loc=1)
 #filepath    = os.path.join(output_path,'Critical Frequency.png')
 
-#make plots seperated by frequency
-nx_plots=1
-nx2=nx_plots+1
-ny_plots=5
+##make plots seperated by frequency
+#nx_plots=1
+#nx2=nx_plots+1
+#ny_plots=5
+##xsize=8
+##ysize=8
 #xsize=8
-#ysize=8
-xsize=8
-ysize=2
-fig         = plt.figure(figsize=(nx2*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
-#plot 
-ax0     = fig.add_subplot(ny_plots,nx_plots,1)
-ax1     = fig.add_subplot(ny_plots,nx_plots,2)
-ax2     = fig.add_subplot(ny_plots,nx_plots,3)
-ax3     = fig.add_subplot(ny_plots,nx_plots,4)
-ax4     = fig.add_subplot(ny_plots,nx_plots,5)
-ax5     = fig.add_subplot(ny_plots,nx2,6)
-ax6     = fig.add_subplot(ny_plots,nx2,7)
-ax7     = fig.add_subplot(ny_plots,nx2,8)
-ax8     = fig.add_subplot(ny_plots,nx2,9)
-ax9     = fig.add_subplot(ny_plots,nx2,10)
-ax0.plot(df['date'], df['count1'], '-y')
-ax1.plot(df['date'], df['d1'], '-y')
-ax2.plot(df['date'], df['f1'], '-y')
-ax3.plot(df['date'], df['hv'], '-m')
-ax4.plot(df['date'], df['fc1'], '-y')
-ax5.plot(df['date'], df['count2'], '-g')
-ax6.plot(df['date'], df['d2'], '-g')
-ax7.plot(df['date'], df['f2'], '-g')
-ax8.plot(df['date'], df['hv'], '-m')
-ax9.plot(df['date'], df['fc2'], '-g')
-filepath    = os.path.join(output_path,graphfile2)
-fig.savefig(filepath)
-#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
-plt.clf()
+#ysize=2
+#fig         = plt.figure(figsize=(nx2*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
+##plot 
+#ax0     = fig.add_subplot(ny_plots,nx_plots,1)
+#ax1     = fig.add_subplot(ny_plots,nx_plots,2)
+#ax2     = fig.add_subplot(ny_plots,nx_plots,3)
+#ax3     = fig.add_subplot(ny_plots,nx_plots,4)
+#ax4     = fig.add_subplot(ny_plots,nx_plots,5)
+#ax5     = fig.add_subplot(ny_plots,nx2,6)
+#ax6     = fig.add_subplot(ny_plots,nx2,7)
+#ax7     = fig.add_subplot(ny_plots,nx2,8)
+#ax8     = fig.add_subplot(ny_plots,nx2,9)
+#ax9     = fig.add_subplot(ny_plots,nx2,10)
+#ax0.plot(df['date'], df['count1'], '-y')
+#ax1.plot(df['date'], df['d1'], '-y')
+#ax2.plot(df['date'], df['f1'], '-y')
+#ax3.plot(df['date'], df['hv'], '-m')
+#ax4.plot(df['date'], df['fc1'], '-y')
+#ax5.plot(df['date'], df['count2'], '-g')
+#ax6.plot(df['date'], df['d2'], '-g')
+#ax7.plot(df['date'], df['f2'], '-g')
+#ax8.plot(df['date'], df['hv'], '-m')
+#ax9.plot(df['date'], df['fc2'], '-g')
+#filepath    = os.path.join(output_path,graphfile2)
+#fig.savefig(filepath)
+##fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+#plt.clf()
 
-#Make count plot
-fig2, ax1, ax2, ax3=rbn_lib.count_band(df_links, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=3000,dt=15,unit='minutes',xRot=False, ret_lim=False, rti_plot=False)
-#fig.tight_layout()
-filepath    = os.path.join(output_path,graphfile)
-fig2.savefig(filepath)
-#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
-plt.clf()
-
-##Critical Frequency calculation
-#
-##Find average distance of links
-#
-##Find average frequency of links on each band
-#
-##For 20 and 40m 
+##Make count plot
+#fig2, ax1, ax2, ax3=rbn_lib.count_band(df_links, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=3000,dt=15,unit='minutes',xRot=False, ret_lim=False, rti_plot=False)
+##fig.tight_layout()
+#filepath    = os.path.join(output_path,graphfile)
+#fig2.savefig(filepath)
+##fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+#plt.clf()
 
 
 ##Read RBN data 
