@@ -83,13 +83,17 @@ eTime = datetime.datetime(2015,6,28,03,00, 00)
 #map_sTime=sTime+datetime.timedelta(minutes=15)
 #map_eTime=map_sTime+datetime.timedelta(minutes=15)
 
-#Specify output filename
+#Specify output filenames
 #csvfname='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
 #outfile=os.path.join(output_path,csvfname)
 rbnMap='RBN_WAL_'
 graphfile='RBN_WAL_count_v3_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
 graphfile1='RBN_WAL_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v2'
 graphfile2='RBN_WAL_freq_division_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v2'
+lgraph1='RBN_WAL_fc1'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
+lgraph2='RBN_WAL_fc2'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
+hgraph1='RBN_WAL_f1'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
+hgraph2='RBN_WAL_f2'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
 #fof2Map=''
 
 fig = plt.figure(figsize=(8,4))
@@ -230,7 +234,7 @@ filepath    = os.path.join(output_path,filename)
 fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 
 #Compile Calculated values into a new dataframe
 df_full=pd.DataFrame({'date':time, 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'hv': hv, 'fc1': fc,'fc2':fc2})
@@ -238,7 +242,7 @@ csvfname='info_rbn_wal_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
 
 #Drop NaNs (times that did not have enough data to preform the calculations)
 df = df_full.dropna(subset=['d1', 'd2', 'f1', 'f2'])
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 
 #Plot Data and Calculated values
 nx_plots=1
@@ -334,7 +338,7 @@ bbox_to_anchor=None
 legend = fig.legend(handles,labels,ncol=ncol,loc=loc,markerscale=markerscale,prop=prop,title=title,bbox_to_anchor=bbox_to_anchor,scatterpoints=1)
 #57 uncomment for original
 
-import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
 ax = plt.gca().add_artist(legend)
 #title_prop = {'weight':'bold','size':22}
 ##fig.text(0.525,1.025,'HF Communication Paths',ha='center',**title_prop)
@@ -344,6 +348,52 @@ filepath    = os.path.join(output_path,graphfile1)
 fig.savefig(filepath)
 fig.savefig(filepath[:-3]+'.pdf',bbox_inches='tight')
 plt.clf()
+
+#Make plot of fc1 and fc2 only
+fig         = plt.figure(figsize=(8,4)) # Create figure with the appropriate size.
+line1=plt.plot(df['date'], df['fc1'], 'color1', label='14MHz')
+filepath    = os.path.join(output_path,lgraph1)
+fig         = plt.figure(figsize=(8,4)) # Create figure with the appropriate size.
+line2=plt.plot(df['date'], df['fc2'], 'color2', label='7MHz')
+filepath    = os.path.join(output_path,lgraph2)
+##legend=plt.legend([line1, line2],['20m','40m'],loc=1)
+#filepath    = os.path.join(output_path,'Critical Frequency.png')
+
+# the histogram of the data
+link_f1=df_links.freq[df_links.freq>freq1-500]
+link_f1=link_f1.freq[link_f1.freq<freq1+500]
+link_f2=df_links.freq[df_links.freq>freq2-500]
+link_f2=link_f2.freq[link_f2.freq<freq2+500]
+
+#First Frequency Band  Histograms
+#n, bins, patches = plt.hist(rbn_df2.Freq_plasma, num_bins, normed=1, facecolor='green', alpha=0.5)
+n, bins, patches = plt.hist(link_f1, num_bins, normed=1, facecolor=color1, alpha=0.5)
+## add a 'best fit' line
+##y = mlab.normpdf(bins, mu, sigma)
+##plt.plot(bins, y, 'r--')
+plt.xlabel('Frequency (kHz)')
+plt.ylabel('Counts')
+plt.title('Histogram of '+str(freq1)+'kHz Band seen by RBN')
+plt.title('Histogram of Frequency from RBN')
+### Tweak spacing to prevent clipping of ylabel
+plt.subplots_adjust(left=0.15)
+filepath    = os.path.join(output_path,hgraph1)
+fig.savefig(filepath,bbox_inches='tight')
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+
+#Second Frequency Band Histogram
+n, bins, patches = plt.hist(link_f2, num_bins, normed=1, facecolor=color2, alpha=0.5)
+## add a 'best fit' line
+##y = mlab.normpdf(bins, mu, sigma)
+##plt.plot(bins, y, 'r--')
+plt.xlabel('Frequency (kHz)')
+plt.ylabel('Counts')
+plt.title('Histogram of '+str(freq2)+'kHz Band seen by RBN')
+### Tweak spacing to prevent clipping of ylabel
+plt.subplots_adjust(left=0.15)
+filepath    = os.path.join(output_path,hgraph2)
+fig.savefig(filepath,bbox_inches='tight')
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 
 #Make plot of fc and hv only
 #fig         = plt.figure(figsize=(8,4)) # Create figure with the appropriate size.
