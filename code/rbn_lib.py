@@ -1559,11 +1559,15 @@ def band_averages(df, freq1, freq2):
     count1=len(df1)
     count2=len(df2)
     df1=df1.mean()
+#    import ipdb; ipdb.set_trace()
     df2=df2.mean()
     f1=df1.freq
     f2=df2.freq
-    d1=df1.dist
-    d2=df2.dist
+    d1=df1.link_dist
+    d2=df2.link_dist
+#    d1=df1.dist
+#    d2=df2.dist
+#    import ipdb; ipdb.set_trace()
 #    output=[count1, count2, f1, f2, d1, d2]
     count=[count1, count2]
 #    import ipdb; ipdb.set_trace()

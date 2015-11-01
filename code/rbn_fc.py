@@ -88,12 +88,12 @@ eTime = datetime.datetime(2015,6,28,03,00, 00)
 #outfile=os.path.join(output_path,csvfname)
 rbnMap='RBN_WAL_'
 graphfile='RBN_WAL_count_v3_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
-graphfile1='RBN_WAL_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v2'
-graphfile2='RBN_WAL_freq_division_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v2'
-lgraph1='RBN_WAL_fc1'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
-lgraph2='RBN_WAL_fc2'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
-hgraph1='RBN_WAL_f1'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
-hgraph2='RBN_WAL_f2'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
+graphfile1='RBN_WAL_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v3.png'
+graphfile2='RBN_WAL_freq_division_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v3.png'
+lgraph1='RBN_WAL_fc1'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
+lgraph2='RBN_WAL_fc2'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
+hgraph1='RBN_WAL_f1'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
+hgraph2='RBN_WAL_f2'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
 #fof2Map=''
 
 fig = plt.figure(figsize=(8,4))
@@ -166,8 +166,8 @@ while map_sTime<eTime:
     count2.append(count[1])
     f1.append(df1.freq)
     f2.append(df2.freq)
-    d1.append(df1.dist)
-    d2.append(df2.dist)
+    d1.append(df1.link_dist)
+    d2.append(df2.link_dist)
 
     #See if have enough information to solve for critical frequency
 #    if df1.freq.isempty() or df2.freq.isempty():
@@ -330,7 +330,7 @@ ax_tmp.set_visible(False)
 #if ncol is None:
 ncol = len(labels)
 #loc='lower center'
-loc='lower_right'
+loc='lower right'
 markerscale=0.5
 prop={'size':10}
 title=None
@@ -346,28 +346,40 @@ ax = plt.gca().add_artist(legend)
 fig.tight_layout()
 filepath    = os.path.join(output_path,graphfile1)
 fig.savefig(filepath)
-fig.savefig(filepath[:-3]+'.pdf',bbox_inches='tight')
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
 
 #Make plot of fc1 and fc2 only
 fig         = plt.figure(figsize=(8,4)) # Create figure with the appropriate size.
-line1=plt.plot(df['date'], df['fc1'], 'color1', label='14MHz')
+line1=plt.plot(df['date'], df['fc1'], color1, label='14MHz')
 filepath    = os.path.join(output_path,lgraph1)
+fig.savefig(filepath,bbox_inches='tight')
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 fig         = plt.figure(figsize=(8,4)) # Create figure with the appropriate size.
-line2=plt.plot(df['date'], df['fc2'], 'color2', label='7MHz')
+line2=plt.plot(df['date'], df['fc2'], color2, label='7MHz')
 filepath    = os.path.join(output_path,lgraph2)
+fig.savefig(filepath,bbox_inches='tight')
+fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 ##legend=plt.legend([line1, line2],['20m','40m'],loc=1)
 #filepath    = os.path.join(output_path,'Critical Frequency.png')
 
 # the histogram of the data
+
 link_f1=df_links.freq[df_links.freq>freq1-500]
-link_f1=link_f1.freq[link_f1.freq<freq1+500]
+import ipdb; ipdb.set_trace()
+#link_f1=link_f1.freq[link_f1.freq<freq1+500]
+link_f1=link_f1[link_f1<freq1+500]
+import ipdb; ipdb.set_trace()
 link_f2=df_links.freq[df_links.freq>freq2-500]
-link_f2=link_f2.freq[link_f2.freq<freq2+500]
+#link_f2=link_f2.freq[link_f2.freq<freq2+500]
+link_f2=link_f2[link_f2<freq2+500]
 
 #First Frequency Band  Histograms
+import ipdb; ipdb.set_trace()
+link1=link_f1.tolist()
+num_bins=len(link_f1)-1
 #n, bins, patches = plt.hist(rbn_df2.Freq_plasma, num_bins, normed=1, facecolor='green', alpha=0.5)
-n, bins, patches = plt.hist(link_f1, num_bins, normed=1, facecolor=color1, alpha=0.5)
+n, bins, patches = plt.hist(link1, num_bins, normed=1, facecolor=color1, alpha=0.5)
 ## add a 'best fit' line
 ##y = mlab.normpdf(bins, mu, sigma)
 ##plt.plot(bins, y, 'r--')
@@ -382,7 +394,10 @@ fig.savefig(filepath,bbox_inches='tight')
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 
 #Second Frequency Band Histogram
-n, bins, patches = plt.hist(link_f2, num_bins, normed=1, facecolor=color2, alpha=0.5)
+link2=link_f2.tolist()
+num_bins=len(link_f2)-1
+#n, bins, patches = plt.hist(link2, num_bins, normed=1, facecolor=color2, alpha=0.5)
+n, bins, patches = plt.hist(link2, num_bins, facecolor=color2, alpha=0.5)
 ## add a 'best fit' line
 ##y = mlab.normpdf(bins, mu, sigma)
 ##plt.plot(bins, y, 'r--')
