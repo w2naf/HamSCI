@@ -48,7 +48,7 @@ radius=100
 
 
 #Specify frequncies to evaluate at
-freq1=3000
+freq1=14000
 freq2=7000
 
 #create output directory if none exists
@@ -78,36 +78,22 @@ except:
 #sTime = datetime.datetime(2015,7,12,01,17, 00)
 #eTime = datetime.datetime(2015,7,12,01,22, 00)
 
-#Field day
-#sTime = datetime.datetime(2015,6,28,01,00, 00)
-#eTime = datetime.datetime(2015,6,28,03,00, 00)
-#contest="FD"
-##2014 ARRL CW SS
-#sTime = datetime.datetime(2014,11,2,01,00, 00)
-#eTime = datetime.datetime(2014,11,2,03,00, 00)
-#contest="cwSS"
-#Validation Test Case
-#sTime = datetime.datetime(2014, 8,2,00,00, 00)
-sTime = datetime.datetime(2014, 8,2,00,15, 00)
-eTime = datetime.datetime(2014, 8,2,23,00, 00)
-contest="Code_Test"
+sTime = datetime.datetime(2015,6,28,01,00, 00)
+eTime = datetime.datetime(2015,6,28,03,00, 00)
 #map_sTime=sTime+datetime.timedelta(minutes=15)
 #map_eTime=map_sTime+datetime.timedelta(minutes=15)
 
 #Specify output filenames
 #csvfname='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
 #outfile=os.path.join(output_path,csvfname)
-#'+sTime.strftime('%Y')+'_'+contest+'_'
-#rbnMap='RBN_WAL_2014_cwSS__'
-rbnMap='RBN_WAL_'+sTime.strftime('%Y')+'_'+contest+'_'
-graphfile='RBN_WAL_count_v4_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
-graphfile1='RBN_WAL_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v4.png'
-graphfile2='RBN_WAL_freq_division_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v4.png'
-lgraph1='RBN_WAL_fc1_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
-lgraph2='RBN_WAL_fc2_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
-hgraph1='RBN_WAL_f1_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
-hgraph2='RBN_WAL_f2_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
-#hgraph2='RBN_WAL_f2_2014_cwSS'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
+rbnMap='RBN_WAL_'
+graphfile='RBN_WAL_count_v3_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
+graphfile1='RBN_WAL_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v3.png'
+graphfile2='RBN_WAL_freq_division_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_v3.png'
+lgraph1='RBN_WAL_fc1'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
+lgraph2='RBN_WAL_fc2'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
+hgraph1='RBN_WAL_f1'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
+hgraph2='RBN_WAL_f2'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
 #fof2Map=''
 
 fig = plt.figure(figsize=(8,4))
@@ -141,7 +127,7 @@ output=[0,0,0,0,0,0]
 
 #for kk,map_sTime in enumerate(map_times):
 while map_sTime<eTime:
-    csvfname='rbn_wal_2014_cwSS__'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
+    csvfname='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
     outfile=os.path.join(output_path,csvfname)
     kk= kk + 1
     time.append(map_eTime)
@@ -164,14 +150,11 @@ while map_sTime<eTime:
 #    import ipdb; ipdb.set_trace()
 
     #Select Region
-#    rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
-    rbn_df2 = rbn_df 
-    import ipdb; ipdb.set_trace()
+    rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
     #import ipdb; ipdb.set_trace()
     ##Limit links to those with a midpoint within the radius of the isond
     #rbn_links=rbn_df2[rbn_df2.dist<=radius]
     rbn_df2, rbn_links=rbn_lib.getLinks(rbn_df2,isond,radius) 
-    import ipdb; ipdb.set_trace()
 #    import ipdb; ipdb.set_trace()
     #Find average frequency and distance/band
 #    df1,df2,count1[i], count2[i], f1[i], f2[i], d1[i], d2[i]=rbn_lib.band_averages(rbn_links, freq1, freq2) 
@@ -227,11 +210,10 @@ while map_sTime<eTime:
     #Plot on map
 #    fig = plt.figure(figsize=(8,4))
 #    ax0  = fig.add_subplot(1,1,1)
-    if (rbn_links['date'].min()!=rbn_links['date'].max()):
-        m, fig=rbn_lib.rbn_map_plot(rbn_links,legend=True,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
-        midpoint    = m.scatter(rbn_links.midLon, rbn_links.midLat,color='m',marker='s',s=2,zorder=100)
-        loc_isond    = m.scatter(isond[1],isond[0],color='k',marker='*',s=12,zorder=100)
-        #leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
+    m, fig=rbn_lib.rbn_map_plot(rbn_links,legend=True,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+    midpoint    = m.scatter(rbn_links.midLon, rbn_links.midLat,color='m',marker='s',s=2,zorder=100)
+    loc_isond    = m.scatter(isond[1],isond[0],color='k',marker='*',s=12,zorder=100)
+    #leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
     map_sTime=map_eTime
     map_eTime=map_sTime+datetime.timedelta(minutes=15)
 #    import ipdb; ipdb.set_trace()
@@ -286,11 +268,11 @@ ax4     = fig.add_subplot(ny_plots,nx_plots,5)
 #fig, ((ax5),(ax0),(ax1),(ax2),(ax3))=plt.subplots(5,1,sharex=True,sharey=False)
 #m, fig=rbn_lib.rbn_map_plot(df_links,legend=True,ax=ax5,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
 #plot data on the same figure
-ax0.plot(df['date'], df['count1'], '*-y',df['date'], df['count2'], '*-g')
-ax1.plot(df['date'], df['d1'], '*-y',df['date'], df['d2'], '*-g')
-ax2.plot(df['date'], df['f1'], '*-y',df['date'], df['f2'], '*-g')
-ax3.plot(df['date'], df['hv'], '*-m')
-ax4.plot(df['date'], df['fc1'], '*-y',df['date'], df['fc2'], '*-g')
+ax0.plot(df['date'], df['count1'], '-y',df['date'], df['count2'], '-g')
+ax1.plot(df['date'], df['d1'], '-y',df['date'], df['d2'], '-g')
+ax2.plot(df['date'], df['f1'], '-y',df['date'], df['f2'], '-g')
+ax3.plot(df['date'], df['hv'], '-m')
+ax4.plot(df['date'], df['fc1'], '-y',df['date'], df['fc2'], '-g')
 #ax3.plot(df['date'], df['fc1'], '-y',df['date'], df['fc2'], '-g')
 #Alternate color plots
 #ax0.plot(df['date'], df['count1'], '-r',df['date'], df['count2'], '-b')
