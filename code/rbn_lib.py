@@ -1209,7 +1209,7 @@ def get_geomagInd(sTime, eTime=None):
 
     return kp, ap, kpSum, apMean, ssn
 
-def get_hmF2(sTime,lat, lon, ssn=None):
+def get_hmF2(sTime,lat, lon, ssn=None, output=True):
     """Get hmF2 data for midpoint of RBN link
     **Args**:
         * **[sTime]:The earliest time you want data for 
@@ -1217,6 +1217,7 @@ def get_hmF2(sTime,lat, lon, ssn=None):
         * **[lat]: Latitude
         * **[lon]: Longitude
         * **[ssn]: Rz12 sunspot number
+        * **[output]: Select output values. True=output all. False=Only output hmF2.
         * **[]: 
     **Returns**:
         * **[hmF2]: The height of the F2 layer 
@@ -1284,7 +1285,10 @@ def get_hmF2(sTime,lat, lon, ssn=None):
     hmF2=oarr[1]
 #    foF2=np.sqrt(oarr[0]/(1.24e10))
 #    import ipdb; ipdb.set_trace()
-    return hmF2, outf, oarr
+    if(output):
+        return hmF2, outf, oarr
+    else:
+        return hmF2
 
 #def rbn_fof2():
     

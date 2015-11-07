@@ -216,6 +216,9 @@ while map_sTime<eTime:
 #        fc.append(np.sqrt(np.square(df1.freq)/(1+(df1.dist/(2*h[i])))))
 #        import ipdb; ipdb.set_trace()
 
+    #Get hmF2 for the start time
+    hmF2.append(rbn_lib.get_hmF2(map_sTime,isond[0], isond[2], output=False) 
+
     #Export df of `links to csv file
     rbn_links.to_csv(outfile, index=False)
     #Concatinate in a dataframe
