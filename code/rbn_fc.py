@@ -48,7 +48,7 @@ radius=100
 
 
 #Specify frequncies to evaluate at
-freq1=3000
+freq1=14000
 freq2=7000
 
 #create output directory if none exists
@@ -79,18 +79,18 @@ except:
 #eTime = datetime.datetime(2015,7,12,01,22, 00)
 
 #Field day
-#sTime = datetime.datetime(2015,6,28,01,00, 00)
-#eTime = datetime.datetime(2015,6,28,03,00, 00)
-#contest="FD"
+sTime = datetime.datetime(2015,6,28,01,00, 00)
+eTime = datetime.datetime(2015,6,28,03,00, 00)
+contest="FD"
 ##2014 ARRL CW SS
 #sTime = datetime.datetime(2014,11,2,01,00, 00)
 #eTime = datetime.datetime(2014,11,2,03,00, 00)
 #contest="cwSS"
-#Validation Test Case
-#sTime = datetime.datetime(2014, 8,2,00,00, 00)
-sTime = datetime.datetime(2014, 8,2,00,15, 00)
-eTime = datetime.datetime(2014, 8,2,23,00, 00)
-contest="Code_Test"
+##Validation Test Case
+##sTime = datetime.datetime(2014, 8,2,00,00, 00)
+#sTime = datetime.datetime(2014, 8,2,00,15, 00)
+#eTime = datetime.datetime(2014, 8,2,23,00, 00)
+#contest="Code_Test"
 #map_sTime=sTime+datetime.timedelta(minutes=15)
 #map_eTime=map_sTime+datetime.timedelta(minutes=15)
 
@@ -133,6 +133,7 @@ f1=[]
 f2=[]
 d1=[]
 d2=[]
+hmF2=[]
 count=[0,0]
 time=[]
 count1=[]
@@ -166,13 +167,14 @@ while map_sTime<eTime:
     #Select Region
 #    rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
     rbn_df2 = rbn_df 
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     #import ipdb; ipdb.set_trace()
+
     ##Limit links to those with a midpoint within the radius of the isond
     #rbn_links=rbn_df2[rbn_df2.dist<=radius]
     rbn_df2, rbn_links=rbn_lib.getLinks(rbn_df2,isond,radius) 
-    import ipdb; ipdb.set_trace()
 #    import ipdb; ipdb.set_trace()
+
     #Find average frequency and distance/band
 #    df1,df2,count1[i], count2[i], f1[i], f2[i], d1[i], d2[i]=rbn_lib.band_averages(rbn_links, freq1, freq2) 
 #    df1,df2,count1[i], count2[i], f1[i], f2[i], d1[i], d2[i]=rbn_lib.band_averages(rbn_links, freq1, freq2) 
@@ -217,7 +219,7 @@ while map_sTime<eTime:
 #        import ipdb; ipdb.set_trace()
 
     #Get hmF2 for the start time
-    hmF2.append(rbn_lib.get_hmF2(map_sTime,isond[0], isond[2], output=False) 
+    hmF2.append(rbn_lib.get_hmF2(map_sTime,isond[0], isond[1], output=False)) 
 
     #Export df of `links to csv file
     rbn_links.to_csv(outfile, index=False)
@@ -258,7 +260,8 @@ plt.clf()
 #import ipdb; ipdb.set_trace()
 
 #Compile Calculated values into a new dataframe
-df_full=pd.DataFrame({'date':time, 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'hv': hv, 'fc1': fc,'fc2':fc2})
+df_full=pd.DataFrame({'date':time, 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'hv': hv, 'fc1': fc,'fc2':fc2, 'hmF2':hmF2})
+import ipdb; ipdb.set_trace()
 csvfname='info_rbn_wal_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
 
 #Drop NaNs (times that did not have enough data to preform the calculations)
@@ -292,7 +295,8 @@ ax4     = fig.add_subplot(ny_plots,nx_plots,5)
 ax0.plot(df['date'], df['count1'], '*-y',df['date'], df['count2'], '*-g')
 ax1.plot(df['date'], df['d1'], '*-y',df['date'], df['d2'], '*-g')
 ax2.plot(df['date'], df['f1'], '*-y',df['date'], df['f2'], '*-g')
-ax3.plot(df['date'], df['hv'], '*-m')
+ax3.plot(df['date'], df['hv'], '*-m',df['date'], df['hmF2'],'*-r')
+#ax3.plot(df['date'], df['hv'], '*-m')
 ax4.plot(df['date'], df['fc1'], '*-y',df['date'], df['fc2'], '*-g')
 #ax3.plot(df['date'], df['fc1'], '-y',df['date'], df['fc2'], '-g')
 #Alternate color plots
@@ -387,49 +391,49 @@ fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 # the histogram of the data
 
 link_f1=df_links.freq[df_links.freq>freq1-500]
-import ipdb; ipdb.set_trace()
-#link_f1=link_f1.freq[link_f1.freq<freq1+500]
-link_f1=link_f1[link_f1<freq1+500]
-import ipdb; ipdb.set_trace()
-link_f2=df_links.freq[df_links.freq>freq2-500]
-#link_f2=link_f2.freq[link_f2.freq<freq2+500]
-link_f2=link_f2[link_f2<freq2+500]
-
-#First Frequency Band  Histograms
-import ipdb; ipdb.set_trace()
-link1=link_f1.tolist()
-num_bins=len(link_f1)-1
-#n, bins, patches = plt.hist(rbn_df2.Freq_plasma, num_bins, normed=1, facecolor='green', alpha=0.5)
-n, bins, patches = plt.hist(link1, num_bins, normed=1, facecolor=color1, alpha=0.5)
-## add a 'best fit' line
-##y = mlab.normpdf(bins, mu, sigma)
-##plt.plot(bins, y, 'r--')
-plt.xlabel('Frequency (kHz)')
-plt.ylabel('Counts')
-plt.title('Histogram of '+str(freq1)+'kHz Band seen by RBN')
-plt.title('Histogram of Frequency from RBN')
-### Tweak spacing to prevent clipping of ylabel
-plt.subplots_adjust(left=0.15)
-filepath    = os.path.join(output_path,hgraph1)
-fig.savefig(filepath,bbox_inches='tight')
-fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
-
-#Second Frequency Band Histogram
-link2=link_f2.tolist()
-num_bins=len(link_f2)-1
-#n, bins, patches = plt.hist(link2, num_bins, normed=1, facecolor=color2, alpha=0.5)
-n, bins, patches = plt.hist(link2, num_bins, facecolor=color2, alpha=0.5)
-## add a 'best fit' line
-##y = mlab.normpdf(bins, mu, sigma)
-##plt.plot(bins, y, 'r--')
-plt.xlabel('Frequency (kHz)')
-plt.ylabel('Counts')
-plt.title('Histogram of '+str(freq2)+'kHz Band seen by RBN')
-### Tweak spacing to prevent clipping of ylabel
-plt.subplots_adjust(left=0.15)
-filepath    = os.path.join(output_path,hgraph2)
-fig.savefig(filepath,bbox_inches='tight')
-fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+#import ipdb; ipdb.set_trace()
+##link_f1=link_f1.freq[link_f1.freq<freq1+500]
+#link_f1=link_f1[link_f1<freq1+500]
+#import ipdb; ipdb.set_trace()
+#link_f2=df_links.freq[df_links.freq>freq2-500]
+##link_f2=link_f2.freq[link_f2.freq<freq2+500]
+#link_f2=link_f2[link_f2<freq2+500]
+#
+##First Frequency Band  Histograms
+#import ipdb; ipdb.set_trace()
+#link1=link_f1.tolist()
+#num_bins=len(link_f1)-1
+##n, bins, patches = plt.hist(rbn_df2.Freq_plasma, num_bins, normed=1, facecolor='green', alpha=0.5)
+#n, bins, patches = plt.hist(link1, num_bins, normed=1, facecolor=color1, alpha=0.5)
+### add a 'best fit' line
+###y = mlab.normpdf(bins, mu, sigma)
+###plt.plot(bins, y, 'r--')
+#plt.xlabel('Frequency (kHz)')
+#plt.ylabel('Counts')
+#plt.title('Histogram of '+str(freq1)+'kHz Band seen by RBN')
+#plt.title('Histogram of Frequency from RBN')
+#### Tweak spacing to prevent clipping of ylabel
+#plt.subplots_adjust(left=0.15)
+#filepath    = os.path.join(output_path,hgraph1)
+#fig.savefig(filepath,bbox_inches='tight')
+#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+#
+##Second Frequency Band Histogram
+#link2=link_f2.tolist()
+#num_bins=len(link_f2)-1
+##n, bins, patches = plt.hist(link2, num_bins, normed=1, facecolor=color2, alpha=0.5)
+#n, bins, patches = plt.hist(link2, num_bins, facecolor=color2, alpha=0.5)
+### add a 'best fit' line
+###y = mlab.normpdf(bins, mu, sigma)
+###plt.plot(bins, y, 'r--')
+#plt.xlabel('Frequency (kHz)')
+#plt.ylabel('Counts')
+#plt.title('Histogram of '+str(freq2)+'kHz Band seen by RBN')
+#### Tweak spacing to prevent clipping of ylabel
+#plt.subplots_adjust(left=0.15)
+#filepath    = os.path.join(output_path,hgraph2)
+#fig.savefig(filepath,bbox_inches='tight')
+#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 
 #Make plot of fc and hv only
 #fig         = plt.figure(figsize=(8,4)) # Create figure with the appropriate size.

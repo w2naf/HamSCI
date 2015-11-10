@@ -331,7 +331,7 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
     sTime       = df['date'].min()
     eTime       = df['date'].max()
 
-    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
     half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
     plot_mTime = sTime + half_time
 
