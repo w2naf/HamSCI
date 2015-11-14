@@ -117,6 +117,133 @@ def read_rbn(sTime,eTime=None,data_dir=None,
         #import ipdb; ipdb.set_trace()
         return df
 
+def read_rbn_std(sTime,eTime=None,data_dir=None,
+             qrz_call='km4ege',qrz_passwd='ProjectEllie_2014'):
+    import os               # Provides utilities that help us do os-level operations like create directories
+    import datetime         # Really awesome module for working with dates and times.
+    import zipfile
+    import urllib2          # Used to automatically download data files from the web.
+    import pickle
+
+    import numpy as np      #Numerical python - provides array types and operations
+    import pandas as pd     #This is a nice utility for working with time-series type data.
+
+    from hamtools import qrz
+
+    #import ipdb; ipdb.set_trace()
+    if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
+
+    qz      = qrz.Session(qrz_call,qrz_passwd)
+
+    ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
+    eDay        =  datetime.datetime(eTime.year,eTime.month,eTime.day)
+    while ymd_list[-1] < eDay:
+        ymd_list.append(ymd_list[-1] + datetime.timedelta(days=1))
+
+    for ymd_dt in ymd_list:
+        ymd         = ymd_dt.strftime('%Y%m%d')
+        data_file   = '{0}.zip'.format(ymd)
+        data_path   = os.path.join(data_dir,data_file)  
+
+        time_0      = datetime.datetime.now()
+        print 'Starting RBN processing on <%s> at %s.' % (data_file,str(time_0))
+
+        ################################################################################
+        # Make sure the data file exists.  If not, download it and open it.
+        if not os.path.exists(data_path):
+             try:    # Create the output directory, but fail silently if it already exists
+                 os.makedirs(data_dir) 
+             except:
+                 pass
+             # File downloading code from: http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
+             url = 'http://www.reversebeacon.net/raw_data/dl.php?f='+ymd
+
+             #import ipdb; ipdb.set_trace()
+             u = urllib2.urlopen(url)
+             f = open(data_path, 'wb')
+             meta = u.info()
+             file_size = int(meta.getheaders("Content-Length")[0])
+             print "Downloading: %s Bytes: %s" % (data_path, file_size)
+         
+             file_size_dl = 0
+             block_sz = 8192
+             while True:
+                 buffer = u.read(block_sz)
+                 if not buffer:
+                     break
+         
+                 file_size_dl += len(buffer)
+                 f.write(buffer)
+                 status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+                 status = status + chr(8)*(len(status)+1)
+                 print status,
+             f.close()
+             status = 'Done downloading!  Now converting to Pandas dataframe and plotting...'
+             print status
+             
+        std_sTime=datetime.datetime(sTime.year,sTime.month,sTime.day, sTime.hour)
+        if eTime.minute == 0 and eTime.second == 0:
+            std_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour)
+        else:
+            std_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour+1)
+
+        import ipdb; ipdb.set_trace()
+        p_filename = 'rbn_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
+        p_filepath = os.path.join(data_dir,p_filename)
+        if not os.path.exists(p_filepath):
+            # Load data into dataframe here. ###############################################
+            with zipfile.ZipFile(data_path,'r') as z:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
+                with z.open(ymd+'.csv') as fl:
+                    df          = pd.read_csv(fl,parse_dates=[10])
+
+            # Create columns for storing geolocation data.
+            df['dx_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+            df['dx_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+            df['de_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+            df['de_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+
+            # Trim dataframe to just the entries we need.
+            df = df[np.logical_and(df['date'] >= std_sTime,df['date'] < std_eTime)]
+
+            # Look up lat/lons in QRZ.com
+            errors  = 0
+            success = 0
+            for index,row in df.iterrows():
+                if index % 50   == 0:
+                    print index,datetime.datetime.now()-time_0,row['date']
+                de_call = row['callsign']
+                dx_call = row['dx']
+                try:
+                    de      = qz.qrz(de_call)
+                    dx      = qz.qrz(dx_call)
+
+                    row['de_lat'] = de['lat']
+                    row['de_lon'] = de['lon']
+                    row['dx_lat'] = dx['lat']
+                    row['dx_lon'] = dx['lon']
+                    df.loc[index] = row
+    #                print '{index:06d} OK - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
+                    success += 1
+                except:
+    #                print '{index:06d} LOOKUP ERROR - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
+                    errors += 1
+            total   = success + errors
+            pct     = success / float(total) * 100.
+            print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
+            df.to_pickle(p_filepath)
+        else:
+            with open(p_filepath,'rb') as fl:
+                import ipdb; ipdb.set_trace()
+                df = pickle.load(fl)
+
+        
+        # Trim dataframe to just the entries we need.
+        df = df[np.logical_and(df['date'] >= sTime,df['date'] < eTime)]
+        import ipdb; ipdb.set_trace()
+
+        #import ipdb; ipdb.set_trace()
+        return df
+
 def k4kdj_rbn(sTime,eTime=None,data_dir=None,
              qrz_call='km4ege',qrz_passwd='ProjectEllie_2014'):
     import os               # Provides utilities that help us do os-level operations like create directories
@@ -1763,7 +1890,101 @@ def fc_stack_plot(df, xsize=8, ysize=4, ncol=None):
 #
 #    return legend
 
-def rbn_crit_freq(df_avg):
+def rbn_crit_freq(df, time, coord_center, freq1=14000, freq2=7000):
+    """Calculate ionospheric plasma characteristics from rbn data
+    **Args**:
+        * **df**:  rbn_links data frame
+        * **time**:  the start and end ut time of the time interval calculations taken over.
+        * **coord_center**: center lat and lon of the region 
+        * **freq1**:  frequencies interested in
+        * **freq2**:  frequencies interested in
+    **Returns**:
+        * **df_fc**:  data frame with the output values (calculated critial frequencies and virtual height and iri hmF2
+                        df_fc=pd.DataFrame({'date':time[1], 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'hv': hv, 'fc1': fc,'fc2':fc2, 'hmF2':hmF2})
+
+    .. note:: Untested!
+
+    Written by Magda Moses 2015 October 10
+    """
+    import numpy as np
+    import pandas as pd 
+
+    import datetime
+
+    import rbn_lib
+    
+
+    i=0
+    hv=[]
+    hvB=[]
+    fc=[]
+    fc2=[]
+    fcB=[]
+    f1=[]
+    f2=[]
+    d1=[]
+    d2=[]
+    hmF2=[]
+    count=[0,0]
+    print_time=[]
+    count1=[]
+    count2=[]
+    output=[0,0,0,0,0,0]
+
+#    #Find average frequency and distance/band
+#    df1,df2,count1[i], count2[i], f1[i], f2[i], d1[i], d2[i]=rbn_lib.band_averages(rbn_links, freq1, freq2) 
+#    df1,df2,count1[i], count2[i], f1[i], f2[i], d1[i], d2[i]=rbn_lib.band_averages(rbn_links, freq1, freq2) 
+    df1,df2, count=rbn_lib.band_averages(df, freq1, freq2) 
+
+    #Save averages in arrays
+    count1.append(count[0])
+    count2.append(count[1])
+    f1.append(df1.freq)
+    f2.append(df2.freq)
+    d1.append(df1.link_dist)
+    d2.append(df2.link_dist)
+
+    #See if have enough information to solve for critical frequency
+#    if df1.freq.isempty() or df2.freq.isempty():
+#    if f1==0 or f2==0:
+    if df1.freq==0 or df2.freq==0:
+        fc.append('NA')
+        hv.append('NA')
+        hmF2.append('NA')
+    else:
+        #Solve the critical frequency equation
+#        hv.append(abs((np.sqrt((np.square(f2[i]*d1[i])-np.square(f1[i]*d2[i]))))/(np.square(f1[i])-np.square(f2[i])))/2)
+#        height=abs((np.square(f2[i]*d1[i])-np.square(f1[i]*d2[i]))))/(np.square(f1[i])-np.square(f2[i])))/2
+        numer=abs(np.square(f2[i]*d1[i])-np.square(f1[i]*d2[i]))
+        den=abs(np.square(f1[i])-np.square(f2[i]))
+        hv.append(np.sqrt(abs(np.square(f2[i]*d1[i])-np.square(f1[i]*d2[i]))/abs(np.square(f1[i])-np.square(f2[i])))/2)
+        hvB.append(np.sqrt(numer/den)/2)
+#        den=(np.square(f1[i])-np.square(f2[i]))
+#        import ipdb; ipdb.set_trace()
+        fc.append(np.sqrt(np.square(f1[i])/(1+np.square(d1[i]/(2*hv[i])))))
+        fc2.append(np.sqrt(np.square(f2[i])/(1+np.square(d2[i]/(2*hv[i])))))
+        fcB.append(np.sqrt(np.square(f1[i])/(1+np.square(d1[i]/(2*hvB[i])))))
+#        i=i+1
+#        h[i]=np.sqrt((np.square(df2.freq*df1.dist)-np.square(df1.freq*df2.dist))/(np.square(df1.freq)-np.square(df2.freq)))/2
+#        import ipdb; ipdb.set_trace()
+#        fc[i]=np.sqrt(np.square(df1.freq)/(1+(df1.dist/(2*h[i]))))
+#        import ipdb; ipdb.set_trace()
+#        hv.append(np.sqrt((np.square(df2.freq*df1.dist)-np.square(df1.freq*df2.dist))/(np.square(df1.freq)-np.square(df2.freq)))/2)
+#        import ipdb; ipdb.set_trace()
+#        fc.append(np.sqrt(np.square(df1.freq)/(1+(df1.dist/(2*h[i])))))
+#        import ipdb; ipdb.set_trace()
+
+        #Get hmF2 for the start and end time
+        h_start=rbn_lib.get_hmF2(time[0],coord_center[0], coord_center[1], output=False) 
+        h_end=rbn_lib.get_hmF2(time[1],coord_center[0], coord_center[1], output=False) 
+        hmF2.append((h_start+h_end)/2)
+    #    hmF2.append(rbn_lib.get_hmF2(map_sTime,coord_center[0], coord_center[1], output=False)) 
+
+    print_time.append(time[1])
+
+    #save results in dataframe
+#    df_fc=pd.DataFrame({'date':time[1], 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'hv': hv, 'fc1': fc,'fc2':fc2, 'hmF2':hmF2})
+    df_fc=pd.DataFrame({'date':print_time, 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'hv': hv, 'fc1': fc,'fc2':fc2, 'hmF2':hmF2})
 
     return df_fc
 
