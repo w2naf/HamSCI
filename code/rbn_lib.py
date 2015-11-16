@@ -180,66 +180,132 @@ def read_rbn_std(sTime,eTime=None,data_dir=None,
              f.close()
              status = 'Done downloading!  Now converting to Pandas dataframe and plotting...'
              print status
-             
+
+#        #Original Implementation
+#        std_sTime=datetime.datetime(sTime.year,sTime.month,sTime.day, sTime.hour)
+#        if eTime.minute == 0 and eTime.second == 0:
+#          std_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour)
+#        else:
+#          std_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour+1)
+
+#        #New Implementation
+#        std_sTime=datetime.datetime(sTime.year,sTime.month,sTime.day, sTime.hour)
+#        if eTime.minute == 0 and eTime.second == 0:
+#            hourly_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour)
+#        else:
+#            hourly_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour+1)
+#
+#        if hourly_eTime.hour-std_sTime.hour !=1:
+#            std_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, std_sTime.hour+1)
+#        else:
+#            std_eTime=hourly_eTime
+
+        #New Implementation
         std_sTime=datetime.datetime(sTime.year,sTime.month,sTime.day, sTime.hour)
         if eTime.minute == 0 and eTime.second == 0:
-            std_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour)
+            hourly_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour)
         else:
-            std_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour+1)
+            hourly_eTime=eTime+datetime.timedelta(hours=1)
+            hourly_eTime=datetime.datetime(hourly_eTime.year,hourly_eTime.month,hourly_eTime.day, hourly_eTime.hour)
+#            hourly_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour+1)
 
-        import ipdb; ipdb.set_trace()
-        p_filename = 'rbn_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
-        p_filepath = os.path.join(data_dir,p_filename)
-        if not os.path.exists(p_filepath):
-            # Load data into dataframe here. ###############################################
-            with zipfile.ZipFile(data_path,'r') as z:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
-                with z.open(ymd+'.csv') as fl:
-                    df          = pd.read_csv(fl,parse_dates=[10])
+        std_eTime=std_sTime+datetime.timedelta(hours=1)
+#        if hourly_eTime.hour-std_sTime.hour !=1:
+#            std_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, std_sTime.hour+1)
+#        else:
+#            std_eTime=hourly_eTime
+#
+#        #New Implementation
+#        std_sTime=datetime.datetime(sTime.year,sTime.month,sTime.day, sTime.hour)
+#        if eTime.minute == 0 and eTime.second == 0:
+#            hourly_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour)
+#        else:
+##            if sTime.hour+1==24:
+##                hourly_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day+1, 0)
+##            else:
+#            hourly_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour+1)
+#
+##        if hourly_eTime.hour==24:
+##                hourly_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day+1, 0)
+#
+#        if hourly_eTime.day==std_sTime.day and hourly_eTime.hour-std_sTime.hour !=1:
+#            std_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, std_sTime.hour+1)
+#        elif hourly_eTime.day!=std_sTime.day and 24 + std_sTime.hour !=24:
+#
+#        else:
+#            std_eTime=hourly_eTime
 
-            # Create columns for storing geolocation data.
-            df['dx_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
-            df['dx_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
-            df['de_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
-            df['de_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+#        import ipdb; ipdb.set_trace()
+        hour_flag=0
+        while std_eTime<=hourly_eTime:
+                p_filename = 'rbn_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
+                p_filepath = os.path.join(data_dir,p_filename)
+                if not os.path.exists(p_filepath):
+                    # Load data into dataframe here. ###############################################
+                    with zipfile.ZipFile(data_path,'r') as z:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
+                        with z.open(ymd+'.csv') as fl:
+                            df          = pd.read_csv(fl,parse_dates=[10])
 
-            # Trim dataframe to just the entries we need.
-            df = df[np.logical_and(df['date'] >= std_sTime,df['date'] < std_eTime)]
+                    # Create columns for storing geolocation data.
+                    df['dx_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+                    df['dx_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+                    df['de_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+                    df['de_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
 
-            # Look up lat/lons in QRZ.com
-            errors  = 0
-            success = 0
-            for index,row in df.iterrows():
-                if index % 50   == 0:
-                    print index,datetime.datetime.now()-time_0,row['date']
-                de_call = row['callsign']
-                dx_call = row['dx']
-                try:
-                    de      = qz.qrz(de_call)
-                    dx      = qz.qrz(dx_call)
+                    # Trim dataframe to just the entries we need.
+                    df = df[np.logical_and(df['date'] >= std_sTime,df['date'] < std_eTime)]
 
-                    row['de_lat'] = de['lat']
-                    row['de_lon'] = de['lon']
-                    row['dx_lat'] = dx['lat']
-                    row['dx_lon'] = dx['lon']
-                    df.loc[index] = row
-    #                print '{index:06d} OK - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
-                    success += 1
-                except:
-    #                print '{index:06d} LOOKUP ERROR - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
-                    errors += 1
-            total   = success + errors
-            pct     = success / float(total) * 100.
-            print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
-            df.to_pickle(p_filepath)
-        else:
-            with open(p_filepath,'rb') as fl:
-                import ipdb; ipdb.set_trace()
-                df = pickle.load(fl)
+                    # Look up lat/lons in QRZ.com
+                    errors  = 0
+                    success = 0
+                    for index,row in df.iterrows():
+                        if index % 50   == 0:
+                            print index,datetime.datetime.now()-time_0,row['date']
+                        de_call = row['callsign']
+                        dx_call = row['dx']
+                        try:
+                            de      = qz.qrz(de_call)
+                            dx      = qz.qrz(dx_call)
+
+                            row['de_lat'] = de['lat']
+                            row['de_lon'] = de['lon']
+                            row['dx_lat'] = dx['lat']
+                            row['dx_lon'] = dx['lon']
+                            df.loc[index] = row
+            #                print '{index:06d} OK - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
+                            success += 1
+                        except:
+            #                print '{index:06d} LOOKUP ERROR - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
+                            errors += 1
+                    total   = success + errors
+                    pct     = success / float(total) * 100.
+                    print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
+                    df.to_pickle(p_filepath)
+                else:
+                    with open(p_filepath,'rb') as fl:
+#                        import ipdb; ipdb.set_trace()
+                        df = pickle.load(fl)
+#                import ipdb; ipdb.set_trace()
+
+                if hour_flag==0:
+#                    import ipdb; ipdb.set_trace()
+                    df_comp=df
+#                    df_comp=pd.df.copy(deep=True)
+                    hour_flag=hour_flag+1
+#                if hour_flag!=0:
+                else:
+#                    import ipdb; ipdb.set_trace()
+                    df_comp=pd.concat([df_comp, df])
+
+                std_sTime=std_eTime
+                std_eTime=std_sTime+datetime.timedelta(hours=1)
+#                std_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, std_eTime.hour+1)
 
         
         # Trim dataframe to just the entries we need.
-        df = df[np.logical_and(df['date'] >= sTime,df['date'] < eTime)]
-        import ipdb; ipdb.set_trace()
+        df = df_comp[np.logical_and(df_comp['date'] >= sTime,df_comp['date'] < eTime)]
+#        df = df[np.logical_and(df['date'] >= sTime,df['date'] < eTime)]
+#        import ipdb; ipdb.set_trace()
 
         #import ipdb; ipdb.set_trace()
         return df
