@@ -1753,6 +1753,7 @@ def band_averages(df, freq1, freq2):
     df2=df[df.freq>freq2-500]
     df2=df2[df2.freq<freq2+500]
 #    import ipdb; ipdb.set_trace()
+#    import ipdb; ipdb.set_trace()
 #    df2=df[df.freq>freq2-500 && df.freq<freq2+500]
     count1=len(df1)
     count2=len(df2)
@@ -1763,6 +1764,7 @@ def band_averages(df, freq1, freq2):
     f2=df2.freq
     d1=df1.link_dist
     d2=df2.link_dist
+#    import ipdb; ipdb.set_trace()
 #    d1=df1.dist
 #    d2=df2.dist
 #    import ipdb; ipdb.set_trace()
@@ -1836,6 +1838,7 @@ def band_averages(df, freq1, freq2):
 #    return df1, df2, count1, count2, f1, f2, d1, d2
 #    return df1, df2,output
     return df1, df2,count
+
 def fc_stack_plot(df, xsize=8, ysize=4, ncol=None):
     """Creates stack plots of the average values used in the critical frequency calculations and the virtual height and critical frequency obtained from the rbn data
     **Args**:
