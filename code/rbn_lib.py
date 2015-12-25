@@ -133,7 +133,7 @@ def read_rbn_std(sTime,eTime=None,data_dir=None,
     #import ipdb; ipdb.set_trace()
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
-    qz      = qrz.Session(qrz_call,qrz_passwd)
+#    qz      = qrz.Session(qrz_call,qrz_passwd)
 
     ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
     eDay        =  datetime.datetime(eTime.year,eTime.month,eTime.day)
@@ -155,6 +155,8 @@ def read_rbn_std(sTime,eTime=None,data_dir=None,
                  os.makedirs(data_dir) 
              except:
                  pass
+
+             qz      = qrz.Session(qrz_call,qrz_passwd)
              # File downloading code from: http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
              url = 'http://www.reversebeacon.net/raw_data/dl.php?f='+ymd
 
@@ -1839,7 +1841,7 @@ def band_averages(df, freq1, freq2):
 #    return df1, df2,output
     return df1, df2,count
 
-def fc_stack_plot(df, xsize=8, ysize=4, ncol=None):
+def fc_stack_plot(df,sTime, eTime, freq1, freq2,nx_plots=1,ny_plots=5, xsize=8, ysize=4, ncol=None,plot_legend=False):
     """Creates stack plots of the average values used in the critical frequency calculations and the virtual height and critical frequency obtained from the rbn data
     **Args**:
         * **df**:  critical frequncy output dataframe
@@ -1861,10 +1863,14 @@ def fc_stack_plot(df, xsize=8, ysize=4, ncol=None):
     import pandas as pd
 
     ##Sort the data by band to determine color 
-    band1=[]
-    band2=[]
-    band1.append(np.array((np.floor(df['f1']/1000.)),dtype=np.int))
-    band2.append(np.array((np.floor(df['f2']/1000.)),dtype=np.int))
+#    band1=[]
+#    band2=[]
+#    df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
+#    band1=(np.floor(df['f1']/1000.)),dtype=np.int)
+    import ipdb; ipdb.set_trace()
+    band1=np.int(np.floor(freq1/1000.))
+    band2=np.int(np.floor(freq2/1000.))
+#    band2.append(np.array((np.floor(df['f2']/1000.)),dtype=np.int))
 #    band1  = np.floor(df['f1']/1000.)
 #    band2  = np.floor(df['f2']/1000.)
 
@@ -1874,7 +1880,24 @@ def fc_stack_plot(df, xsize=8, ysize=4, ncol=None):
 #    label2 = band_dict[band2]['name']
     label1 = band_dict[band1]['freq']
     label2 = band_dict[band2]['freq']
+    import ipdb; ipdb.set_trace()
 
+#    color3='magenta'
+    color3='m'
+#    color4='red'
+    color4='r'
+#    color4=(0.75, 0.25, 0.75)
+    label3='h_virtual'
+    label4='hmF2'
+
+#    import ipdb; ipdb.set_trace()
+#    marker1='*-'
+#    freq1_prop        = {'marker':'*','color':color1,'linestyle':'_draw_solid'}
+#    freq2_prop        = {'marker':'*','color':color2,'linestyle':'_draw_solid'}
+#    hv_prop           = {'marker':'*','color':color3,'linestyle':'_draw_solid'}
+#    hmF2_prop         = {'marker':'*','color':color4,'linestyle':'_draw_solid'}
+
+    #Uncomment the next 57 lines to get original plotting code
     fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
     #plot 
     ax0     = fig.add_subplot(ny_plots,nx_plots,1)
@@ -1882,19 +1905,68 @@ def fc_stack_plot(df, xsize=8, ysize=4, ncol=None):
     ax2     = fig.add_subplot(ny_plots,nx_plots,3)
     ax3     = fig.add_subplot(ny_plots,nx_plots,4)
     ax4     = fig.add_subplot(ny_plots,nx_plots,5)
-    #ax1     = fig.add_subplot(ny_plots,1,2)
-    #ax2     = fig.add_subplot(1,ny_plots,3)
-    #ax3     = fig.add_subplot(1,ny_plots,4)
-    #fig, ((ax0),(ax1),(ax2),(ax3))=plt.subplots(4,1,sharex=True,sharey=False)
-    #fig, ((ax0),(ax1),(ax2),(ax3), (ax4))=plt.subplots(5,1,sharex=True,sharey=False)
-    #fig, ((ax5),(ax0),(ax1),(ax2),(ax3))=plt.subplots(5,1,sharex=True,sharey=False)
-    #m, fig=rbn_lib.rbn_map_plot(df_links,legend=True,ax=ax5,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
-
+#    #ax1     = fig.add_subplot(ny_plots,1,2)
+#    #ax2     = fig.add_subplot(1,ny_plots,3)
+#    #ax3     = fig.add_subplot(1,ny_plots,4)
+#    #fig, ((ax0),(ax1),(ax2),(ax3))=plt.subplots(4,1,sharex=True,sharey=False)
+#    #fig, ((ax0),(ax1),(ax2),(ax3), (ax4))=plt.subplots(5,1,sharex=True,sharey=False)
+#    #fig, ((ax5),(ax0),(ax1),(ax2),(ax3))=plt.subplots(5,1,sharex=True,sharey=False)
+#    #m, fig=rbn_lib.rbn_map_plot(df_links,legend=True,ax=ax5,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+#    #plot data on the same figure
+#    ax0.plot(df['date'], df['count1'], '*-y',df['date'], df['count2'], '*-g')
+#    ax1.plot(df['date'], df['d1'], '*-y',df['date'], df['d2'], '*-g')
+#    ax2.plot(df['date'], df['f1'], '*-y',df['date'], df['f2'], '*-g')
+#    ax3.plot(df['date'], df['hv'], '*-m',df['date'], df['hmF2'],'*-r')
+#    #ax3.plot(df['date'], df['hv'], '*-m')
+#    ax4.plot(df['date'], df['fc1'], '*-y',df['date'], df['fc2'], '*-g')
+#    #ax3.plot(df['date'], df['fc1'], '-y',df['date'], df['fc2'], '-g')
+#    #Alternate color plots
+#    #ax0.plot(df['date'], df['count1'], '-r',df['date'], df['count2'], '-b')
+#    #ax1.plot(df['date'], df['d1'], '-r',df['date'], df['d2'], '-b')
+#    #ax2.plot(df['date'], df['f1'], '-r',df['date'], df['f2'], '-b')
+#    #ax3.plot(df['date'], df['hv'], '-g')
+#    #ax4.plot(df['date'], df['fc1'], '-r',df['date'], df['fc2'], '-b')
+#    ##ax3.plot(df['date'], df['fc1'], '-r',df['date'], df['fc2'], '-b')
+#    #plot data on the same figure
+#    import ipdb; ipdb.set_trace()
+##    ax0.plot(df['date'], df['count1'], s=freq1_prop, df['date'], df['count2'], s=freq2_prop)
+#    ax0.plot(df['date'], df['count1'], freq1_prop,  df['date'], df['count2'], 'color', color2, 'marker',marker1)
+#    import ipdb; ipdb.set_trace()
+#    ax1.plot(df['date'], df['d1'], freq1_prop, df['date'], df['d2'], freq2_prop)
+#    import ipdb; ipdb.set_trace()
+#    ax2.plot(df['date'], df['f1'], freq1_prop, df['date'], df['f2'], freq2_prop)
+#    import ipdb; ipdb.set_trace()
+#    ax3.plot(df['date'], df['hv'], hv_prop, df['date'],  df['hmF2'],hmF2_prop)
+#    import ipdb; ipdb.set_trace()
+#    ax4.plot(df['date'], df['fc1'], freq1_prop,df['date'], df['fc2'], freq2_prop)
+#    import ipdb; ipdb.set_trace()
+    #plot data on the same figure
+#    ax0.plot(df['date'], df['count1'], '-*'+color1,df['date'], df['count2'], color2)
+#    ax1.plot(df['date'], df['d1'], color=freq1_prop['color'], linestyle=freq1_prop['linestyle'], marker=freq1_prop['marker'],df['date'], df['d2'], color2)
+#    ax2.plot(df['date'], df['f1'], color1,df['date'], df['f2'], color2)
+#    ax3.plot(df['date'], df['hv'], '-m')
+#    ax4.plot(df['date'], df['fc1'], color1,df['date'], df['fc2'], color2)
+#
+#    fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
+#    #plot 
+#    ax0     = fig.add_subplot(ny_plots,nx_plots,1)
+#    ax1     = fig.add_subplot(ny_plots,nx_plots,2)
+#    ax2     = fig.add_subplot(ny_plots,nx_plots,3)
+#    ax3     = fig.add_subplot(ny_plots,nx_plots,4)
+#    ax4     = fig.add_subplot(ny_plots,nx_plots,5)
+#    #ax1     = fig.add_subplot(ny_plots,1,2)
+#    #ax2     = fig.add_subplot(1,ny_plots,3)
+#    #ax3     = fig.add_subplot(1,ny_plots,4)
+#    #fig, ((ax0),(ax1),(ax2),(ax3))=plt.subplots(4,1,sharex=True,sharey=False)
+#    #fig, ((ax0),(ax1),(ax2),(ax3), (ax4))=plt.subplots(5,1,sharex=True,sharey=False)
+#    #fig, ((ax5),(ax0),(ax1),(ax2),(ax3))=plt.subplots(5,1,sharex=True,sharey=False)
+#    #m, fig=rbn_lib.rbn_map_plot(df_links,legend=True,ax=ax5,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+#
     #plot data on the same figure
     ax0.plot(df['date'], df['count1'], color1,df['date'], df['count2'], color2)
     ax1.plot(df['date'], df['d1'], color1,df['date'], df['d2'], color2)
     ax2.plot(df['date'], df['f1'], color1,df['date'], df['f2'], color2)
-    ax3.plot(df['date'], df['hv'], '-m')
+    ax3.plot(df['date'], df['hv'], color3,df['date'], df['hmF2'],color4)
     ax4.plot(df['date'], df['fc1'], color1,df['date'], df['fc2'], color2)
     
     #Set the title and labels for the plots
@@ -1906,6 +1978,7 @@ def fc_stack_plot(df, xsize=8, ysize=4, ncol=None):
     ###ax4.set_xlabel('Time [UT]')
     #ax3.set_title('Calculated Critical Frequency per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
     #ax3.set_xlabel('Time [UT]')
+
     #ax0.set_title('RBN Spots per Unit Time')
     ax1.set_title('Average Link Distance per Unit Time')
     ax2.set_title('Average Link Frequency per Unit Time')
@@ -1920,12 +1993,35 @@ def fc_stack_plot(df, xsize=8, ysize=4, ncol=None):
     ax3.set_ylabel('Height (km)')
     ax4.set_ylabel('Freqency (kHz)')
     ax4.set_xlabel('Time [UT]')
-    #ax3.set_xlabel('Time [UT]')
+#    #Set the title and labels for the plots
+#    ax0.set_title('RBN Spots per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+#    #ax1.set_title('Average Link Distance per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+#    #ax2.set_title('Average Link Frequency per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+#    ###ax3.set_title('Calculated Virtual Height per unit timeper Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+#    ###ax4.set_title('Calculated Critical Frequency per unit timeper Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+#    ###ax4.set_xlabel('Time [UT]')
+#    #ax3.set_title('Calculated Critical Frequency per Unit Time\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+#    #ax3.set_xlabel('Time [UT]')
+#    #ax0.set_title('RBN Spots per Unit Time')
+#    ax1.set_title('Average Link Distance per Unit Time')
+#    ax2.set_title('Average Link Frequency per Unit Time')
+#    ax3.set_title('Calculated Virtual Height per Unit Time')
+#    ax4.set_title('Calculated Critical Frequency per Unit Time')
+#    #ax3.set_title('Calculated Critical Frequency per Unit Time')
+#
+#    #set labels
+#    ax0.set_ylabel('Count')
+#    ax1.set_ylabel('Distance (km)')
+#    ax2.set_ylabel('Freqency (kHz)')
+#    ax3.set_ylabel('Height (km)')
+#    ax4.set_ylabel('Freqency (kHz)')
+#    ax4.set_xlabel('Time [UT]')
+#    #ax3.set_xlabel('Time [UT]')
     
     #Add Legend
     handles=[]
     labels=[]
-    if legend:
+    if plot_legend:
 #        if fig is None: fig = plt.gcf() 
         handles.append(mpatches.patch(color=color1,label=label1))
         labels.append(label1)

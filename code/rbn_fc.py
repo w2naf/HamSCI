@@ -32,6 +32,7 @@ lonMax=-65
 #Map Properties 
 #Specify whether to make a map
 make_map=False
+make_fullmap=True
 #define map projection 
 mapProj='cyl'
 llcrnrlon=lonMin-5 
@@ -44,17 +45,19 @@ urcrnrlat=latMax+5
 #urcrnrlat=52 
 
 #Specify Ionosonde that the calculated critical frequencies will be compared to 
-#isond=[37.93, -75.47]
-isond=[52, -2]
+isond=[37.93, -75.47]
+#Arbitary point in South Britain
+#isond=[52, -2]
 #Specify radius(km) for the area to evaluate over
-#radius=150
-radius=200
+radius=150
 
 
 #Specify frequncies to evaluate at
 freq1=14000
+#freq1=10000
 #freq1=3500
-freq2=7000
+#freq2=7000
+freq2=21000
 
 ##create output directory if none exists
 ##output_dir='output'
@@ -100,11 +103,11 @@ eTime = datetime.datetime(2014, 8,3,00,00, 00)
 ##sTime = datetime.datetime(2014, 8,2,00,15, 00)
 #eTime = datetime.datetime(2014, 8,2,01,40, 00)
 contest="Code_Test"
-#RSGB Eclipse QSO Party 2015
-#Actual time 0800-1130
-sTime = datetime.datetime(2015,3,20,07,00, 00)
-eTime = datetime.datetime(2015,3,20,12,00, 00)
-contest="RSGB_EclipseQP"
+##RSGB Eclipse QSO Party 2015
+##Actual time 0800-1130
+#sTime = datetime.datetime(2015,3,20,07,00, 00)
+#eTime = datetime.datetime(2015,3,20,12,00, 00)
+#contest="RSGB_EclipseQP"
 
 #Set delta time
 deltaTime=datetime.timedelta(minutes=15)
@@ -118,14 +121,14 @@ map_eTime=map_sTime+deltaTime
 csvfname='rbn_wal_'+map_sTime.strftime('%H%M - ')+'-'+map_eTime.strftime('%H%M UT')
 #'+sTime.strftime('%Y')+'_'+contest+'_'
 #rbnMap='RBN_WAL_2014_cwSS__'
-rbnMap='RBN_WAL_'+sTime.strftime('%Y')+'_'+contest+'_'
-graphfile='RBN_WAL_count_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_'+str(radius)+'km'
-graphfile1='RBN_WAL_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_'+str(radius)+'km.png'
-graphfile2='RBN_WAL_freq_division_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_'+str(radius)+'km.png'
-lgraph1='RBN_WAL_fc1_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
-lgraph2='RBN_WAL_fc2_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
-hgraph1='RBN_WAL_f1_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
-hgraph2='RBN_WAL_f2_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
+rbnMap='RBN_WAL_'+sTime.strftime('%Y')+'_'+contest+'_'+str(freq1)+'MHz&'+str(freq2)+'MHz_'
+graphfile='RBN_WAL_count_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_'+str(radius)+'km'+str(freq1)+'MHz&'+str(freq2)+'MHz'
+graphfile1='RBN_WAL_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_'+str(radius)+'km'+str(freq1)+'MHz&'+str(freq2)+'MHz'+'.png'
+graphfile2='RBN_WAL_freq_division_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_'+str(radius)+'km'+str(freq1)+'MHz&'+str(freq2)+'MHz'+'.png'
+lgraph1='RBN_WAL_fc1_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+str(freq1)+'MHz&'+str(freq2)+'MHz'+'.png'
+lgraph2='RBN_WAL_fc2_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+str(freq1)+'MHz&'+str(freq2)+'MHz'+'.png'
+hgraph1='RBN_WAL_f1_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+str(freq1)+'MHz&'+str(freq2)+'MHz'+'.png'
+hgraph2='RBN_WAL_f2_'+sTime.strftime('%Y')+'_'+contest+'_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+str(freq1)+'MHz&'+str(freq2)+'MHz'+'.png'
 #hgraph2='RBN_WAL_f2_2014_cwSS'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'.png'
 #fof2Map=''
 
@@ -205,12 +208,11 @@ while map_sTime<eTime:
 
             #add subplot
             ax0     = fig.add_subplot(2,2,kk)
+
     #Read RBN data 
     print "Processing RBN Data for Interval #"+str(kk)+': '+map_sTime.strftime('%H:%M')+'-'+map_eTime.strftime('%H:%M')
     rbn_df  = rbn_lib.read_rbn_std(map_sTime,map_eTime,data_dir='data/rbn')
 #    rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
-#    import ipdb; ipdb.set_trace()
-#    import ipdb; ipdb.set_trace()
 
     #Select Region
 #    rbn_df2 = rbn_lib.rbn_region(rbn_df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=True)
@@ -224,7 +226,7 @@ while map_sTime<eTime:
 #    import ipdb; ipdb.set_trace()
 #
 #    #Calculate Critical frequency
-    df_fc=rbn_lib.rbn_crit_freq(rbn_links, time=[map_sTime, map_eTime],coord_center=isond, freq1=14000, freq2=7000)
+    df_fc=rbn_lib.rbn_crit_freq(rbn_links, time=[map_sTime, map_eTime],coord_center=isond, freq1=freq1, freq2=freq2)
 #    import ipdb; ipdb.set_trace()
     print df_fc.count1;
     print df_fc.count2;
@@ -292,15 +294,15 @@ while map_sTime<eTime:
         #Plot on map
     #    fig = plt.figure(figsize=(8,4))
     #    ax0  = fig.add_subplot(1,1,1)
-        if (rbn_links['date'].min()!=rbn_links['date'].max()):
+        if (rbn_links.date.min()!=rbn_links.date.max()):
             m, fig=rbn_lib.rbn_map_plot(rbn_links,legend=True,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
             midpoint    = m.scatter(rbn_links.midLon, rbn_links.midLat,color='m',marker='s',s=2,zorder=100)
             loc_isond    = m.scatter(isond[1],isond[0],color='k',marker='*',s=12,zorder=100)
             #leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.505],ncdxf=True,ncol=4)
+
+    #Increment time 
     map_sTime=map_eTime
-#    import ipdb; ipdb.set_trace()
     map_eTime=map_sTime+deltaTime
-    #    import ipdb; ipdb.set_trace()
 
     #    if kk==4:
     #        filename=rbnMap+str(fig_inx)+'_a.jpg'
@@ -319,14 +321,24 @@ if make_map==True:
     fig.savefig(filepath,bbox_inches='tight')
     fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
     plt.clf()
-    #import ipdb; ipdb.set_trace()
-
+if make_fullmap==True:
+#if (rbn_links.date.min()!=rbn_links.date.max()):
+    fig = plt.figure(figsize=(8,4))
+    ax0     = fig.add_subplot(1,1,1)
+    m, fig=rbn_lib.rbn_map_plot(df_links,legend=True,ax=ax0,tick_font_size=9,ncdxf=True, llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat)
+    midpoint    = m.scatter(df_links.midLon, df_links.midLat,color='m',marker='s',s=2,zorder=100)
+    loc_isond    = m.scatter(isond[1],isond[0],color='k',marker='*',s=12,zorder=100)
+    filename=rbnMap+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')+'_a.jpg'
+    filepath    = os.path.join(output_path,filename)
+    fig.savefig(filepath,bbox_inches='tight')
+    fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+    plt.clf()
 #Compile Calculated values into a new dataframe
 #df_full=pd.DataFrame({'date':time, 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'hv': hv, 'fc1': fc,'fc2':fc2, 'hmF2':hmF2})
 #import ipdb; ipdb.set_trace()
 outfile=os.path.join(output_path,csvfname)
 df_links.to_csv(outfile)
-#csvfname='info_rbn_wal_'+sTime.strftime('%H%M - ')+'-'+eTime.strftime('%H%M UT')
+#csvfname='info_rbn_wal_'+sTime.strftime('%h%m - ')+'-'+etime.strftime('%h%m ut')
 
 #Make Count Graph for test
 df=df_full.dropna(subset=['count1','count2'])
@@ -349,7 +361,7 @@ ny_plots=5
 #ysize=8
 xsize=8
 ysize=2
-#fig=rbn_lib.fc_stack_plot(df, xsize, ysize, ncol=None)
+#fig=rbn_lib.fc_stack_plot(df, sTime, eTime, freq1, freq2, nx_plots,ny_plots, xsize, ysize, ncol=None, plot_legend=True)
 #Uncomment the next 57 lines to get original plotting code
 fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
 #plot 
@@ -410,11 +422,12 @@ ax4.set_xlabel('Time [UT]')
 
 ##legend=plt.legend(handles=[ax0], loc=1)
 #legend=plt.legend([line1, line2],['20m','40m'],loc=1)
-
+#
 #Add Legend
 color1='y'
 color2='g'
 label1='14MHz'
+#label1=str(freq1/'14MHz'
 label2='7MHz'
 handles=[]
 labels=[]
@@ -435,10 +448,11 @@ prop={'size':10}
 title=None
 bbox_to_anchor=None
 legend = fig.legend(handles,labels,ncol=ncol,loc=loc,markerscale=markerscale,prop=prop,title=title,bbox_to_anchor=bbox_to_anchor,scatterpoints=1)
-#57 uncomment for original
-
 #import ipdb; ipdb.set_trace()
 ax = plt.gca().add_artist(legend)
+#57 uncomment for original
+
+
 #title_prop = {'weight':'bold','size':22}
 ##fig.text(0.525,1.025,'HF Communication Paths',ha='center',**title_prop)
 #fig.text(0.525,1.000,'Reverse Beacon Network\n'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'),ha='center',**title_prop)
@@ -448,23 +462,23 @@ fig.savefig(filepath)
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
 plt.clf()
 
-#Make plot of fc1 and fc2 only
-fig         = plt.figure(figsize=(8,4)) # Create figure with the appropriate size.
-line1=plt.plot(df['date'], df['fc1'], color1, label='14MHz')
-filepath    = os.path.join(output_path,lgraph1)
-fig.savefig(filepath,bbox_inches='tight')
-fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
-fig         = plt.figure(figsize=(8,4)) # Create figure with the appropriate size.
-line2=plt.plot(df['date'], df['fc2'], color2, label='7MHz')
-filepath    = os.path.join(output_path,lgraph2)
-fig.savefig(filepath,bbox_inches='tight')
-fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
-##legend=plt.legend([line1, line2],['20m','40m'],loc=1)
-#filepath    = os.path.join(output_path,'Critical Frequency.png')
-
+##Make plot of fc1 and fc2 only
+#fig         = plt.figure(figsize=(8,4)) # Create figure with the appropriate size.
+#line1=plt.plot(df['date'], df['fc1'], color1, label='14MHz')
+#filepath    = os.path.join(output_path,lgraph1)
+#fig.savefig(filepath,bbox_inches='tight')
+#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+#fig         = plt.figure(figsize=(8,4)) # Create figure with the appropriate size.
+#line2=plt.plot(df['date'], df['fc2'], color2, label='7MHz')
+#filepath    = os.path.join(output_path,lgraph2)
+#fig.savefig(filepath,bbox_inches='tight')
+#fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+###legend=plt.legend([line1, line2],['20m','40m'],loc=1)
+##filepath    = os.path.join(output_path,'Critical Frequency.png')
+#
 # the histogram of the data
 
-link_f1=df_links.freq[df_links.freq>freq1-500]
+#link_f1=df_links.freq[df_links.freq>freq1-500]
 #import ipdb; ipdb.set_trace()
 ##link_f1=link_f1.freq[link_f1.freq<freq1+500]
 #link_f1=link_f1[link_f1<freq1+500]
