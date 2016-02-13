@@ -8,6 +8,7 @@ import os
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
+import matplotlib.patches as mpatches
 
 import numpy as np
 import pandas as pd
@@ -46,9 +47,19 @@ map_ax=[[x1,y1, w1, h1], [x1, y2, w1, h1]]
 
 #Define Eclipse Path limits
 eLimits=['ds_NL.csv', 'ds_SL.csv']
+#Define future eclipse path central line coordinates
+eFuture=['ds_CL_2024.txt', 'ds_CL_2044.txt', 'ds_CL_2045.txt', 'ds_CL_2052.txt']
 import ipdb; ipdb.set_trace()
+input_path='website'
+
 #Define visual 
+#for 2017
 eColor=(0.75,0.25,0.5)
+path_color=['r', 'orange', 'g', 'b']
+epath=['-r', '-o', '-g', '-b']
+#For others
+
+tick_font_size=9
 #pZorder is the zorder of the eclipse path with higher zorder=on top
 pZorder=9
 
@@ -96,7 +107,7 @@ sat_nr = 15
 
 #flares = gme.sat.find_flares(goes_data,min_class='X2')
 
-output_path = os.path.join('output','agu')
+output_path = os.path.join('website','output','figures')
 #handling.prepare_output_dirs({0:output_path},clear_output_dirs=True)
 ## Determine the aspect ratio of subplot.
 xsize       = 8.0
@@ -105,16 +116,6 @@ ysize       = 4.0
 nx_plots    = 1
 ny_plots    = 1
 
-#for inx,flare in flares.iterrows():
-##    try:
-#    if True:
-#filename    = sTime.strftime('rbn_%Y%m%d_%H%M.png')
-#filepath    = os.path.join(output_path,filename)
-
-#int_min     = 30
-#map_times   = [inx - datetime.timedelta(minutes=(int_min*2))]
-#for x in range(3):
-#    map_times.append(map_times[-1] + datetime.timedelta(minutes=int_min))
 
 fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
 #    subplot_nr  = 0 # Counter for the subplot
@@ -126,7 +127,7 @@ total_count = 0
 map_sTime=datetime.datetime(2013,5,13,15,5)
 map_eTime = map_sTime + datetime.timedelta(minutes=15)
 
-filename    = 'agu_2017eclipse_rbn_superdarn_'+sTime.strftime('%Y%m%d_%H%M')+'.png'
+filename    = '2017_2052_eclipses.png'
 filepath    = os.path.join(output_path,filename)
 
 #        map_times = []
@@ -140,40 +141,100 @@ ax0     = fig.add_subplot(1,1,1)
 #            ax0     = fig.add_axes(map_ax[plt_inx])
 
 
-print ''
-print '################################################################################'
-print 'Plotting RBN Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
+#print ''
+#print '################################################################################'
+#print 'Plotting RBN Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
+#
+#rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
+#
+## Figure out how many records properly geolocated.
+#good_loc    = rbn_df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+#good_count_map  = good_loc['callsign'].count()
+#total_count_map = len(rbn_df)
+#good_pct_map    = float(good_count_map) / total_count_map * 100.
+#
+#good_count      += good_count_map
+#total_count     += total_count_map
+#
+#print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
+#
+## Go plot!!
+#m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat, proj=mapProj, basemapType=False, eclipse=True,path_alpha=path_alpha)
+##m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=True,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat, proj=mapProj, basemapType=False, eclipse=True,path_alpha=path_alpha)
+##############################################################
+#Get Figure (taken from rbn_lib code)
+fig     = ax0.get_figure()
 
-rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
+m = plotUtils.mapObj(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=mapProj,ax=ax0,fillContinents='None', fix_aspect=True)
 
-# Figure out how many records properly geolocated.
-good_loc    = rbn_df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
-good_count_map  = good_loc['callsign'].count()
-total_count_map = len(rbn_df)
-good_pct_map    = float(good_count_map) / total_count_map * 100.
+#title='Eclipses over the Continetal US from 2017-2052'
+#ax.set_title(title)
+#
+# draw parallels and meridians.
+#m.drawparallels(np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+#m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True],fontsize=tick_font_size)
+m.drawcoastlines(color='0.65')
+m.drawmapboundary(fill_color='w')
+#m.nightshade(plot_mTime,color='0.82')
+#if plotting the 2017 eclipse map then also draw state boundaries
+m.drawcountries(color='0.65')#np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+m.drawstates(color='0.65')
+############################################################
 
-good_count      += good_count_map
-total_count     += total_count_map
 
-print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
+#Plot 2017 Eclipse path swath on map
+m,fig=eclipse_lib.eclipse_swath(infile=eLimits,mapobj=m, fig=fig, pathColor=eColor, pZorder=pZorder, filetype='csv')
+#Plot future eclipse central line paths on map
+cindex=0
+for coord in eFuture:
+    eCL=os.path.join('website',coord)
+#    pathColor=path_color[cindex]
+    m,fig=eclipse_lib.eclipse_map_plot(infile=eCL,mapobj=m, fig=fig, pathColor=path_color[cindex], filetype='txt')
+    cindex=cindex+1
 
-# Go plot!!
-m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat, proj=mapProj, basemapType=False, eclipse=True,path_alpha=path_alpha)
-#m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=True,ax=ax0,tick_font_size=9,ncdxf=True,llcrnrlon=llcrnrlon, llcrnrlat=llcrnrlat, urcrnrlon=urcrnrlon, urcrnrlat=urcrnrlat, proj=mapProj, basemapType=False, eclipse=True,path_alpha=path_alpha)
+#Set up legend
+import ipdb; ipdb.set_trace()
+handles=[]
+labels=[]
 
-#Plot Eclipse path swath on map
-m,fig=eclipse_lib.eclipse_swath(infile=eLimits,mapobj=m, fig=fig, pathColor=eColor, pZorder=pZorder)
+elabels=['2024', '2044', '2045', '2052']
 
-#Plot SuperDARN Radars of interest on map (Fort Hayes West and Fort Hayes East on the map)
-#for code in radars:
-#            overlayRadar(m,fontSize=12,codes=radars,dateTime=map_sTime)
-#            overlayFov(m, codes=radars, maxGate=40, beams=beam)
-#First plot radar with the beam shown in the FOV which we will plot RTI data from later (radars[0])
-overlayRadar(m,fontSize=12,codes=radars[0],dateTime=map_sTime)
-overlayFov(m, codes=radars[0], maxGate=40, beams=beam,model='GS', fovColor=fovColor,zorder=fovZorder)
-#Next plot the rest of the radars (no beams will be plotted)
-overlayRadar(m,fontSize=12,codes=radars[1:],dateTime=map_sTime)
-overlayFov(m, codes=radars[1:], maxGate=40, beams=None,model='GS', fovColor=fovColor,zorder=fovZorder)
+cindex=0
+handles.append(mpatches.Patch(color=eColor,label='2017'))
+labels.append('2017')
+
+while cindex<len(elabels):
+    handles.append(mpatches.Patch(color=path_color[cindex],label=elabels[cindex]))
+    labels.append(elabels[cindex])
+    cindex+=1
+
+fig_tmp = plt.figure()
+ax_tmp = fig_tmp.add_subplot(111)
+ax_tmp.set_visible(False)
+#if ncol is None:
+ncol = len(labels)
+loc='lower center'
+#loc='lower right'
+markerscale=0.5
+prop={'size':10}
+title=None
+bbox_to_anchor=None
+#import ipdb; ipdb.set_trace()
+legend = fig.legend(handles,labels,ncol=ncol,loc=loc,markerscale=markerscale,prop=prop,title=title,bbox_to_anchor=bbox_to_anchor,scatterpoints=1)
+#import ipdb; ipdb.set_trace()
+#import ipdb; ipdb.set_trace()
+ax = plt.gca().add_artist(legend)
+
+##Plot SuperDARN Radars of interest on map (Fort Hayes West and Fort Hayes East on the map)
+##for code in radars:
+##            overlayRadar(m,fontSize=12,codes=radars,dateTime=map_sTime)
+##            overlayFov(m, codes=radars, maxGate=40, beams=beam)
+##First plot radar with the beam shown in the FOV which we will plot RTI data from later (radars[0])
+#overlayRadar(m,fontSize=12,codes=radars[0],dateTime=map_sTime)
+#overlayFov(m, codes=radars[0], maxGate=40, beams=beam,model='GS', fovColor=fovColor,zorder=fovZorder)
+##Next plot the rest of the radars (no beams will be plotted)
+#overlayRadar(m,fontSize=12,codes=radars[1:],dateTime=map_sTime)
+#overlayFov(m, codes=radars[1:], maxGate=40, beams=None,model='GS', fovColor=fovColor,zorder=fovZorder)
 
 #    x,y, w, h=ax0.get_position().bounds
 #    print "ax0 map 1-(x,y,width, height)="
@@ -197,8 +258,9 @@ overlayFov(m, codes=radars[1:], maxGate=40, beams=None,model='GS', fovColor=fovC
 
 #Titles and other propertites
 #title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
-title='2017 Solar Eclipse\nSuperDARN Radars and Reverse Beacon Network'
-title='2017 Solar Eclipse'
+#title='2017 Solar Eclipse\nSuperDARN Radars and Reverse Beacon Network'
+title='Map of All Eclipses over Continental US From 2017-2052'
+#import ipdb; ipdb.set_trace()
 ax0.set_title(title,loc='center')
 #ax0.set_title(map_sTime.strftime('%d %b %Y'),loc='right')
 
@@ -215,7 +277,7 @@ ax0.set_title(title,loc='center')
 #                item.set_fontsize(4)
 
 #            print flare
-print map_sTime
+#print map_sTime
 
 #        ax      = fig.add_subplot(3,1,3)
     #ax.plot(inx,flare['B_AVG'],'o',label='{0} Class Flare @ {1}'.format(flare['class'],inx.strftime('%H%M UT')))
@@ -238,16 +300,16 @@ print map_sTime
 #
 #        #gme.sat.goes_plot(goes_data_map,ax=ax,legendLoc='lower right')
 
-shift=0.070
-shift=0.035
-#        yl=y2-shift-0.025
-#        leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,yl],ncdxf=True,ncol=4)
-x0, y0, width, height = ax0.get_position().bounds
-#y_pos=y0-shift-0.025
-y_pos=y0-shift
-leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.45,y_pos],ncdxf=True,ncol=4)
-#leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.360],ncdxf=True)
-title_prop = {'weight':'bold','size':22}
+#shift=0.070
+#shift=0.035
+##        yl=y2-shift-0.025
+##        leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,yl],ncdxf=True,ncol=4)
+#x0, y0, width, height = ax0.get_position().bounds
+##y_pos=y0-shift-0.025
+#y_pos=y0-shift
+#leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.45,y_pos],ncdxf=True,ncol=4)
+##leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.360],ncdxf=True)
+#title_prop = {'weight':'bold','size':22}
 #        fig.text(0.525,1.025,'HF Communication Paths',ha='center',**title_prop)
 #fig.text(0.525,1.000,'2017 Solar Eclipse\nSuperDARN Radars and Reverse Beacon Network',ha='center',**title_prop)
 #fig.text('2017 Solar Eclipse\nSuperDARN Radars and Reverse Beacon Network',ha='center',**title_prop)
@@ -341,13 +403,15 @@ title_prop = {'weight':'bold','size':22}
 #        ax.vlines(map_times,0,1,linestyle='--',color='b')
 #
 #        fig.tight_layout(h_pad=2.5,w_pad=3.5)
-fig.savefig(filepath,bbox_inches='tight')
+import ipdb; ipdb.set_trace()
+#fig.savefig(filepath,bbox_inches='tight')
+fig.savefig(filepath)
 fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
-plt.clf()
+#plt.clf()
 
-good_pct = float(good_count)/total_count * 100.
-print ''
-print 'Final stats for: {0}'.format(filepath)
-print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count,total_count,good_pct)
+#good_pct = float(good_count)/total_count * 100.
+#print ''
+#print 'Final stats for: {0}'.format(filepath)
+#print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count,total_count,good_pct)
 #    except:
 #        pass

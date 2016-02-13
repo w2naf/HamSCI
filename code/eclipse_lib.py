@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-def eclipse_get_path(fname='ds_CL.csv', data_dir=None):
+def eclipse_get_path(fname='ds_CL.csv', data_dir=None,filetype='csv'):
     #Inputs: 
     #fname: specify filename (the file is in the same folder as the code)
     #data_dir: directory the file is in, could have directory as input in future version too
@@ -18,13 +18,20 @@ def eclipse_get_path(fname='ds_CL.csv', data_dir=None):
     #fpath=os.path.join(inpuit,fname)
     #Main body
     #Make data frame (make sure there is an index column that is seperate from your data unless part of the data is an index!) 
-    df_cl=pd.DataFrame.from_csv(fname)
+#    df_cl=pd.DataFrame.from_csv(fname,delim_whitespace)
+    if filetype=='csv':
+        df_cl=pd.DataFrame.from_csv(fname)
+
+    if filetype=='txt':
+        df_cl=pd.DataFrame.from_csv(fname,sep=None, index_col=None)
+#        df_cl=pd.read_csv(fname,sep=None,engine='python', index_col=None)
+
     df_cl.columns=['eLat','eLon']
 #    import ipdb; ipdb.set_trace()
     return df_cl
 
 
-def eclipse_map_plot(infile=None,mapobj=None, fig=None, style='--m', lw=2):
+def eclipse_map_plot(infile=None,mapobj=None, fig=None, pathColor='--m', lw=2,filetype='csv'):
     import datetime
     from matplotlib import pyplot as plt
     from mpl_toolkits.basemap import Basemap
@@ -32,11 +39,11 @@ def eclipse_map_plot(infile=None,mapobj=None, fig=None, style='--m', lw=2):
     import pandas as pd
     #
     #Plot  
-    df=eclipse_get_path(fname=infile)
-    mapobj.plot(df['eLon'],df['eLat'],style, linewidth=lw, latlon=True)
+    df=eclipse_get_path(fname=infile, filetype=filetype)
+    mapobj.plot(df['eLon'],df['eLat'], color=pathColor ,linewidth=lw, latlon=True)
     return mapobj,fig 
 
-def eclipse_swath(infile=None, mapobj=None, fig=None, pathColor='m', lw=2, pZorder=0):
+def eclipse_swath(infile=None, mapobj=None, fig=None, pathColor='m', lw=2, pZorder=0,filetype='csv'):
     import datetime
     from matplotlib import pyplot as plt
     from matplotlib import path
@@ -49,7 +56,7 @@ def eclipse_swath(infile=None, mapobj=None, fig=None, pathColor='m', lw=2, pZord
 
     i=0
     for inputF in infile: 
-        df0=eclipse_get_path(fname=inputF)
+        df0=eclipse_get_path(fname=inputF, filetype=filetype)
 #        import ipdb; ipdb.set_trace()
         if i==0:
             df=df0
@@ -58,6 +65,7 @@ def eclipse_swath(infile=None, mapobj=None, fig=None, pathColor='m', lw=2, pZord
             sort_df0=df0.sort(columns='eLon',ascending=False)
             frame= [df,sort_df0]
             df=pd.concat(frame, ignore_index=True)
+            import ipdb; ipdb.set_trace()
 #            import ipdb; ipdb.set_trace()
             
         i+=1
