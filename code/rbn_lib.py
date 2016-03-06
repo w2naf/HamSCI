@@ -311,6 +311,49 @@ def read_rbn_std(sTime,eTime=None,data_dir=None,
 
         #import ipdb; ipdb.set_trace()
         return df
+def station_loc(df, data_dir=None,
+             qrz_call='km4ege',qrz_passwd='ProjectEllie_2014'):
+    import os               # Provides utilities that help us do os-level operations like create directories
+    import datetime         # Really awesome module for working with dates and times.
+    import zipfile
+    import urllib2          # Used to automatically download data files from the web.
+    import pickle
+
+    import numpy as np      #Numerical python - provides array types and operations
+    import pandas as pd     #This is a nice utility for working with time-series type data.
+
+    from hamtools import qrz
+
+    #import ipdb; ipdb.set_trace()
+    if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
+
+    #Get Station lat/lon
+    qz      = qrz.Session(qrz_call,qrz_passwd)
+#    df['dx_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+#    df['dx_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+    df['de_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+    df['de_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+    # Look up lat/lons in QRZ.com
+    errors  = 0
+    success = 0
+    for index,row in df.iterrows():
+        de_call = row['callsign']
+        try:
+            de      = qz.qrz(de_call)
+
+            row['de_lat'] = de['lat']
+            row['de_lon'] = de['lon']
+
+            df.loc[index] = row
+    #                print '{index:06d} OK - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
+            success += 1
+        except:
+    #                print '{index:06d} LOOKUP ERROR - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
+            errors += 1
+    total   = success + errors
+    pct     = success / float(total) * 100.
+    print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
+    return df
 
 def k4kdj_rbn(sTime,eTime=None,data_dir=None,
              qrz_call='km4ege',qrz_passwd='ProjectEllie_2014'):
@@ -952,7 +995,8 @@ def rbn_map_overlay(df,m=None, scatter_rbn=False, ax=None,legend=True,tick_font_
     half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
     plot_mTime = sTime + half_time
 
-    if scatter_rbn==False:
+#    if scatter_rbn==False:
+    if m==None:
         if basemapType:
             m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax)
         else:
@@ -1049,6 +1093,73 @@ def rbn_map_overlay(df,m=None, scatter_rbn=False, ax=None,legend=True,tick_font_
 
         if legend:
             band_legend()
+
+    return m,fig
+
+def rbn_map_node(df, sTime, eTime,m=None, ax=None, tick_font_size=None,ncdxf=False,plot_paths=True,
+        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,eclipse=False,path_alpha=None):
+    """Plot Reverse Beacon Network data.
+
+    **Args**:
+        * **[ymin]**: Y-Axis minimum limit
+        * **[ymax]**: Y-Axis maximum limit
+        * **[legendSize]**: Character size of the legend
+
+    **Returns**:
+        * **fig**:      matplotlib figure object that was plotted to
+
+    .. note::
+        If a matplotlib figure currently exists, it will be modified by this routine.  If not, a new one will be created.
+
+    Written by Magda Moses and  Nathaniel Frissell 2016 March 05
+    """
+    import datetime
+    
+    from matplotlib import pyplot as plt
+    from mpl_toolkits.basemap import Basemap
+
+    import numpy as np
+    import pandas as pd
+
+    import eclipse_lib
+
+    from davitpy.pydarn.radar import *
+    from davitpy.pydarn.plotting import *
+    from davitpy.utils import *
+
+    if ax is None:
+        fig     = plt.figure(figsize=(10,6))
+        ax      = fig.add_subplot(111)
+    else:
+        fig     = ax.get_figure()
+
+    #Drop NaNs (QSOs without Lat/Lons)
+    df = df.dropna(subset=['de_lat','de_lon'])
+
+#    if scatter_rbn==False:
+    if m==None:
+        if basemapType:
+            m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax)
+        else:
+            m = plotUtils.mapObj(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax,fillContinents='None', fix_aspect=True)
+
+    #    title = sTime.strftime('%H%M - ')+eTime.strftime('%H%M UT')
+    #    title = sTime.strftime('Reverse Beacon Network %Y %b %d %H%M UT - ')+eTime.strftime('%Y %b %d %H%M UT')
+        title = sTime.strftime('RBN: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
+        ax.set_title(title)
+
+        # draw parallels and meridians.
+        m.drawparallels(np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+        m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True],fontsize=tick_font_size)
+        m.drawcoastlines(color='0.65')
+        m.drawmapboundary(fill_color='w')
+#        m.nightshade(plot_mTime,color='0.82')
+        #if plotting the 2017 eclipse map then also draw state boundaries
+        if eclipse:
+            m.drawcountries(color='0.65')#np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+            m.drawstates(color='0.65')
+
+    m.scatter(df['de_lon'],df['de_lat'])
 
     return m,fig
 

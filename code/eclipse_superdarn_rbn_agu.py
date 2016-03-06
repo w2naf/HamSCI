@@ -145,6 +145,7 @@ print '#########################################################################
 print 'Plotting RBN Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
 
 rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
+import ipdb; ipdb.set_trace()
 
 # Figure out how many records properly geolocated.
 good_loc    = rbn_df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
