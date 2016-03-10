@@ -29,8 +29,10 @@ lonMax=-65
 
 #2014 ARRL CW SS
 sTime = datetime.datetime(2014,11,2,01,00, 00)
-eTime = datetime.datetime(2014,11,2,03,00, 00)
-eTime = datetime.datetime(2014,11,2,04,00, 00)
+#eTime = datetime.datetime(2014,11,2,03,00, 00)
+#eTime = datetime.datetime(2014,11,2,04,00, 00)
+sTime = datetime.datetime(2014,11,02,04,00, 00)
+eTime = datetime.datetime(2014,11,02,8,00, 00)
 contest="cwSS"
 
 #Set delta time
@@ -96,6 +98,7 @@ while map_sTime<eTime:
 #            if df[df['callsign'=call]]==0:
 #                nodes.append(call)
 
+
 #Re-sort Callsigns 
 df=pd.DataFrame({'callsign': nodes})
 rbn_nodes=df['callsign'].unique()
@@ -103,6 +106,38 @@ rbn_nodes=df['callsign'].unique()
 #Save information in dataframe
 del df
 df=pd.DataFrame({'callsign': rbn_nodes})
+
+##########################################33
+#############
+def rbn_nodes(sTime,eTime, deltaTime=datetime.deltatime(minutes=15))
+    nodes=[]
+    map_sTime=sTime
+    map_eTime=map_sTime+deltaTime
+    while map_sTime<eTime:
+        rbn_df  = rbn_lib.read_rbn_std(map_sTime,map_eTime,data_dir='data/rbn')
+        call=rbn_df['callsign'].unique()
+        for de in call:
+            nodes.append(de)
+        #Increment time 
+        map_sTime=map_eTime
+        map_eTime=map_sTime+deltaTime
+
+    #Re-sort Callsigns 
+    df=pd.DataFrame({'callsign': nodes})
+    rbn_nodes=df['callsign'].unique()
+#########################################
+
+#########################################
+####Main Code
+df, rbn_nodes=rbn_lib.find_node()
+if kk==1:
+    df_nodes=df
+else:
+#    df_nodes=pd.concat([df_nodes, df], ignore_index=True)
+    df_nodes=pd.concat([df_nodes, df])
+for I in range(0,len(rbn_nodes)-1):
+    df['callsign']
+#########################################
 
 df=rbn_lib.station_loc(df,data_dir='data/rbn')
 df = rbn_lib.rbn_region(df, latMin=latMin, latMax=latMax, lonMin=lonMin, lonMax=lonMax, constr_de=True, constr_dx=False)
