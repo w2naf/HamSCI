@@ -48,15 +48,15 @@ filepath    = os.path.join(output_path,filename)
 ##########################################
 #Define signal parameters
 T=1.0/800.0
-N=1000
-f1=100
-f2=200
+N=800
+f1=80
+f2=50
 a1=1
-a2=.5
+a2=5
 theta1=-np.pi/2
 theta2=-np.pi/2
 #time=np.arange(0,4*np.pi,.1)
-time=np.arange(0,.03,1e-5)
+#time=np.arange(0,.03,1e-5)
 time=np.linspace(0.0,N*T, N)
 #time=np.arange(100)
 ##########################################
@@ -74,17 +74,36 @@ if signal=='sinusoid'or signal=='mix':
     sig10=[]
 
     i=0
+    j=complex(0,1)
 
     for t in time:
+#        sig1.append(a1*np.cos(2*np.pi*t+theta1))
+#        sig2.append(a2*np.cos(2*np.pi*t+theta2))
         sig1.append(a1*np.cos(2*np.pi*f1*t+theta1))
         sig2.append(a2*np.cos(2*np.pi*f2*t+theta2))
         sig3.append(sig1[i]+sig2[i])
+#        sig4.append(a1*np.exp((0+j*2*np.pi*f1*t))+a2*np.exp((0+j*2*np.pi*f2*t)))
+        sig4.append(a1*np.exp((0+j*2*np.pi*f1*t)))
 #        sig4.append(sig1[i]*sig3[i])
 #        sig9.append(np.cos(2*np.pi*f2*t))
 #        sig10.append(sig1[i]*sig9[i])
         i=i+1
 
-    sig=np.array(sig1)
+    mysig=np.array(sig4)
+    sig_gen=np.ones((len(mysig),2))
+    sig_gen[:,0]=mysig.real
+    sig_gen[:,1]=mysig.imag
+
+#    sig=np.linspace(0.0,1.0,sig_gen.shape[-2])
+#    sig=np.zeros(sig_gen.shape[-2])
+    sig=[]
+    i=0
+
+    while i<sig_gen.shape[-2]:
+        sig.append(np.complex(sig_gen[i,0],sig_gen[i,1]))
+        i=i+1
+
+    sig=np.array(sig)
 
 if signal=='square' or signal=='mix':
     sqr=np.ones(100)
@@ -113,8 +132,8 @@ if signal=='mix':
 #Preform FFT
 #t = np.arange(256)
 spec = np.fft.fft(sig)
-#freq = np.fft.fftfreq(time.shape[-1])
-freq = np.fft.fftfreq(sig.shape[-1])
+freq = np.fft.fftfreq(time.shape[-1])
+#freq = np.fft.fftfreq(sig.shape[-1])
 import ipdb; ipdb.set_trace()
 
 amp=np.abs(spec)
@@ -143,6 +162,7 @@ ax4     = fig.add_subplot(ny_plots,nx_plots,5)
 
 #ax0.plot(time,sig1,'-m', time, sig2, '-b',time, sig3, '-r',time, sig4,'-g')
 ax0.plot(time,sig,'-m')
+#ax0.plot(time,sig,'-m', time, sig1, 'b', time, sig2, 'r')
 ax1.plot(freq, spec.real, 'b', freq, spec.imag,'g')
 ax2.plot(freq, amp, 'r')
 ax3.plot(freq, phase,'c')
