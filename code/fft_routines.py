@@ -25,24 +25,24 @@ filepath    = os.path.join(output_path,filename)
 ##########################################
 
 ###########################################
-##FFT Test code from iPython`
-##np.fft.fft(np.exp(2j * np.pi * np.arange(8) / 8))
-##array([ -3.44505240e-16 +1.14383329e-17j,
-##             8.00000000e+00 -5.71092652e-15j,
-##                      2.33482938e-16 +1.22460635e-16j,
-##                               1.64863782e-15 +1.77635684e-15j,
-##                                        9.95839695e-17 +2.33482938e-16j,
-##                                                 0.00000000e+00 +1.66837030e-15j,
-##                                                          1.14383329e-17 +1.22460635e-16j,
-##                                                                   -1.64863782e-15 +1.77635684e-15j])
-#t = np.arange(256)
-#sp = np.fft.fft(np.sin(t))
-#freq = np.fft.fftfreq(t.shape[-1])
-#fig = plt.figure()
-#plt.plot(freq, sp.real, 'b', freq, sp.imag,'g')
-##plt.show()
-#fig.savefig(filepath,bbox_inches='tight')
-#import ipdb; ipdb.set_trace()
+#FFT Test code from iPython`
+print np.fft.fft(np.exp(2j * np.pi * np.arange(8) / 8))
+#array([ -3.44505240e-16 +1.14383329e-17j,
+#             8.00000000e+00 -5.71092652e-15j,
+#                      2.33482938e-16 +1.22460635e-16j,
+#                               1.64863782e-15 +1.77635684e-15j,
+#                                        9.95839695e-17 +2.33482938e-16j,
+#                                                 0.00000000e+00 +1.66837030e-15j,
+#                                                          1.14383329e-17 +1.22460635e-16j,
+#                                                                   -1.64863782e-15 +1.77635684e-15j])
+t = np.arange(256)
+sp = np.fft.fft(np.sin(t))
+freq = np.fft.fftfreq(t.shape[-1])
+fig = plt.figure()
+plt.plot(freq, sp.real, 'b', freq, sp.imag,'g')
+#plt.show()
+fig.savefig(filepath,bbox_inches='tight')
+import ipdb; ipdb.set_trace()
 ###########################################
 
 ##########################################
@@ -89,6 +89,7 @@ if signal=='sinusoid'or signal=='mix':
 #        sig10.append(sig1[i]*sig9[i])
         i=i+1
 
+#    Uncomment to use exp code
     mysig=np.array(sig4)
     sig_gen=np.ones((len(mysig),2))
     sig_gen[:,0]=mysig.real
@@ -104,6 +105,10 @@ if signal=='sinusoid'or signal=='mix':
         i=i+1
 
     sig=np.array(sig)
+
+    sig=np.array(sig1)
+
+    
 
 if signal=='square' or signal=='mix':
     sqr=np.ones(100)
