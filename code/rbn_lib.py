@@ -133,7 +133,7 @@ def read_rbn_std(sTime,eTime=None,data_dir=None,
     #import ipdb; ipdb.set_trace()
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
-#    qz      = qrz.Session(qrz_call,qrz_passwd)
+    qz      = qrz.Session(qrz_call,qrz_passwd)
 
     ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
     eDay        =  datetime.datetime(eTime.year,eTime.month,eTime.day)
@@ -520,7 +520,7 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},tit
     return legend
 
 def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_paths=True,
-        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,eclipse=False,path_alpha=None):
+        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,m=None,eclipse=False,path_alpha=None):
     """Plot Reverse Beacon Network data.
 
     **Args**:
@@ -573,21 +573,23 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
     half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
     plot_mTime = sTime + half_time
 
-    if basemapType:
-        m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax)
-    else:
-        m = plotUtils.mapObj(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax,fillContinents='None', fix_aspect=True)
+    if m==None: #added to allow rbn to be plotted over maps of other data 
+        if basemapType:
+            m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax)
+        else:
+            m = plotUtils.mapObj(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax,fillContinents='None', fix_aspect=True)
 
 #    title = sTime.strftime('%H%M - ')+eTime.strftime('%H%M UT')
 #    title = sTime.strftime('Reverse Beacon Network %Y %b %d %H%M UT - ')+eTime.strftime('%Y %b %d %H%M UT')
-    title = sTime.strftime('RBN: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
-    ax.set_title(title)
+    if m==None:
+        title = sTime.strftime('RBN: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
+        ax.set_title(title)
 
-    # draw parallels and meridians.
-    m.drawparallels(np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
-    m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True],fontsize=tick_font_size)
-    m.drawcoastlines(color='0.65')
-    m.drawmapboundary(fill_color='w')
+        # draw parallels and meridians.
+        m.drawparallels(np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+        m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True],fontsize=tick_font_size)
+        m.drawcoastlines(color='0.65')
+        m.drawmapboundary(fill_color='w')
     m.nightshade(plot_mTime,color='0.82')
     #if plotting the 2017 eclipse map then also draw state boundaries
     if eclipse:
