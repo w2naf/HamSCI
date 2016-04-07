@@ -310,6 +310,7 @@ def read_rbn_std(sTime,eTime=None,data_dir=None,
 #        import ipdb; ipdb.set_trace()
 
         #import ipdb; ipdb.set_trace()
+#        import ipdb; ipdb.set_trace()
         return df
 def station_loc(df, data_dir=None,
              qrz_call='km4ege',qrz_passwd='ProjectEllie_2014'):
@@ -590,7 +591,7 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
         m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True],fontsize=tick_font_size)
         m.drawcoastlines(color='0.65')
         m.drawmapboundary(fill_color='w')
-    m.nightshade(plot_mTime,color='0.82')
+        m.nightshade(plot_mTime,color='0.82')
     #if plotting the 2017 eclipse map then also draw state boundaries
     if eclipse:
         m.drawcountries(color='0.65')#np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
