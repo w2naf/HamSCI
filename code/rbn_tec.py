@@ -31,16 +31,25 @@ endTime=datetime.datetime(year, month, day,1,59,59)
 startTime=datetime.datetime(year, month, day,2,0,0)
 #startTime=datetime.datetime(year, month, day,4,20,0)
 startTime=datetime.datetime(year, month, day,6,0,0)
+#starteime on line bellow is when started making only 1 plot every 10 mintues
+startTime=datetime.datetime(year, month, day,16,0,0)
+startTime=datetime.datetime(year, month, day,19,0,0)
+
 #startTime=datetime.datetime(year, month, day,4,20,0)
 endTime=datetime.datetime(year, month, day,23,59,59)
 delta = datetime.timedelta(minutes = 5)
+#delta2 = datetime.timedelta(minutes = 10)
 
 map_sTime=startTime
 map_eTime=map_sTime+delta
 
 #Directories 
 tecDir=os.path.join('output', 'tec','data')
-outputDir=os.path.join('output', 'tec','tec_video')
+#outputDir=os.path.join('output', 'tec','tec_video')
+#Made this edit around 
+#For 1 map every 10 minutes
+outputDir=os.path.join('output', 'tec','tec_10min')
+
 #When making a tec_video
 #handling.prepare_output_dirs({0:outputDir},clear_output_dirs=True)
 
@@ -108,6 +117,9 @@ outputDir=os.path.join('output', 'tec','tec_video')
 kk=0
 kk=24
 kk=72
+#When started making 1 map every 10 minutes
+kk=192
+kk=228
 #Main loop to make TEC/RBN Maps
 while map_sTime<endTime:
     #Create output file for map
@@ -167,8 +179,12 @@ while map_sTime<endTime:
     #fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
     plt.clf()
     
-    #Increment
-    kk=kk+1
-    map_sTime=map_eTime
+#    #Increment
+#    kk=kk+1
+#    map_sTime=map_eTime
+#    map_eTime=map_sTime+delta
+    #For 1 plot every 10 minutes uncomment 2lines bellow 
+    kk=kk+2
+    map_sTime=map_eTime+delta
     map_eTime=map_sTime+delta
 #    import ipdb; ipdb.set_trace()
