@@ -237,7 +237,7 @@ def read_rbn_std(sTime,eTime=None,data_dir=None,
 #        else:
 #            std_eTime=hourly_eTime
 
-#        import ipdb; ipdb.set_trace()
+        #flag 
         hour_flag=0
         while std_eTime<=hourly_eTime:
                 p_filename = 'rbn_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
@@ -254,7 +254,7 @@ def read_rbn_std(sTime,eTime=None,data_dir=None,
                     df['de_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
                     df['de_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
 
-                    # Trim dataframe to just the entries we need.
+                    # Trim dataframe to just the entries in a 1 hour time period.
                     df = df[np.logical_and(df['date'] >= std_sTime,df['date'] < std_eTime)]
 
                     # Look up lat/lons in QRZ.com
@@ -285,18 +285,15 @@ def read_rbn_std(sTime,eTime=None,data_dir=None,
                     df.to_pickle(p_filepath)
                 else:
                     with open(p_filepath,'rb') as fl:
-#                        import ipdb; ipdb.set_trace()
                         df = pickle.load(fl)
-#                import ipdb; ipdb.set_trace()
 
                 if hour_flag==0:
-#                    import ipdb; ipdb.set_trace()
                     df_comp=df
 #                    df_comp=pd.df.copy(deep=True)
                     hour_flag=hour_flag+1
 #                if hour_flag!=0:
+                #When specified start/end times cross over the hour mark
                 else:
-#                    import ipdb; ipdb.set_trace()
                     df_comp=pd.concat([df_comp, df])
 
                 std_sTime=std_eTime
@@ -307,11 +304,8 @@ def read_rbn_std(sTime,eTime=None,data_dir=None,
         # Trim dataframe to just the entries we need.
         df = df_comp[np.logical_and(df_comp['date'] >= sTime,df_comp['date'] < eTime)]
 #        df = df[np.logical_and(df['date'] >= sTime,df['date'] < eTime)]
-#        import ipdb; ipdb.set_trace()
-
-        #import ipdb; ipdb.set_trace()
-#        import ipdb; ipdb.set_trace()
         return df
+
 def station_loc(df, data_dir=None,
              qrz_call='km4ege',qrz_passwd='ProjectEllie_2014'):
     import os               # Provides utilities that help us do os-level operations like create directories
@@ -1101,7 +1095,7 @@ def rbn_map_overlay(df,m=None, scatter_rbn=False, ax=None,legend=True,tick_font_
 
 def rbn_map_node(df, sTime, eTime,m=None, ax=None, tick_font_size=None,ncdxf=False,plot_paths=True,
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,eclipse=False,path_alpha=None):
-    """Plot Reverse Beacon Network data.
+    """Plot Reverse Beacon Network reciever nodes from RBN data. 
 
     **Args**:
         * **[ymin]**: Y-Axis minimum limit
@@ -1359,11 +1353,11 @@ def path_mid(de_lat, de_lon, dx_lat, dx_lon):
         * **[linkDist]: Link distance in meters  
         * **[dist]: Midpoint distance in meters
   
-    .. note:: Untested!
+    .. note:: !
 
      dist
   
-    .. note:: Untested!
+    .. note:: !
 
     Written by Magda Moses 2015 August 02
     """
@@ -1448,7 +1442,7 @@ def get_geomagInd(sTime, eTime=None):
     **Returns**:
         * **[]: 
         
-    .. note:: Untested!
+    .. note:: Untested!???
 
     Written by Magda Moses 2015 August 06
     """
@@ -1533,7 +1527,7 @@ def get_hmF2(sTime,lat, lon, ssn=None, output=True):
         * **[outf]: An array with the output of irisub.for 
         * **[oarr]: Array with input parameters and array with additional output of irisub.for
         
-    .. note:: Untested!
+    .. note:: Untested!????? (It probably has been at this point.)
 
     Written by Magda Moses 2015 August 06
     """
@@ -1784,7 +1778,7 @@ def getLinks(df, center, radius):
         * **df**:  data frame with added columns for the midpoint lat/lon, the link distance, the midipoint legnth and the midpoint distance from the center [km]
         * **link_df**: data frame with only those links whose midpoints fall within the specified radius from center
   
-    .. note:: Untested!
+    .. note:: 
 
     Written by Magda Moses 2015 October 05
     """
@@ -1850,7 +1844,7 @@ def band_averages(df, freq1, freq2):
     **Returns**:
         * **df_avg**:  data frame with the average frequency and distance for each band
 
-    .. note:: Untested!
+    .. note:: !
 
     Written by Magda Moses 2015 October 10
     """
@@ -2181,7 +2175,7 @@ def rbn_crit_freq(df, time, coord_center, freq1=14000, freq2=7000):
         * **df_fc**:  data frame with the output values (calculated critial frequencies and virtual height and iri hmF2
                         df_fc=pd.DataFrame({'date':time[1], 'count1': count1, 'count2': count2, 'd1': d1,'d2': d2,'f1': f1,'f2': f2,'hv': hv, 'fc1': fc,'fc2':fc2, 'hmF2':hmF2})
 
-    .. note:: Untested!
+    .. note:: !????? (It probably has been tested at this point.)
 
     Written by Magda Moses 2015 October 10
     """
