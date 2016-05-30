@@ -46,11 +46,20 @@ map_ax=[[x1,y1, w1, h1], [x1, y2, w1, h1]]
 
 #Define Eclipse Path limits
 eLimits=['ds_NL.csv', 'ds_SL.csv']
-import ipdb; ipdb.set_trace()
-#Define visual 
+
+#Define Eclipse visual 
 eColor=(0.75,0.25,0.5)
 #pZorder is the zorder of the eclipse path with higher zorder=on top
 pZorder=9
+
+#Define VTARA station visual
+vtara_mark='^'
+vtara_c='c'
+
+#Create dictionary for "addons" to the RBN map legend
+addons={}
+addons['vtara']={'label': 'VTARA Stations', 'marker': vtara_mark,'color': vtara_c}
+addons['eclipse']={'label': 'Path of Totality', 'marker': '','color': eColor}
 
 #define RBN alpha
 path_alpha=0.3
@@ -128,7 +137,7 @@ m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=Tru
 m,fig=eclipse_lib.eclipse_swath(infile=eLimits,mapobj=m, fig=fig, pathColor=eColor, pZorder=pZorder)
 
 #Plot VTARA Field stations
-m,fig=eclipse_lib.plot_vtara_stations(m=m, color='c', fig=fig, ax=ax0) 
+m,fig=eclipse_lib.plot_vtara_stations(m=m,symbol=vtara_mark, color=vtara_c, fig=fig, ax=ax0) 
 
 #Plot SuperDARN Radars of interest on map (Fort Hayes West and Fort Hayes East on the map)
 #for code in radars:
@@ -157,7 +166,8 @@ shift=0.035
 x0, y0, width, height = ax0.get_position().bounds
 #y_pos=y0-shift-0.025
 y_pos=y0-shift
-leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.45,y_pos],ncdxf=True,ncol=4)
+#leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.45,y_pos],ncdxf=True,ncol=4,addons=addons)
+leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.45,y_pos],ncdxf=True,ncol=5,addons=addons)
 #leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.360],ncdxf=True)
 title_prop = {'weight':'bold','size':22}
 #        fig.text(0.525,1.025,'HF Communication Paths',ha='center',**title_prop)

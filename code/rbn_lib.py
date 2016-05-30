@@ -482,7 +482,16 @@ bandlist        = band_dict.keys()
 bandlist.sort(reverse=True)
 
 
-def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},title=None,bbox_to_anchor=None,ncdxf=False,ncol=None):
+def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},title=None,bbox_to_anchor=None,ncdxf=False,ncol=None,addons=None):
+    #Note (Magda Moses): Added variable addons to enable adding additional markers to legend if necessary (30 May 2016)
+    #addons is a dictionary with the following format
+    #addons[add]={'label': legend_label, 'marker': symbol,'color': symbol_color}
+        #[add]: index of addons, hence, the legend (with respect to the addons) will be arrandged alphabetically! 
+        #[legend_label]: The label that will appear on the legend
+        #[symbol]: Symbol (if referencing a line/color, then use '')
+        #[color]: Color of symbol/line that will appear on the legend
+    #Also Note that you can change where the addons will appear in the legend by moving the if-statement in which they are created
+
     from matplotlib import pyplot as plt
     import matplotlib.patches as mpatches
 
@@ -500,6 +509,27 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},tit
     fig_tmp = plt.figure()
     ax_tmp = fig_tmp.add_subplot(111)
     ax_tmp.set_visible(False)
+
+    #Use the following block to add additional markers to map
+    if addons!=None:
+        for add in addons.keys():
+            marker=addons[add]['marker']
+            color=addons[add]['color']
+            label=addons[add]['label']
+            #VTARA
+            if add=='vtara':
+                scat = ax_tmp.scatter(0,0,s=dxf_leg_size,marker=marker, color=color)
+                labels.append(label)
+                handles.append(scat)
+#                scat = ax_tmp.scatter(0,0,s=dxf_leg_size,marker=addons['vtara']['marker'], color=addons['vtara']['color'])
+#                labels.append(addons['vtara']['label'])
+#                handles.append(scat)
+            #Eclipse
+            if add=='eclipse':
+                handles.append(mpatches.Patch(color=color,label=label))
+                labels.append(label)
+
+    #Add rest of markers
     scat = ax_tmp.scatter(0,0,color='k',s=50)
     labels.append('RBN Receiver')
     handles.append(scat)

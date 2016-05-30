@@ -67,7 +67,6 @@ def eclipse_swath(infile=None, mapobj=None, fig=None, pathColor='m', lw=2, pZord
     i=0
     for inputF in infile: 
         df0=eclipse_get_path(fname=inputF, filetype=filetype)
-#        import ipdb; ipdb.set_trace()
         if i==0:
             df=df0
         else: 
@@ -75,8 +74,6 @@ def eclipse_swath(infile=None, mapobj=None, fig=None, pathColor='m', lw=2, pZord
             sort_df0=df0.sort(columns='eLon',ascending=False)
             frame= [df,sort_df0]
             df=pd.concat(frame, ignore_index=True)
-            import ipdb; ipdb.set_trace()
-#            import ipdb; ipdb.set_trace()
             
         i+=1
     #df=concat([df, df[ 
