@@ -107,7 +107,7 @@ def eclipse_limits_legend():
 
 #def plot_vtara_stations(m,symbol='^',color='r',,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_paths=True,
 #        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,m=None,eclipse=False,path_alpha=None):
-def plot_vtara_stations(m=None,symbol='^',color='r',ax=None,legend=True,tick_font_size=None,
+def plot_vtara_stations(m=None,symbol='^',color='r',fig=None,ax=None,legend=True,tick_font_size=None,
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,eclipse=False):
     """Plot VTARA Filed Stations
 
@@ -130,13 +130,19 @@ def plot_vtara_stations(m=None,symbol='^',color='r',ax=None,legend=True,tick_fon
     import numpy as np
 #    import pandas as pd
 
-    if ax is None:
-        fig     = plt.figure(figsize=(10,6))
-        ax      = fig.add_subplot(111)
-    else:
-        fig     = ax.get_figure()
-
+#    if ax is None:
+#        fig     = plt.figure(figsize=(10,6))
+#        ax      = fig.add_subplot(111)
+#    else:
+#        fig     = ax.get_figure()
+#
     if m==None: #added to allow rbn to be plotted over maps of other data 
+        if ax is None:
+            fig     = plt.figure(figsize=(10,6))
+            ax      = fig.add_subplot(111)
+        else:
+            fig     = ax.get_figure()
+
         if basemapType:
             m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax)
         else:
@@ -149,22 +155,22 @@ def plot_vtara_stations(m=None,symbol='^',color='r',ax=None,legend=True,tick_fon
         m.drawmapboundary(fill_color='w')
 #        m.nightshade(plot_mTime,color='0.82')
 
-    #if plotting the 2017 eclipse map then also draw state boundaries
-    if eclipse:
-        m.drawcountries(color='0.65')#np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
-        m.drawstates(color='0.65')
-
-    vlat=[]
-#    import ipdb; ipdb.set_trace()
-    vlon=[]
+        #if plotting the 2017 eclipse map then also draw state boundaries
+        if eclipse:
+            m.drawcountries(color='0.65')#np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+            m.drawstates(color='0.65')
     
-    import ipdb; ipdb.set_trace()
+    #Get VTARA sites from dictionary
+    vlat=[]
+    vlon=[]
     for i in np.arange(1,5):
         vlat.append(vtara_dict[i]['lat']) 
         vlon.append(vtara_dict[i]['lon'])
     
+    #plot stations
 #    rx    = m.scatter(lon,lat,color='r',s=2,zorder=100)
-    rx    = m.scatter(vlon,vlat,marker=symbol, color=color,zorder=100)
+#    rx    = m.scatter(vlon,vlat,marker=symbol, color=color,zorder=100)
+    rx    = m.scatter(vlon,vlat,marker=symbol, color=color,s=50,zorder=100)
     
     return m,fig
 

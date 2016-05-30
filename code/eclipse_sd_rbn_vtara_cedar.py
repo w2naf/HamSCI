@@ -127,6 +127,9 @@ m,fig=rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=Tru
 #Plot Eclipse path swath on map
 m,fig=eclipse_lib.eclipse_swath(infile=eLimits,mapobj=m, fig=fig, pathColor=eColor, pZorder=pZorder)
 
+#Plot VTARA Field stations
+m,fig=eclipse_lib.plot_vtara_stations(m=m, color='c', fig=fig, ax=ax0) 
+
 #Plot SuperDARN Radars of interest on map (Fort Hayes West and Fort Hayes East on the map)
 #for code in radars:
 #            overlayRadar(m,fontSize=12,codes=radars,dateTime=map_sTime)
