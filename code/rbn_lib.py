@@ -521,9 +521,6 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},tit
                 scat = ax_tmp.scatter(0,0,s=dxf_leg_size,marker=marker, color=color)
                 labels.append(label)
                 handles.append(scat)
-#                scat = ax_tmp.scatter(0,0,s=dxf_leg_size,marker=addons['vtara']['marker'], color=addons['vtara']['color'])
-#                labels.append(addons['vtara']['label'])
-#                handles.append(scat)
             #Eclipse
             if add=='eclipse':
                 handles.append(mpatches.Patch(color=color,label=label))

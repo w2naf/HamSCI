@@ -58,7 +58,7 @@ vtara_c='c'
 
 #Create dictionary for "addons" to the RBN map legend
 addons={}
-addons['vtara']={'label': 'VTARA Stations', 'marker': vtara_mark,'color': vtara_c}
+addons['vtara']={'label': 'VTARA Station', 'marker': vtara_mark,'color': vtara_c}
 addons['eclipse']={'label': 'Path of Totality', 'marker': '','color': eColor}
 
 #define RBN alpha
