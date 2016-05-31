@@ -59,7 +59,7 @@ path_alpha=0.8
 #Define SuperDARN radars want on the map 
 #Note: Data for the RTI plot will be taken from beam of radars[0]
 #radars=['fhw', 'fhe','cvw','cve']
-radars=['fhw']
+radars=['fhw', 'cvw']
 
 beam=7
 beam=19
@@ -85,7 +85,6 @@ cax_w=0.025
 cax_dim=[cax_x, ax_dim[1],cax_w, ax_dim[3]]
 print ax_dim
 print cax_dim
-#import ipdb; ipdb.set_trace()
 #Specify start and end time
 sTime = datetime.datetime(2013,5,12)
 eTime = datetime.datetime(2013,5,14)
@@ -125,7 +124,9 @@ ny_plots    = 2
 #        for x in range(3):
 #            map_times.append(map_times[-1] + datetime.timedelta(minutes=int_min))
 #
-filename='RTI_Map_Terminator_'+radars[0]+'beam'+str(beam)+'_'+sTime.strftime('%Y%m%d_%H%M')+'-'+eTime.strftime('%Y%m%d_%H%M')+'.png'
+#for rad in radars:
+filename='SD_RTI_Map_Terminator_'+radars[0]+'beam'+str(beam)+'_'+sTime.strftime('%Y%m%d_%H%M')+'-'+eTime.strftime('%Y%m%d_%H%M')+'.png'
+#filename='RTI_Map_Terminator_'+rad+'beam'+str(beam)+'_'+sTime.strftime('%Y%m%d_%H%M')+'-'+eTime.strftime('%Y%m%d_%H%M')+'.png'
 filepath=os.path.join(output_path,filename)
 
 fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
@@ -135,17 +136,54 @@ letters = 'abcd'
 good_count  = 0
 total_count = 0
 
+#Get the radar inforamtion (can give more information including maxgate and beam)
+radar_path='hdw.dat.'+radars[0]
+import ipdb; ipdb.set_trace()
+#sitehdw = pydarn.radar.hdwRead(radar_path)
+#sitehdw = hdwRead(radar_path)
+#site    = pydarn.radar.network().getRadarByCode(rad).getSiteByDate(times[fplot][0])
+site    = pydarn.radar.network().getRadarByCode(radars[0])
+#rad_loc=[sitehdw['geolon'], sitehdw['geolat']] 
+
 map_times = []
 #map_times.append(sTime+timedelta(hours=1))
 map_times.append(sTime)
 map_times.append(eTime)
 #map_times.append(datetime.datetime(2013,5,13,16,5))
+#Sunrise/Sunset Times 
+#jd = getJD(sTime)
+#riseTime, setTime=calcSunRiseSetUTC( jd, rad_loc[1], rad_loc[0])
+#jd = getJD(eTime)
+#eriseTime, esetTime=calcSunRiseSetUTC( jd, rad_loc[1], rad_loc[0])
+import ipdb; ipdb.set_trace()
+
 for kk,map_sTime in enumerate(map_times):
     plt_inx = kk + 1
     ax0     = fig.add_subplot(3,1,plt_inx)
 #            ax0     = fig.add_axes(map_ax[plt_inx])
     map_sTime = map_times[kk]
     map_eTime = map_sTime + datetime.timedelta(minutes=15)
+
+
+    print ''
+    print '################################################################################'
+    print 'Plotting RBN Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
+
+#    rbn_df  = rbn_lib.read_rbn_std(datetime.datetime(2013,5,13,16,5),map_eTime,data_dir='data/rbn')
+#    rbn_df  = rbn_lib.read_rbn(datetime.datetime(2013,5,13,16,5),datetime.datetime(2013,5,13,16,20),data_dir='data/rbn')
+#Created about 8 different 1 minute long pickle files in intial tests run (consider deleting)
+#        #sTime=datetime.datetime(2013,5,13,23,0)with h= 4,5 eTime = sTime + datetime.timedelta(hours = h) #
+#        #sTime=datetime.datetime(2013,3,13,23,0) with h= 5 eTime = sTime + datetime.timedelta(hours = h) #
+#        #sTime=datetime.datetime(2015,8,20,23,0) with h= 5 eTime = sTime + datetime.timedelta(hours = h) #
+#        #sTime=datetime.datetime(2015,8,21,23,0) with h= 5 eTime = sTime + datetime.timedelta(hours = h) #
+#        ##sTime=datetime.datetime(2013,5,14,1,0) with h= 4 eTime = sTime + datetime.timedelta(hours = h) #
+    rbn_df  = rbn_lib.read_rbn(map_sTime,map_sTime + datetime.timedelta(minutes=1),data_dir='data/rbn')
+#    rbn_df  = rbn_lib.read_rbn_std(map_sTime,map_eTime,data_dir='data/rbn')
+
+    # Figure out how many records properly geolocated.
+    good_loc    = rbn_df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+    good_count_map  = good_loc['callsign'].count()
+    total_count_map = len(rbn_df)
 
     print ''
     print '################################################################################'
@@ -191,7 +229,6 @@ for kk,map_sTime in enumerate(map_times):
     x,y, w, h=ax0.get_position().bounds
     print "ax0 map 1-(x,y,width, height)="
     print x,y,w,h
-#            import ipdb; ipdb.set_trace()
     #If this is the first map plotted, then save the axis as ax1
     if plt_inx==1:
         ax1=ax0
@@ -206,7 +243,6 @@ for kk,map_sTime in enumerate(map_times):
 #
     print ax0.get_position().bounds
     print map_sTime
-#            import ipdb; ipdb.set_trace()
     #Titles and other propertites
     title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
     ax0.set_title(title,loc='center')
@@ -242,7 +278,9 @@ ax      = fig.add_axes(ax_dim)
 #        ax      =fig.add_subplot(3,1,3)
 cax     =fig.add_axes(cax_dim)
 #rti_magda.plotRti(sTime=sTime, eTime=eTime, ax=ax, rad=radars[0], params=['power'],yrng=[0,40], gsct=gs, cax=cax, xtick_size=18,ytick_size=18)
-rti_magda.plotRti(sTime=sTime, eTime=eTime, bmnum=beam, ax=ax, rad=radars[0], params=['power'], gsct=gs, cax=cax, xtick_size=18,ytick_size=18)
+#rti_magda.plotRti(sTime=sTime, eTime=eTime, bmnum=beam, ax=ax, rad=radars[0], params=['power'], gsct=gs, cax=cax, xtick_size=18,ytick_size=18, plotTerminator=True)
+rti_magda.plotRti(sTime=sTime, eTime=eTime, bmnum=beam, ax=ax, rad=radars[0], params=['power'],coords='geo', gsct=gs, cax=cax, xtick_size=18,ytick_size=18, plotTerminator=True)
+#rti_magda.plotRti(sTime=sTime, eTime=eTime, bmnum=beam, ax=ax, rad=radars[0], params=['power'], gsct=gs, cax=cax, xtick_size=18,ytick_size=18)
 # ax2      = fig.add_subplot(3,1,3)
 # rti_magda.plotRti(sTime=goes_sTime, eTime=goes_eTime, ax=ax2, rad=radars[1], params=['power'])
 
@@ -259,10 +297,8 @@ x0, y0, width, height = ax.get_position().bounds
 ax_bounds = ax.get_position().bounds
 print "ax0 map2-(x,y,width, height)=" 
 #        print ax0_bounds
-#        import ipdb; ipdb.set_trace()
 
 #Set position of Bottommost plot
-#        import ipdb; ipdb.set_trace()
 width   = width #0.80
 x0      = x0 #(1.-width) / 2. + 0.050
 #        y0      = .050
