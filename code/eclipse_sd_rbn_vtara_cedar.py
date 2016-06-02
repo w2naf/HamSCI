@@ -102,7 +102,7 @@ total_count = 0
 map_sTime=datetime.datetime(2013,5,13,15,5)
 map_eTime = map_sTime + datetime.timedelta(minutes=15)
 
-filename    = 'cedar_2017eclipse_rbn_superdarn_'+sTime.strftime('%Y%m%d_%H%M')+'.png'
+filename    = 'cedar_2017eclipse_rbn_superdarn_vtara_'+sTime.strftime('%Y%m%d_%H%M')+'.png'
 filepath    = os.path.join(output_path,filename)
 
 #        map_times = []

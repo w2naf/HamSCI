@@ -43,7 +43,8 @@ urcrnrlat=latMax+5
 
 #create output directory if none exists
 #output_dir='output'
-output_path = os.path.join('output','rbn','foF2')
+#output_path = os.path.join('output','rbn','foF2')
+output_path = os.path.join('output','rbn','test')
 #handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
 try: 
     os.makedirs(output_path)

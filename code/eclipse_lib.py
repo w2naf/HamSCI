@@ -126,6 +126,7 @@ def plot_vtara_stations(m=None,symbol='^',color='r',fig=None,ax=None,legend=True
 
     import numpy as np
 #    import pandas as pd
+    from davitpy.utils.plotUtils import textHighlighted
 
 #    if ax is None:
 #        fig     = plt.figure(figsize=(10,6))
@@ -168,6 +169,20 @@ def plot_vtara_stations(m=None,symbol='^',color='r',fig=None,ax=None,legend=True
 #    rx    = m.scatter(lon,lat,color='r',s=2,zorder=100)
 #    rx    = m.scatter(vlon,vlat,marker=symbol, color=color,zorder=100)
     rx    = m.scatter(vlon,vlat,marker=symbol, color=color,s=50,zorder=100)
+
+    #Label sites
+    xOff = 0.0
+    ha = .5
+    # Get  coordinates in map projection
+#    if not hasattr(mapObj, 'coords'): 
+#            x,y = mapObj(site.geolon, site.geolat)
+#    else:
+#            x,y = mapObj(site.geolon, site.geolat, coords='geo')
+    fontSize=10
+    zorder=11
+    for i in np.arange(0,4):
+        textHighlighted((vlon[i], vlat[i]), vtara_dict[i+1]['name'], xytext=(xOff, -5), 
+                text_alignment=(ha,1), variant='small-caps', fontsize=fontSize, zorder=zorder)
     
     return m,fig
 

@@ -33,14 +33,18 @@ from davitpy.utils import *
 sTime=datetime.datetime(2013,5,13,23,0)
 sTime=datetime.datetime(2013,3,13,23,0)
 sTime=datetime.datetime(2015,8,21,23,0)
-#sTime=datetime.datetime(2013,5,14,0,0)
+sTime=datetime.datetime(2013,5,14,0,0)
+sTime=datetime.datetime(2013,5,14,1,0)
 eTime = sTime + datetime.timedelta(hours=4) #minutes=15)
+eTime = sTime + datetime.timedelta(hours=5) #minutes=15)
 import ipdb; ipdb.set_trace()
 
 radar='fhw'
+#radar='cvw'
 #beam=23
 beam=8
 beam=19
+beam=21
 #Define visual properties of Radars on the map 
 fovColor=(0.5,0,0.75)
 #fovZorder is the zorder of the FOV with higher zorder=on top
@@ -76,6 +80,9 @@ m = plotUtils.mapObj(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon
 # Plot radar fov\n",
 #overlayFov(m, codes=code, maxGate=75, beams=[0,4,7,8,23])
 overlayRadar(m,fontSize=12,codes=radar,dateTime=sTime)
+fan.plotFan(sTime,['fhe','fhw', 'cve', 'cvw'],param='power',gsct=True, show=False, png=True)
+import ipdb; ipdb.set_trace()
+#plotFan(sTime,rad,interval=60,fileType='fitex',param='power',filtered=False, show=False)
 #overlayFov(m, codes=radar, maxGate=40, model='GS', fovColor=fovColor,zorder=fovZorder)
 overlayFov(m, codes=radar, maxGate=40, beams=beam, model='GS', fovColor=fovColor,zorder=fovZorder)
 fig.savefig(filepath2,bbox_inches='tight')
@@ -88,7 +95,8 @@ fig.savefig(filepath2,bbox_inches='tight')
 del fig
 
 fig = plt.figure(figsize=(14,12)) #Define a figure with a custom size.\n",
-plotRti(sTime, rad=radar, eTime=eTime, bmnum=beam, figure=fig) #,plotTerminator=True)
+plotRti(sTime, rad=radar, eTime=eTime, bmnum=beam, figure=fig, coords='geo',plotTerminator=True)
+#plotRti(sTime, rad=radar, eTime=eTime, bmnum=beam, figure=fig) #,plotTerminator=True)
 #plotRti(sTime, rad=radar, eTime=eTime, bmnum=beam)
 
 #fig.savefig(filepath,bbox_inches='tight')
