@@ -748,6 +748,8 @@ def plotFreq(myFig,times,freq,nave,pos=[.1,.82,.76,.06],xlim=None,xticks=None):
   Modified by NAF 20131101
   """
     
+#  ax = drawAxes(ax,times[fplot],rad,cpid[fplot],bmnum,nrang[fplot],frang[fplot],rsep[fplot],p==len(params)-1,yrng=yrng,coords=coords,\
+#                pos=pos,xtick_size=xtick_size,ytick_size=ytick_size,xticks=xticks,axvlines=axvlines)
   #FIRST, DO THE TFREQ PLOTTING
   ax = myFig.add_axes(pos)
   ax.yaxis.tick_left()

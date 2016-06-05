@@ -66,10 +66,19 @@ path_alpha=0.3
 
 #Define SuperDARN radars want on the map 
 #Note: Data for the RTI plot will be taken from beam of radars[0]
-radars=['fhw', 'fhe','cvw','cve']
+#radars=['fhw', 'fhe','cvw','cve']
+radars=['fhw', 'fhe', 'cve','cvw']
 beam=7
+beam=21
 #Define visual properties of Radars on the map 
 fovColor=(0.5,0,0.75)
+#beamColor=(0.5,0.5,0.75)
+#bColRGB = 7/float(x.shape[0])
+bColRGB = 0
+bCol = (bColRGB/2,bColRGB,1)
+bCol = (0.5,0, 0.75)
+bCol = None 
+
 #fovZorder is the zorder of the FOV with higher zorder=on top
 fovZorder=10
 
@@ -102,7 +111,7 @@ total_count = 0
 map_sTime=datetime.datetime(2013,5,13,15,5)
 map_eTime = map_sTime + datetime.timedelta(minutes=15)
 
-filename    = 'cedar_2017eclipse_rbn_superdarn_vtara_'+sTime.strftime('%Y%m%d_%H%M')+'.png'
+filename    = 'cedar3_2017eclipse_rbn_superdarn_vtara_'+sTime.strftime('%Y%m%d_%H%M')+'.png'
 filepath    = os.path.join(output_path,filename)
 
 #        map_times = []
@@ -143,12 +152,20 @@ m,fig=eclipse_lib.plot_vtara_stations(m=m,symbol=vtara_mark, color=vtara_c, fig=
 #for code in radars:
 #            overlayRadar(m,fontSize=12,codes=radars,dateTime=map_sTime)
 #            overlayFov(m, codes=radars, maxGate=40, beams=beam)
-#First plot radar with the beam shown in the FOV which we will plot RTI data from later (radars[0])
-overlayRadar(m,fontSize=12,codes=radars[0],dateTime=map_sTime)
-overlayFov(m, codes=radars[0], maxGate=40, beams=beam,model='GS', fovColor=fovColor,zorder=fovZorder)
-#Next plot the rest of the radars (no beams will be plotted)
-overlayRadar(m,fontSize=12,codes=radars[1:],dateTime=map_sTime)
-overlayFov(m, codes=radars[1:], maxGate=40, beams=None,model='GS', fovColor=fovColor,zorder=fovZorder)
+
+##First plot radar with the beam shown in the FOV which we will plot RTI data from later (radars[0])
+#overlayRadar(m,fontSize=12,codes=radars[0],dateTime=map_sTime)
+#overlayFov(m, codes=radars[0], maxGate=40, beams=beam,model='GS', fovColor=novColor,zorder=fovZorder)
+##Next plot the rest of the radars (no beams will be plotted)
+#overlayRadar(m,fontSize=12,codes=radars[1:],dateTime=map_sTime)
+#overlayFov(m, codes=radars[1:], maxGate=40, beams=None,model='GS', fovColor=fovColor,zorder=fovZorder)
+
+#First plot radars with no beam shown 
+overlayRadar(m,fontSize=12,codes=radars[0:3],dateTime=map_sTime)
+overlayFov(m, codes=radars[0:3], maxGate=40, beams=None,model='GS', fovColor=fovColor,zorder=fovZorder)
+#Next plot radar with the beam shown in the FOV which we will plot RTI data from later (radars[0])
+overlayRadar(m,fontSize=12,codes=radars[3],dateTime=map_sTime)
+overlayFov(m, codes=radars[3], maxGate=40, beams=beam,model='GS', fovColor=fovColor, beamsColors=bCol, zorder=fovZorder)
 
 
 #Titles and other propertites
