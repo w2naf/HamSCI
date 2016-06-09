@@ -3,19 +3,21 @@ dxf_prop        = {'marker':'*','color':'blue'}
 dxf_leg_size    = 150
 dxf_plot_size   = 50
 
+import geopack
+import os               # Provides utilities that help us do os-level operations like create directories
+import datetime         # Really awesome module for working with dates and times.
+import zipfile
+import urllib2          # Used to automatically download data files from the web.
+import pickle
+
+import numpy as np      #Numerical python - provides array types and operations
+import pandas as pd     #This is a nice utility for working with time-series type data.
+
+from hamtools import qrz
+
+
 def read_rbn(sTime,eTime=None,data_dir=None,
              qrz_call='w2naf',qrz_passwd='hamscience'):
-    import os               # Provides utilities that help us do os-level operations like create directories
-    import datetime         # Really awesome module for working with dates and times.
-    import zipfile
-    import urllib2          # Used to automatically download data files from the web.
-    import pickle
-
-    import numpy as np      #Numerical python - provides array types and operations
-    import pandas as pd     #This is a nice utility for working with time-series type data.
-
-    from hamtools import qrz
-
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
     qz      = qrz.Session(qrz_call,qrz_passwd)
@@ -110,6 +112,15 @@ def read_rbn(sTime,eTime=None,data_dir=None,
         else:
             with open(p_filepath,'rb') as fl:
                 df = pickle.load(fl)
+
+#        lat1, lon1 = 41.0, -75.0
+#        lat2, lon2 = 41.0, -123.0
+        lat1, lon1  = df['de_lat'],df['de_lon']
+        lat2, lon2  = df['dx_lat'],df['dx_lon']
+        sp_mid_lat, sp_mid_lon = geopack.midpoint(lat1,lon1,lat2,lon2)
+
+        df['sp_mid_lat']    = sp_mid_lat
+        df['sp_mid_lon']    = sp_mid_lon
 
         return df
 
@@ -233,15 +244,18 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
 
         for index,row in this_group.iterrows():
             #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
-            de_lat = row['de_lat']
-            de_lon = row['de_lon']
-            dx_lat = row['dx_lat']
-            dx_lon = row['dx_lon']
+            de_lat  = row['de_lat']
+            de_lon  = row['de_lon']
+            dx_lat  = row['dx_lat']
+            dx_lon  = row['dx_lon']
+            mid_lat = row['sp_mid_lat']
+            mid_lon = row['sp_mid_lon']
 
             if row['callsign'] not in de_list: de_list.append(row['callsign'])
             if row['dx'] not in dx_list: dx_list.append(row['dx'])
 
             rx    = m.scatter(de_lon,de_lat,color='k',s=2,zorder=100)
+            mid   = m.scatter(mid_lon,mid_lat,color=color,s=6,zorder=100)
             if plot_paths:
                 line, = m.drawgreatcircle(dx_lon,dx_lat,de_lon,de_lat,color=color)
 

@@ -11,7 +11,6 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
-from davitpy import gme
 import datetime
 
 import rbn_lib
