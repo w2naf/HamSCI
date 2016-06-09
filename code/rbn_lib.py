@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+de_prop         = {'marker':'^','color':'k'}
 dxf_prop        = {'marker':'*','color':'blue'}
 dxf_leg_size    = 150
 dxf_plot_size   = 50
@@ -15,6 +16,10 @@ import pandas as pd     #This is a nice utility for working with time-series typ
 
 from hamtools import qrz
 
+from matplotlib import pyplot as plt
+from mpl_toolkits.basemap import Basemap
+import matplotlib.patches as mpatches
+import matplotlib.markers as mmarkers
 
 def read_rbn(sTime,eTime=None,data_dir=None,
              qrz_call='w2naf',qrz_passwd='hamscience'):
@@ -138,8 +143,6 @@ bandlist.sort(reverse=True)
 
 
 def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},title=None,bbox_to_anchor=None,ncdxf=False,ncol=None):
-    from matplotlib import pyplot as plt
-    import matplotlib.patches as mpatches
 
     if fig is None: fig = plt.gcf() 
 
@@ -151,11 +154,10 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},tit
         handles.append(mpatches.Patch(color=color,label=label))
         labels.append(label)
 
-    import matplotlib.markers as mmarkers
     fig_tmp = plt.figure()
     ax_tmp = fig_tmp.add_subplot(111)
     ax_tmp.set_visible(False)
-    scat = ax_tmp.scatter(0,0,color='k',s=50)
+    scat = ax_tmp.scatter(0,0,s=50,**de_prop)
     labels.append('RBN Receiver')
     handles.append(scat)
     if ncdxf:
@@ -168,6 +170,30 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},tit
     
     legend = fig.legend(handles,labels,ncol=ncol,loc=loc,markerscale=markerscale,prop=prop,title=title,bbox_to_anchor=bbox_to_anchor,scatterpoints=1)
     return legend
+
+def latlon_filt(df,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
+        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
+    """
+    Return an RBN Dataframe with entries only within a specified lat/lon box.
+    """
+    df  = df.copy()
+    lat_tf      = np.logical_and(df[lat_col] >= llcrnrlat,df[lat_col] < urcrnrlat)
+    lon_tf      = np.logical_and(df[lon_col] >= llcrnrlon,df[lon_col] < urcrnrlon)
+    tf          = np.logical_and(lat_tf,lon_tf)
+    df          = df[tf]
+    return df
+
+def dedx_list(df):
+    """
+    Return unique, sorted lists of DE and DX stations in a dataframe.
+    """
+    de_list = df['callsign'].unique().tolist()
+    dx_list = df['dx'].unique().tolist()
+
+    de_list.sort()
+    dx_list.sort()
+
+    return (de_list,dx_list)
 
 def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_paths=True,
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
@@ -188,14 +214,6 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
 
     Written by Nathaniel Frissell 2014 Sept 06
     """
-    import datetime
-    
-    from matplotlib import pyplot as plt
-    from mpl_toolkits.basemap import Basemap
-
-    import numpy as np
-    import pandas as pd
-
     if ax is None:
         fig     = plt.figure(figsize=(10,6))
         ax      = fig.add_subplot(111)
@@ -203,7 +221,20 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
         fig     = ax.get_figure()
 
     #Drop NaNs (QSOs without Lat/Lons)
-    df = df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+    df          = df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+    df_all_nona = df.copy()
+
+    # Filter the dataframe by map lat/lon bounds.
+    # The midpoints are what will be plotted. However, keep track of de and dx stations on map
+    # and overall for informational purposes.
+    latlon_bnds = {'llcrnrlon':llcrnrlon,'llcrnrlat':llcrnrlat,'urcrnrlon':urcrnrlon,'urcrnrlat':urcrnrlat}
+    df          = latlon_filt(df_all_nona,lat_col='sp_mid_lat',lon_col='sp_mid_lon',**latlon_bnds)
+    df_de       = latlon_filt(df_all_nona,lat_col='de_lat',lon_col='de_lon',**latlon_bnds)
+    df_dx       = latlon_filt(df_all_nona,lat_col='dx_lat',lon_col='dx_lon',**latlon_bnds)
+
+    de_list_all, dx_list_all    = dedx_list(df_all_nona)
+    de_list_map, _              = dedx_list(df_de)
+    _, dx_list_map              = dedx_list(df_dx)
 
     ##Sort the data by band and time, then group by band.
     df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
@@ -218,8 +249,6 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
 
     m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection='cyl',ax=ax)
 
-#    title = sTime.strftime('%H%M - ')+eTime.strftime('%H%M UT')
-#    title = sTime.strftime('Reverse Beacon Network %Y %b %d %H%M UT - ')+eTime.strftime('%Y %b %d %H%M UT')
     title = sTime.strftime('RBN: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
     ax.set_title(title)
 
@@ -228,11 +257,10 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
     m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True],fontsize=tick_font_size)
     m.drawcoastlines(color='0.65')
     m.drawmapboundary(fill_color='w')
-    m.nightshade(plot_mTime,color='0.82')
+    m.nightshade(plot_mTime,color='0.50')
     
-    
-    de_list = []
-    dx_list = []
+    rx      = m.scatter(df_de['de_lon'],df_de['de_lat'],s=2,zorder=150,**de_prop)
+
     for band in bandlist:
         try:
             this_group = grouped.get_group(band)
@@ -242,21 +270,15 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
         color = band_dict[band]['color']
         label = band_dict[band]['name']
 
-        for index,row in this_group.iterrows():
-            #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
-            de_lat  = row['de_lat']
-            de_lon  = row['de_lon']
-            dx_lat  = row['dx_lat']
-            dx_lon  = row['dx_lon']
-            mid_lat = row['sp_mid_lat']
-            mid_lon = row['sp_mid_lon']
+        mid   = m.scatter(this_group['sp_mid_lon'],this_group['sp_mid_lat'],alpha=0.8,color=color,s=6,zorder=100)
 
-            if row['callsign'] not in de_list: de_list.append(row['callsign'])
-            if row['dx'] not in dx_list: dx_list.append(row['dx'])
-
-            rx    = m.scatter(de_lon,de_lat,color='k',s=2,zorder=100)
-            mid   = m.scatter(mid_lon,mid_lat,color=color,s=6,zorder=100)
-            if plot_paths:
+        if plot_paths:
+            for index,row in this_group.iterrows():
+                #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
+                de_lat  = row['de_lat']
+                de_lon  = row['de_lon']
+                dx_lat  = row['dx_lat']
+                dx_lon  = row['dx_lon']
                 line, = m.drawgreatcircle(dx_lon,dx_lat,de_lon,de_lat,color=color)
 
                 p = line.get_path()
@@ -278,12 +300,13 @@ def rbn_map_plot(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_pat
         m.scatter(dxf_df['lon'],dxf_df['lat'],s=dxf_plot_size,**dxf_prop)
 
     text = []
-    text.append('TX Stations: {0:d}'.format(len(dx_list)))
-    text.append('RX Stations: {0:d}'.format(len(de_list)))
-    text.append('Plotted Paths: {0:d}'.format(len(df)))
+    text.append('TX All: {0:d}; TX Map: {1:d}'.format( len(dx_list_all), len(dx_list_map) ))
+    text.append('RX All: {0:d}; RX Map: {1:d}'.format( len(de_list_all), len(de_list_map) ))
+    text.append('Plotted links: {0:d}'.format(len(df)))
 
-    props = dict(facecolor='white', alpha=0.9,pad=6)
-    ax.text(0.02,0.05,'\n'.join(text),transform=ax.transAxes,ha='left',va='bottom',size=9,bbox=props)
+    props = dict(facecolor='white', alpha=0.25,pad=6)
+    ax.text(0.02,0.05,'\n'.join(text),transform=ax.transAxes,
+            ha='left',va='bottom',size=9,zorder=500,bbox=props)
 
     if legend:
         band_legend()

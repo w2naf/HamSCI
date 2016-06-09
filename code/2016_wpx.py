@@ -19,15 +19,15 @@ import handling
 output_path = os.path.join('output','wpx2016')
 handling.prepare_output_dirs({0:output_path},clear_output_dirs=True)
 
-#sTime   = datetime.datetime(2016,5,28,23)
-#eTime   = datetime.datetime(2016,5,29,1)
-#cTimes  = []
-#cTimes.append(datetime.datetime(2016,5,29))
-
-sTime   = datetime.datetime(2016,6,3,23)
-eTime   = datetime.datetime(2016,6,4,1)
+sTime   = datetime.datetime(2016,5,28,23)
+eTime   = datetime.datetime(2016,5,29,1)
 cTimes  = []
-cTimes.append(datetime.datetime(2016,6,4))
+cTimes.append(datetime.datetime(2016,5,29))
+
+#sTime   = datetime.datetime(2016,6,3,23)
+#eTime   = datetime.datetime(2016,6,4,1)
+#cTimes  = []
+#cTimes.append(datetime.datetime(2016,6,4))
 
 ## Determine the aspect ratio of subplot.
 xsize       = 10.0
@@ -72,7 +72,11 @@ for cTime in cTimes:
             print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
 
             # Go plot!!
-            rbn_lib.rbn_map_plot(rbn_df,legend=True,ax=ax0,tick_font_size=9,ncdxf=True)
+            latlon_bounds  = {'llcrnrlat':0.,'llcrnrlon':-180.,'urcrnrlat':90.,'urcrnrlon':0.}
+            rbn_lib.rbn_map_plot(rbn_df,legend=True,ax=ax0,
+                    tick_font_size=9,ncdxf=True,plot_paths=False,
+                    **latlon_bounds)
+                    
             print map_sTime
 
 

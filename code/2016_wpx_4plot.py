@@ -20,19 +20,19 @@ import handling
 output_path = os.path.join('output','wpx2016')
 handling.prepare_output_dirs({0:output_path},clear_output_dirs=True)
 
-#sTime   = datetime.datetime(2016,5,28,23)
-#eTime   = datetime.datetime(2016,5,29,1)
-#cTimes  = []
-#cTimes.append(datetime.datetime(2016,5,29))
-
-sTime   = datetime.datetime(2016,6,3,23)
-eTime   = datetime.datetime(2016,6,4,1)
+sTime   = datetime.datetime(2016,5,28,23)
+eTime   = datetime.datetime(2016,5,29,1)
 cTimes  = []
-cTimes.append(datetime.datetime(2016,6,4))
+cTimes.append(datetime.datetime(2016,5,29))
+
+#sTime   = datetime.datetime(2016,6,3,23)
+#eTime   = datetime.datetime(2016,6,4,1)
+#cTimes  = []
+#cTimes.append(datetime.datetime(2016,6,4))
 
 ## Determine the aspect ratio of subplot.
-xsize       = 6.5
-ysize       = 5.5
+xsize       = 7.5
+ysize       = 6.5
 nx_plots    = 2
 ny_plots    = 2
 
@@ -76,21 +76,22 @@ for cTime in cTimes:
             print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
 
             # Go plot!!
-            rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=True)
-            title = map_sTime.strftime('%H%M - ')+map_eTime.strftime('%H%M UT')
+            rbn_lib.rbn_map_plot(rbn_df,legend=False,ax=ax0,tick_font_size=9,ncdxf=False,plot_paths=False)
+            title = map_sTime.strftime('%d %b %Y %H%M UT - ')+map_eTime.strftime('%d %b %Y %H%M UT')
             ax0.set_title(title)
-            letter_prop = {'weight':'bold','size':20}
+            letter_prop = {'weight':'bold','size':16}
             ax0.text(.015,.90,'({0})'.format(letters[kk]),transform=ax0.transAxes,**letter_prop)
 
             print map_sTime
 
-        leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.180],ncdxf=True)
+#        leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.48,0.180],ncdxf=False)
+        leg = rbn_lib.band_legend(fig,loc='center',bbox_to_anchor=[0.45,0.180],ncdxf=False)
 
         title_prop = {'weight':'bold','size':22}
         fig.text(0.525,0.925,'Reverse Beacon Network',ha='center',**title_prop)
 
         fig.savefig(filepath,bbox_inches='tight')
-        fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
+#        fig.savefig(filepath[:-3]+'pdf',bbox_inches='tight')
         plt.clf()
 
         good_pct = float(good_count)/total_count * 100.
