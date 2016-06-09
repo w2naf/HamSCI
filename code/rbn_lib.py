@@ -16,10 +16,14 @@ import pandas as pd     #This is a nice utility for working with time-series typ
 
 from hamtools import qrz
 
+import matplotlib
+matplotlib.use('Agg')
+
 from matplotlib import pyplot as plt
 from mpl_toolkits.basemap import Basemap
 import matplotlib.patches as mpatches
 import matplotlib.markers as mmarkers
+from matplotlib.collections import PolyCollection
 
 def read_rbn(sTime,eTime=None,data_dir=None,
              qrz_call='w2naf',qrz_passwd='hamscience'):
@@ -195,6 +199,56 @@ def dedx_list(df):
 
     return (de_list,dx_list)
 
+class RbnGeoGrid(object):
+    """
+    Define a geographic grid and bin RBN data.
+    """
+    def __init__(self,df=None,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
+        lat_min=-90. ,lat_max=90. ,lat_step=2.5,
+        lon_min=-180.,lon_max=180.,lon_step=2.5):
+
+        lat_vec         = np.arange(lat_min,lat_max,lat_step)
+        lon_vec         = np.arange(lon_min,lon_max,lon_step)
+
+        self.lat_min    = lat_min
+        self.lat_max    = lat_max
+        self.lat_step   = lat_step
+        self.lon_min    = lon_min
+        self.lon_max    = lon_max
+        self.lon_step   = lon_step
+        self.lat_vec    = lat_vec
+        self.lon_vec    = lon_vec
+        self.df         = df
+        self.lat_col    = lat_col
+        self.lon_col    = lon_col
+
+    def grid_mean(self):
+        df          = self.df
+        lat_vec     = self.lat_vec
+        lon_vec     = self.lon_vec
+        lat_step    = self.lat_step
+        lon_step    = self.lon_step
+        lat_col     = self.lat_col
+        lon_col     = self.lon_col
+
+        data_arr    = np.ndarray((lat_vec.size,lon_vec.size),dtype=np.float)
+        data_arr[:] = np.nan
+
+        for lat_inx,lat in enumerate(lat_vec):
+            for lon_inx,lon in enumerate(lon_vec):
+                lat_tf  = np.logical_and(df[lat_col] >= lat, df[lat_col] < lat+lat_step)
+                lon_tf  = np.logical_and(df[lon_col] >= lon, df[lon_col] < lon+lon_step)
+                tf      = np.logical_and(lat_tf,lon_tf)
+                if np.count_nonzero(tf) == 0: continue
+            
+                cell_freq                   = df[tf]['freq'].mean()
+                data_arr[lat_inx,lon_inx]   = cell_freq
+
+        data_arr        = data_arr/1000.
+        self.data_arr   = data_arr
+        
+##        data_arr    = np.ndarray
+
 class RbnMap(object):
     """Plot Reverse Beacon Network data.
 
@@ -365,6 +419,43 @@ class RbnMap(object):
 
     def plot_band_legend(self,*args,**kw_args):
         band_legend(*args,**kw_args)
+
+    def overlay_rbn_grid(self,rbn_grid_obj,color='0.8'):
+        """
+        Overlay the grid from an RbnGeoGrid object.
+        """
+        self.m.drawparallels(rbn_grid_obj.lat_vec,color=color)
+        self.m.drawmeridians(rbn_grid_obj.lon_vec,color=color)
+
+        m   = self.m
+        rgo = rbn_grid_obj
+        lat_vec = rgo.lat_vec
+        lon_vec = rgo.lon_vec
+        lat_step = rgo.lat_step
+        lon_step = rgo.lon_step
+        data_arr= rgo.data_arr
+
+        scan    = []
+        verts   = []
+        for lat_inx,lat in enumerate(lat_vec):
+            for lon_inx,lon in enumerate(lon_vec):
+                data    = data_arr[lat_inx,lon_inx]
+                if np.isnan(data): continue
+                scan.append(data)
+
+                x1,y1 = m(lon,lat)
+                x2,y2 = m(lon,lat+lat_step)
+                x3,y3 = m(lon+lon_step,lat+lat_step)
+                x4,y4 = m(lon+lon_step,lat)
+                verts.append(((x1,y1),(x2,y2),(x3,y3),(x4,y4),(x1,y1)))
+
+        scale   = (0.,30.)
+        cmap    = matplotlib.cm.jet
+        bounds  = np.linspace(scale[0],scale[1],256)
+        norm    = matplotlib.colors.BoundaryNorm(bounds,cmap.N)
+        pcoll   = PolyCollection(np.array(verts),edgecolors='face',closed=False,cmap=cmap,norm=norm,zorder=99)
+        pcoll.set_array(np.array(scan))
+        self.ax.add_collection(pcoll,autolim=False)
 
 def rbn_map_plot(df,ax=None,legend=True,tick_font_size=9,ncdxf=False,plot_paths=True,
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):

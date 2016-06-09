@@ -78,9 +78,16 @@ for cTime in cTimes:
 
             print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
 
+
             # Go plot!!
             latlon_bounds  = {'llcrnrlat':0.,'llcrnrlon':-180.,'urcrnrlat':90.,'urcrnrlon':0.}
-            rbn_map = rbn_lib.RbnMap(rbn_df,ax=ax0,**latlon_bounds)
+            rbn_map         = rbn_lib.RbnMap(rbn_df,ax=ax0,**latlon_bounds)
+            rbn_map.default_plot()
+
+            rbn_grid        = rbn_lib.RbnGeoGrid(rbn_map.df)
+            rbn_grid.grid_mean()
+
+            rbn_map.overlay_rbn_grid(rbn_grid)
 
             print map_sTime
 
