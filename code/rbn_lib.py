@@ -122,6 +122,11 @@ def read_rbn(sTime,eTime=None,data_dir=None,
             with open(p_filepath,'rb') as fl:
                 df = pickle.load(fl)
 
+#            tf = df['callsign'] == 'N7TR'
+##            tf = df['callsign'] == 'AC0C'
+#            df = df[tf]
+
+
 #        lat1, lon1 = 41.0, -75.0
 #        lat2, lon2 = 41.0, -123.0
         lat1, lon1  = df['de_lat'],df['de_lon']
@@ -204,8 +209,8 @@ class RbnGeoGrid(object):
     Define a geographic grid and bin RBN data.
     """
     def __init__(self,df=None,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
-        lat_min=-90. ,lat_max=90. ,lat_step=2.5,
-        lon_min=-180.,lon_max=180.,lon_step=2.5):
+        lat_min=-90. ,lat_max=90. ,lat_step=1.0,
+        lon_min=-180.,lon_max=180.,lon_step=1.0):
 
         lat_vec         = np.arange(lat_min,lat_max,lat_step)
         lon_vec         = np.arange(lon_min,lon_max,lon_step)
@@ -239,7 +244,7 @@ class RbnGeoGrid(object):
                 lat_tf  = np.logical_and(df[lat_col] >= lat, df[lat_col] < lat+lat_step)
                 lon_tf  = np.logical_and(df[lon_col] >= lon, df[lon_col] < lon+lon_step)
                 tf      = np.logical_and(lat_tf,lon_tf)
-                if np.count_nonzero(tf) == 0: continue
+                if np.count_nonzero(tf) <= 0: continue
             
                 cell_freq                   = df[tf]['freq'].mean()
                 data_arr[lat_inx,lon_inx]   = cell_freq
@@ -449,13 +454,13 @@ class RbnMap(object):
                 x4,y4 = m(lon+lon_step,lat)
                 verts.append(((x1,y1),(x2,y2),(x3,y3),(x4,y4),(x1,y1)))
 
-        scale   = (0.,30.)
-        cmap    = matplotlib.cm.jet
-        bounds  = np.linspace(scale[0],scale[1],256)
-        norm    = matplotlib.colors.BoundaryNorm(bounds,cmap.N)
-        pcoll   = PolyCollection(np.array(verts),edgecolors='face',closed=False,cmap=cmap,norm=norm,zorder=99)
-        pcoll.set_array(np.array(scan))
-        self.ax.add_collection(pcoll,autolim=False)
+#        scale   = (0.,30.)
+#        cmap    = matplotlib.cm.jet
+#        bounds  = np.linspace(scale[0],scale[1],256)
+#        norm    = matplotlib.colors.BoundaryNorm(bounds,cmap.N)
+#        pcoll   = PolyCollection(np.array(verts),edgecolors='face',closed=False,cmap=cmap,norm=norm,zorder=99)
+#        pcoll.set_array(np.array(scan))
+#        self.ax.add_collection(pcoll,autolim=False)
 
 def rbn_map_plot(df,ax=None,legend=True,tick_font_size=9,ncdxf=False,plot_paths=True,
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):

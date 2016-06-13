@@ -3,6 +3,7 @@
 
 import sys
 import os
+import datetime
 
 import matplotlib
 matplotlib.use('Agg')
@@ -11,30 +12,36 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
-import datetime
-
 import rbn_lib
 import handling
+event_dir   = None
 
-output_path = os.path.join('output','wpx2016')
+def gen_time_list(sTime,eTime,cTime_dt=datetime.timedelta(minutes=60)):
+    """ Generate a list of datetime.datetimes spaced cTime_dt apart.  """
+    cTimes  = [sTime]
+    while cTimes[-1] <= eTime:
+        cTimes.append(cTimes[-1]+cTime_dt)
+
+    return cTimes
+
+# 2014 Nov Sweepstakes
+#seTimes = ( datetime.datetime(2014,11,8), datetime.datetime(2014,11,9) )
+
+# 2015 Nov Sweepstakes
+seTimes = ( datetime.datetime(2015,11,7), datetime.datetime(2015,11,10) )
+
+# 2016 CQ WPX CW
+#seTimes = ( datetime.datetime(2016,5,28,18), datetime.datetime(2016,5,29,6) )
+
+
+# Script processing begins here. ###############################################
+cTimes      = gen_time_list(*seTimes)
+cTimes      = [cTimes[0]]
+
+if event_dir is None:
+    event_dir = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(*seTimes[:2])
+output_path = os.path.join('output',event_dir)
 handling.prepare_output_dirs({0:output_path},clear_output_dirs=True)
-
-sTime   = datetime.datetime(2016,5,28,23)
-eTime   = datetime.datetime(2016,5,29,1)
-
-cTimes  = [datetime.datetime(2016,5,29)]
-
-#cTime_0 = datetime.datetime(2016,5,28,23)
-#cTime_1 = datetime.datetime(2016,5,29,1)
-#cTime_dt = datetime.timedelta(minutes=15)
-#cTimes  = [cTime_0]
-#while cTimes[-1] <= cTime_1:
-#    cTimes.append(cTimes[-1]+cTime_dt)
-
-##sTime   = datetime.datetime(2016,6,3,23)
-##eTime   = datetime.datetime(2016,6,4,1)
-##cTimes  = []
-##cTimes.append(datetime.datetime(2016,6,4))
 
 ## Determine the aspect ratio of subplot.
 xsize       = 10.0
@@ -80,7 +87,9 @@ for cTime in cTimes:
 
 
             # Go plot!!
-            latlon_bounds  = {'llcrnrlat':0.,'llcrnrlon':-180.,'urcrnrlat':90.,'urcrnrlon':0.}
+#            latlon_bounds  = {'llcrnrlat':0.,'llcrnrlon':-180.,'urcrnrlat':90.,'urcrnrlon':0.}
+#            latlon_bounds  = {'llcrnrlat':-90.,'llcrnrlon':-180.,'urcrnrlat':90.,'urcrnrlon':180.}
+            latlon_bounds  = {'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.}
             rbn_map         = rbn_lib.RbnMap(rbn_df,ax=ax0,**latlon_bounds)
             rbn_map.default_plot()
 
