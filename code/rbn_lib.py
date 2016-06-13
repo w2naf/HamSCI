@@ -161,8 +161,8 @@ def read_rbn(sTime,eTime=None,data_dir=None,
         lat2, lon2  = df['dx_lat'],df['dx_lon']
         sp_mid_lat, sp_mid_lon = geopack.midpoint(lat1,lon1,lat2,lon2)
 
-        df['sp_mid_lat']    = sp_mid_lat
-        df['sp_mid_lon']    = sp_mid_lon
+        df.loc[:,'sp_mid_lat']    = sp_mid_lat
+        df.loc[:,'sp_mid_lon']    = sp_mid_lon
 
         return df
 
@@ -363,7 +363,7 @@ class RbnMap(object):
 
         ##Sort the data by band and time, then group by band.
         df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
-        srt         = df.sort(['band','date'])
+        srt         = df.sort_values(by=['band','date'])
         band_groups = srt.groupby('band')
 
         sTime       = df['date'].min()
