@@ -1,4 +1,6 @@
-#This code is used to generate the RBN-GOES map for the Space Weather feature article.
+#!/usr/bin/env python
+#This script downloads and geolocates RBN data.
+
 import datetime
 import rbn_lib
 
