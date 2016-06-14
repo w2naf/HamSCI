@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-de_prop         = {'marker':'^','color':'k'}
+de_prop         = {'marker':'^','edgecolor':'k','facecolor':'white'}
 dxf_prop        = {'marker':'*','color':'blue'}
 dxf_leg_size    = 150
 dxf_plot_size   = 50
@@ -178,7 +178,8 @@ def read_rbn(sTime,eTime=None,data_dir=None,
 
         return df
 
-def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},title=None,bbox_to_anchor=None,ncdxf=False,ncol=None):
+def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
+        title=None,bbox_to_anchor=None,ncdxf=False,ncol=None):
 
     if fig is None: fig = plt.gcf() 
 
@@ -308,13 +309,26 @@ class RbnMap(object):
         self.__prep_dataframes__(df)
         self.__setup_map__(ax=ax,tick_font_size=tick_font_size,**self.latlon_bnds)
 
-    def default_plot(self):
-        self.plot_de()
-        self.plot_midpoints()
-#        self.plot_paths()
-        self.plot_ncdxf()
-        self.plot_link_stats()
-        self.plot_band_legend()
+    def default_plot(self,
+            plot_de         = True,
+            plot_midpoints  = True,
+            plot_paths      = False,
+            plot_ncdxf      = False,
+            plot_stats      = True,
+            plot_legend     = True):
+
+        if plot_de:
+            self.plot_de()
+        if plot_midpoints:
+            self.plot_midpoints()
+        if plot_paths:
+            self.plot_paths()
+        if plot_ncdxf:
+            self.plot_ncdxf()
+        if plot_stats:
+            self.plot_link_stats()
+        if plot_legend:
+            self.plot_band_legend()
 
     def __setup_map__(self,ax=None,tick_font_size=None,llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
         sTime       = self.metadata['sTime']
@@ -378,10 +392,11 @@ class RbnMap(object):
         self.df_dx          = df_dx
         self.band_groups    = band_groups
 
-    def plot_de(self,s=1,zorder=150):
+    def plot_de(self,s=25,zorder=150):
         m       = self.m
         df_de   = self.df_de
-        rx      = m.scatter(df_de['de_lon'],df_de['de_lat'],s=s,zorder=zorder,**de_prop)
+        rx      = m.scatter(df_de['de_lon'],df_de['de_lat'],
+                s=s,zorder=zorder,**de_prop)
 
 
     def plot_midpoints(self):
