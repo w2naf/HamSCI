@@ -25,6 +25,18 @@ import matplotlib.patches as mpatches
 import matplotlib.markers as mmarkers
 from matplotlib.collections import PolyCollection
 
+# Set up a dictionary which identifies which bands we want and some plotting attributes for each band
+band_dict       = {}
+band_dict[28]   = {'name': '10 m',  'freq': '28 MHz',  'color':'red'}
+band_dict[21]   = {'name': '15 m',  'freq': '21 MHz',  'color':'orange'}
+band_dict[14]   = {'name': '20 m',  'freq': '14 MHz',  'color':'yellow'}
+band_dict[7]    = {'name': '40 m',  'freq': '7 MHz',   'color':'green'}
+band_dict[3]    = {'name': '80 m',  'freq': '3.5 MHz', 'color':'blue'}
+band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
+
+bandlist        = band_dict.keys()
+bandlist.sort(reverse=True)
+
 def read_rbn(sTime,eTime=None,data_dir=None,
              qrz_call='w2naf',qrz_passwd='hamscience'):
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
@@ -165,19 +177,6 @@ def read_rbn(sTime,eTime=None,data_dir=None,
         df.loc[:,'sp_mid_lon']    = sp_mid_lon
 
         return df
-
-# Set up a dictionary which identifies which bands we want and some plotting attributes for each band
-band_dict       = {}
-band_dict[28]   = {'name': '10 m',  'freq': '28 MHz',  'color':'red'}
-band_dict[21]   = {'name': '15 m',  'freq': '21 MHz',  'color':'orange'}
-band_dict[14]   = {'name': '20 m',  'freq': '14 MHz',  'color':'yellow'}
-band_dict[7]    = {'name': '40 m',  'freq': '7 MHz',   'color':'green'}
-band_dict[3]    = {'name': '80 m',  'freq': '3.5 MHz', 'color':'blue'}
-band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
-
-bandlist        = band_dict.keys()
-bandlist.sort(reverse=True)
-
 
 def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},title=None,bbox_to_anchor=None,ncdxf=False,ncol=None):
 
