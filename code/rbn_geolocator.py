@@ -7,25 +7,31 @@ import rbn_lib
 def gen_time_list(sTime,eTime,cTime_dt=datetime.timedelta(minutes=60)):
     """ Generate a list of datetime.datetimes spaced cTime_dt apart.  """
     cTimes  = [sTime]
-    while cTimes[-1] <= eTime:
-        cTimes.append(cTimes[-1]+cTime_dt)
+    while cTimes[-1] < eTime:
+        next_time = cTimes[-1]+cTime_dt
+        if next_time >= eTime:
+            break
+        cTimes.append(next_time)
 
     return cTimes
 
-# 2014 Nov Sweepstakes
-#seTimes = ( datetime.datetime(2014,11,8), datetime.datetime(2014,11,9) )
-
+cTimes  = []
 # 2015 Nov Sweepstakes
 seTimes = ( datetime.datetime(2015,11,7), datetime.datetime(2015,11,10) )
+cTimes      += gen_time_list(*seTimes)
+
+# 2014 Nov Sweepstakes
+seTimes = ( datetime.datetime(2014,11,1), datetime.datetime(2014,11,4) )
+cTimes      += gen_time_list(*seTimes)
 
 # 2016 CQ WPX CW
 #seTimes = ( datetime.datetime(2016,5,28,18), datetime.datetime(2016,5,29,6) )
 
 # Script processing begins here. ###############################################
-cTimes      = gen_time_list(*seTimes)
 
-for cTime in cTimes:
-    eTime = sTime + datetime.timedelta(minutes=15)
+for sTime in cTimes:
+
+    eTime = sTime + datetime.timedelta(minutes=59)
 
     print ''
     print '################################################################################'
@@ -35,11 +41,8 @@ for cTime in cTimes:
 
     # Figure out how many records properly geolocated.
     good_loc        = rbn_df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
-    good_count_map  = good_loc['callsign'].count()
-    total_count_map = len(rbn_df)
-    good_pct_map    = float(good_count_map) / total_count_map * 100.
+    good_count      = good_loc['callsign'].count()
+    total_count     = len(rbn_df)
+    good_pct        = float(good_count) / total_count * 100.
 
-    good_count      += good_count_map
-    total_count     += total_count_map
-
-    print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
+    print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count,total_count,good_pct)
