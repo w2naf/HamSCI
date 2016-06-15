@@ -176,6 +176,8 @@ def read_rbn(sTime,eTime=None,data_dir=None,qrz_call='w2naf',qrz_passwd='hamscie
         df.loc[:,'sp_mid_lat']    = sp_mid_lat
         df.loc[:,'sp_mid_lon']    = sp_mid_lon
 
+        df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
+
         return df
 
 class RbnObject(object):
@@ -195,12 +197,12 @@ class RbnObject(object):
         cmt     = '[{}] {}'.format(data_set,comment)
         #Save data to be returned as self.variables
         
-        rbn_data_set    = RbnDataSet(df,parent=self,comment=comment)
-        setattr(self,data_set,rbn_data_set)
-        setattr(rbn_data_set,'metadata',metadata)
+        rbn_ds  = RbnDataSet(df,parent=self,comment=comment)
+        setattr(self,data_set,rbn_ds)
+        setattr(rbn_ds,'metadata',metadata)
 
-        #Set the new data active.
-        rbn_data_set.set_active()
+        rbn_ds.dropna()
+
 
     def get_data_sets(self):
         """Return a sorted list of musicDataObj's contained in this musicArray.
@@ -232,6 +234,46 @@ class RbnDataSet(object):
 
         self.history = {datetime.datetime.now():comment}
 
+    def dropna(self,new_data_set='dropna',comment='Remove Non-Geolocated Spots'):
+        new_ds      = self.copy(new_data_set,comment)
+        new_ds.df   = new_ds.df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+        new_ds.set_active()
+        return new_ds
+
+    def latlon_filt(self,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
+        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
+
+        arg_dct = {'lat_col':lat_col,'lon_col':lon_col,'llcrnrlon':llcrnrlon,'llcrnrlat':llcrnrlat,'urcrnrlon':urcrnrlon,'urcrnrlat':urcrnrlat}
+        new_ds  = self.apply(latlon_filt,arg_dct)
+
+        md_up   = {'llcrnrlon':llcrnrlon,'llcrnrlat':llcrnrlat,'urcrnrlon':urcrnrlon,'urcrnrlat':urcrnrlat}
+        new_ds.metadata.update(md_up)
+        return new_ds
+
+    def get_band_group(self,band):
+        if not hasattr(self,'band_groups'):
+            srt                 = self.df.sort_values(by=['band','date'])
+            self.band_groups    = srt.groupby('band')
+
+        try:
+            this_group  = self.band_groups.get_group(band)
+        except:
+            this_group  = None
+
+        return this_group
+
+    def dedx_list(self):
+        """
+        Return unique, sorted lists of DE and DX stations in a dataframe.
+        """
+        de_list = self.df['callsign'].unique().tolist()
+        dx_list = self.df['dx'].unique().tolist()
+
+        de_list.sort()
+        dx_list.sort()
+
+        return (de_list,dx_list)
+
     def apply(self,function,arg_dct,new_data_set=None,comment=None):
         if new_data_set is None:
             new_data_set = function.func_name
@@ -240,7 +282,7 @@ class RbnDataSet(object):
             comment = str(arg_dct)
 
         new_ds      = self.copy(new_data_set,comment)
-        new_ds.df   = function(self.df)
+        new_ds.df   = function(self.df,**arg_dct)
         new_ds.set_active()
 
         return new_ds
@@ -270,7 +312,7 @@ class RbnDataSet(object):
         new_data_set_obj    = copy.copy(self)
         setattr(self.parent,new_data_set,new_data_set_obj)
 
-        new_data_set_obj.df         = self.df.copy()
+        new_data_set_obj.df         = copy.deepcopy(self.df)
         new_data_set_obj.metadata   = copy.deepcopy(self.metadata)
         new_data_set_obj.history    = copy.deepcopy(self.history)
 
@@ -286,18 +328,6 @@ class RbnDataSet(object):
         Written by Nathaniel A. Frissell, Summer 2016
         """
         self.parent.active = self
-
-    def set_metadata(self,**metadata):
-        """Adds information to this data_set's  metadata dictionary.
-
-        Parameters
-        ----------
-        **metadata :
-            keywords sent to matplot lib, etc.
-
-        Written by Nathaniel A. Frissell, Summer 2016
-        """
-        self.metadata.update(metadata)
 
     def print_metadata(self):
         """Nicely print all of the metadata associated with the current data_set.
@@ -367,24 +397,12 @@ def latlon_filt(df,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
     """
     Return an RBN Dataframe with entries only within a specified lat/lon box.
     """
-    df  = df.copy()
+    df          = df.copy()
     lat_tf      = np.logical_and(df[lat_col] >= llcrnrlat,df[lat_col] < urcrnrlat)
     lon_tf      = np.logical_and(df[lon_col] >= llcrnrlon,df[lon_col] < urcrnrlon)
     tf          = np.logical_and(lat_tf,lon_tf)
     df          = df[tf]
     return df
-
-def dedx_list(df):
-    """
-    Return unique, sorted lists of DE and DX stations in a dataframe.
-    """
-    de_list = df['callsign'].unique().tolist()
-    dx_list = df['dx'].unique().tolist()
-
-    de_list.sort()
-    dx_list.sort()
-
-    return (de_list,dx_list)
 
 class RbnGeoGrid(object):
     """
@@ -454,13 +472,31 @@ class RbnMap(object):
 
     Written by Nathaniel Frissell 2014 Sept 06
     """
-    def __init__(self,df,ax=None,tick_font_size=9,
-            llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
-        md                  = {}
-        self.metadata       = md
-        self.latlon_bnds    = {'llcrnrlon':llcrnrlon,'llcrnrlat':llcrnrlat,'urcrnrlon':urcrnrlon,'urcrnrlat':urcrnrlat}
+    def __init__(self,rbn_obj,data_set='active',data_set_all='DS001_dropna',ax=None,tick_font_size=9,
+            llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None):
+        self.rbn_obj        = rbn_obj
+        self.data_set       = getattr(rbn_obj,data_set)
+        self.data_set_all   = getattr(rbn_obj,data_set_all)
 
-        self.__prep_dataframes__(df)
+        ds                  = self.data_set
+        ds_md               = self.data_set.metadata
+
+        llb = {}
+        if llcrnrlon is None:
+           llb['llcrnrlon'] = ds_md.get('llcrnrlon',-180.) 
+        if llcrnrlat is None:
+           llb['llcrnrlat'] = ds_md.get('llcrnrlat', -90.) 
+        if urcrnrlon is None:
+           llb['urcrnrlon'] = ds_md.get('urcrnrlon', 180.) 
+        if urcrnrlat is None:
+           llb['urcrnrlat'] = ds_md.get('urcrnrlat',  90.) 
+
+        self.latlon_bnds    = llb
+
+        self.metadata       = {}
+        self.metadata['sTime'] = ds.df['date'].min()
+        self.metadata['eTime'] = ds.df['date'].max()
+
         self.__setup_map__(ax=ax,tick_font_size=tick_font_size,**self.latlon_bnds)
 
     def default_plot(self,
@@ -515,50 +551,16 @@ class RbnMap(object):
         self.ax         = ax
         self.m          = m
 
-    def __prep_dataframes__(self,df):
-        #Drop NaNs (QSOs without Lat/Lons)
-        df          = df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
-        df_all_nona = df.copy()
-
-        # Filter the dataframe by map lat/lon bounds.
-        # The midpoints are what will be plotted. However, keep track of de and dx stations on map
-        # and overall for informational purposes.
-        latlon_bnds = self.latlon_bnds
-        df          = latlon_filt(df_all_nona,lat_col='sp_mid_lat',lon_col='sp_mid_lon',**latlon_bnds)
-        df_de       = latlon_filt(df_all_nona,lat_col='de_lat',lon_col='de_lon',**latlon_bnds)
-        df_dx       = latlon_filt(df_all_nona,lat_col='dx_lat',lon_col='dx_lon',**latlon_bnds)
-
-        ##Sort the data by band and time, then group by band.
-        df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
-        srt         = df.sort_values(by=['band','date'])
-        band_groups = srt.groupby('band')
-
-        sTime       = df['date'].min()
-        eTime       = df['date'].max()
-
-        md          = self.metadata
-        md['sTime'] = sTime
-        md['eTime'] = eTime
-
-        self.df_all_nona    = df_all_nona
-        self.df             = df
-        self.df_de          = df_de
-        self.df_dx          = df_dx
-        self.band_groups    = band_groups
-
     def plot_de(self,s=25,zorder=150):
         m       = self.m
-        df_de   = self.df_de
-        rx      = m.scatter(df_de['de_lon'],df_de['de_lat'],
+        df      = self.data_set.df
+        rx      = m.scatter(df['de_lon'],df['de_lat'],
                 s=s,zorder=zorder,**de_prop)
-
 
     def plot_midpoints(self):
         for band in bandlist:
-            try:
-                this_group = self.band_groups.get_group(band)
-            except:
-                continue
+            this_group = self.data_set.get_band_group(band)
+            if this_group is None: continue
 
             color = band_dict[band]['color']
             label = band_dict[band]['name']
@@ -569,10 +571,8 @@ class RbnMap(object):
     def plot_paths(self):
         m   = self.m
         for band in bandlist:
-            try:
-                this_group = self.band_groups.get_group(band)
-            except:
-                continue
+            this_group = self.data_set.get_band_group(band)
+            if this_group is None: continue
 
             color = band_dict[band]['color']
             label = band_dict[band]['name']
@@ -605,14 +605,13 @@ class RbnMap(object):
         self.m.scatter(dxf_df['lon'],dxf_df['lat'],s=dxf_plot_size,**dxf_prop)
 
     def plot_link_stats(self):
-        de_list_all, dx_list_all    = dedx_list(self.df_all_nona)
-        de_list_map, _              = dedx_list(self.df_de)
-        _, dx_list_map              = dedx_list(self.df_dx)
+        de_list_all, dx_list_all    = self.data_set_all.dedx_list()
+        de_list_map, dx_list_map    = self.data_set.dedx_list() 
 
         text = []
         text.append('TX All: {0:d}; TX Map: {1:d}'.format( len(dx_list_all), len(dx_list_map) ))
         text.append('RX All: {0:d}; RX Map: {1:d}'.format( len(de_list_all), len(de_list_map) ))
-        text.append('Plotted links: {0:d}'.format(len(self.df)))
+        text.append('Plotted links: {0:d}'.format(len(self.data_set.df)))
 
         props = dict(facecolor='white', alpha=0.25,pad=6)
         self.ax.text(0.02,0.05,'\n'.join(text),transform=self.ax.transAxes,
