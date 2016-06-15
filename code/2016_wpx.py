@@ -46,7 +46,7 @@ output_path = os.path.join('output',event_dir)
 handling.prepare_output_dirs({0:output_path},clear_output_dirs=True)
 
 ## Determine the aspect ratio of subplot.
-xsize       = 12.0
+xsize       = 15.0
 ysize       = 6.5
 nx_plots    = 1
 ny_plots    = 1
@@ -80,8 +80,6 @@ for cTime in cTimes:
 
             rbn_obj = rbn_lib.RbnObject(map_sTime,map_eTime,data_dir='data/rbn',qrz_call='w2naf',qrz_passwd='hamscience')
             
-#            rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
-
             # Figure out how many records properly geolocated.
             good_loc        = rbn_obj.DS001_dropna.df
             good_count_map  = good_loc['callsign'].count()
@@ -99,13 +97,15 @@ for cTime in cTimes:
             latlon_bounds  = {'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.}
 
             rbn_obj.active.latlon_filt(**latlon_bounds)
+#            rbn_obj.active.filter_calls('n7tr')
 
             rbn_map         = rbn_lib.RbnMap(rbn_obj,ax=ax0)
             rbn_map.default_plot()
-            rbn_grid        = rbn_obj.active.create_geo_grid()
-#            rbn_grid.grid_mean()
 
-            rbn_map.overlay_rbn_grid(rbn_grid)
+            rbn_grid        = rbn_obj.active.create_geo_grid()
+            rbn_map.overlay_grid(rbn_grid)
+#            rbn_grid.grid_mean()
+#            rbn_map.overlay_grid_data(rbn_grid)
 
             print map_sTime
 

@@ -162,21 +162,16 @@ def read_rbn(sTime,eTime=None,data_dir=None,qrz_call='w2naf',qrz_passwd='hamscie
         # Trim dataframe to just the entries we need.
         df = df_comp[np.logical_and(df_comp['date'] >= sTime,df_comp['date'] < eTime)]
 
-#        df = df[np.logical_and(df['date'] >= sTime,df['date'] < eTime)]
-#            tf = df['callsign'] == 'n7tr'
-##            tf = df['callsign'] == 'ac0c'
-#            df = df[tf]
-
-#        lat1, lon1 = 41.0, -75.0
-#        lat2, lon2 = 41.0, -123.0
+        # Calculate Midpoints
         lat1, lon1  = df['de_lat'],df['de_lon']
         lat2, lon2  = df['dx_lat'],df['dx_lon']
-        sp_mid_lat, sp_mid_lon = geopack.midpoint(lat1,lon1,lat2,lon2)
+        sp_mid_lat, sp_mid_lon  = geopack.midpoint(lat1,lon1,lat2,lon2)
 
-        df.loc[:,'sp_mid_lat']    = sp_mid_lat
-        df.loc[:,'sp_mid_lon']    = sp_mid_lon
+        df.loc[:,'sp_mid_lat']  = sp_mid_lat
+        df.loc[:,'sp_mid_lon']  = sp_mid_lon
 
-        df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
+        # Calculate Band
+        df.loc[:,'band']        = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
 
         return df
 
@@ -197,7 +192,7 @@ class RbnObject(object):
         cmt     = '[{}] {}'.format(data_set,comment)
         #Save data to be returned as self.variables
         
-        rbn_ds  = RbnDataSet(df,parent=self,comment=comment)
+        rbn_ds  = RbnDataSet(df,parent=self,comment=cmt)
         setattr(self,data_set,rbn_ds)
         setattr(rbn_ds,'metadata',metadata)
 
@@ -224,6 +219,14 @@ class RbnObject(object):
         data_sets.sort()
         return data_sets
 
+def make_list(item):
+    """ Force something to be iterable. """
+    item = np.array(item)
+    if item.shape == ():
+        item.shape = (1,)
+
+    return item.tolist()
+
 class RbnDataSet(object):
     def __init__(self, df, comment=None, parent=0, **metadata):
         self.parent = parent
@@ -239,6 +242,38 @@ class RbnDataSet(object):
         new_ds.df   = new_ds.df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
         new_ds.set_active()
         return new_ds
+
+    def filter_calls(self,calls,call_type='de',new_data_set='filter_calls',comment=None):
+        """
+        Filter data frame for specific calls.
+
+        Calls is not case sensitive and may be a single call
+        or a list.
+
+        call_type is 'de' or 'dx'
+        """
+
+        if call_type == 'de': key = 'callsign'
+        if call_type == 'dx': key = 'dx'
+
+        df          = self.df
+        df_calls    = df[key].apply(str.upper)
+
+        calls       = make_list(calls)
+        calls       = [x.upper() for x in calls]
+        tf          = np.zeros((len(df),),dtype=np.bool)
+        for call in calls:
+            tf = np.logical_or(tf,df[key] == call)
+
+        df = df[tf]
+
+        if comment is None:
+            comment = '{}: {!s}'.format(call_type.upper(),calls)
+
+        new_ds      = self.copy(new_data_set,comment)
+        new_ds.df   = df
+        new_ds.set_active()
+        return df
 
     def latlon_filt(self,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
@@ -373,7 +408,12 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
 
     handles = []
     labels  = []
-    for band in bandlist:
+
+    # Force freqs to go low to high regardless of plotting order.
+    bl_copy = bandlist[:]
+    bl_copy.sort()
+
+    for band in bl_copy:
         color = band_dict[band]['color']
         label = band_dict[band]['freq']
         handles.append(mpatches.Patch(color=color,label=label))
@@ -414,7 +454,8 @@ class RbnGeoGrid(object):
     """
     def __init__(self,df=None,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
         lat_min=-90. ,lat_max=90. ,lat_step=1.0,
-        lon_min=-180.,lon_max=180.,lon_step=1.0):
+        lon_min=-180.,lon_max=180.,lon_step=1.0,
+        metadata={}):
 
         lat_vec         = np.arange(lat_min,lat_max,lat_step)
         lon_vec         = np.arange(lon_min,lon_max,lon_step)
@@ -430,8 +471,15 @@ class RbnGeoGrid(object):
         self.df         = df
         self.lat_col    = lat_col
         self.lon_col    = lon_col
+        self.metadata   = metadata
 
-    def grid_mean(self):
+    def grid_mean(self,cmap='jet',vmin=0.,vmax=30.,label='Mean Frequency [MHz]'):
+        md          = self.metadata
+        md['cmap']  = cmap
+        md['vmin']  = vmin
+        md['vmax']  = vmax
+        md['label'] = label
+
         df          = self.df
         lat_vec     = self.lat_vec
         lon_vec     = self.lon_vec
@@ -456,8 +504,6 @@ class RbnGeoGrid(object):
         data_arr        = data_arr/1000.
         self.data_arr   = data_arr
         
-##        data_arr    = np.ndarray
-
 class RbnMap(object):
     """Plot Reverse Beacon Network data.
 
@@ -476,7 +522,7 @@ class RbnMap(object):
 
     Written by Nathaniel Frissell 2014 Sept 06
     """
-    def __init__(self,rbn_obj,data_set='active',data_set_all='DS001_dropna',ax=None,tick_font_size=9,
+    def __init__(self,rbn_obj,data_set='active',data_set_all='DS001_dropna',ax=None,tick_font_size=None,
             llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None):
         self.rbn_obj        = rbn_obj
         self.data_set       = getattr(rbn_obj,data_set)
@@ -624,39 +670,37 @@ class RbnMap(object):
     def plot_band_legend(self,*args,**kw_args):
         band_legend(*args,**kw_args)
 
-    def overlay_rbn_grid(self,rbn_grid_obj,color='0.8'):
+    def overlay_grid(self,grid_obj,color='0.8'):
         """
-        Overlay the grid from an RbnGeoGrid object.
+        Overlay the grid from a GeoGrid object.
         """
-        self.m.drawparallels(rbn_grid_obj.lat_vec,color=color)
-        self.m.drawmeridians(rbn_grid_obj.lon_vec,color=color)
+        self.m.drawparallels(grid_obj.lat_vec,color=color)
+        self.m.drawmeridians(grid_obj.lon_vec,color=color)
+        
+    def overlay_grid_data(self,grid_obj,cmap=None,vmin=None,vmax=None,label=None):
+        gmd     = grid_obj.metadata
+        if cmap is None:
+            cmap = gmd.get('cmap','jet')
+        if vmin is None:
+            vmin = gmd.get('vmin',None)
+        if vmax is None:
+            vmax = gmd.get('vmax',None)
+        if label is None:
+            label = gmd.get('label',None)
 
-        m   = self.m
-        rgo = rbn_grid_obj
-        lat_vec = rgo.lat_vec
-        lon_vec = rgo.lon_vec
-        lat_step = rgo.lat_step
-        lon_step = rgo.lon_step
-        data_arr= rgo.data_arr
+        fig     = self.fig
+        ax      = self.ax
+        m       = self.m
 
-        scan    = []
-        verts   = []
-        for lat_inx,lat in enumerate(lat_vec):
-            for lon_inx,lon in enumerate(lon_vec):
-                data    = data_arr[lat_inx,lon_inx]
-                if np.isnan(data): continue
-                scan.append(data)
-
-                x1,y1 = m(lon,lat)
-                x2,y2 = m(lon,lat+lat_step)
-                x3,y3 = m(lon+lon_step,lat+lat_step)
-                x4,y4 = m(lon+lon_step,lat)
-                verts.append(((x1,y1),(x2,y2),(x3,y3),(x4,y4),(x1,y1)))
-
-#        scale   = (0.,30.)
-#        cmap    = matplotlib.cm.jet
-#        bounds  = np.linspace(scale[0],scale[1],256)
-#        norm    = matplotlib.colors.BoundaryNorm(bounds,cmap.N)
-#        pcoll   = PolyCollection(np.array(verts),edgecolors='face',closed=False,cmap=cmap,norm=norm,zorder=99)
-#        pcoll.set_array(np.array(scan))
-#        self.ax.add_collection(pcoll,autolim=False)
+        rgo     = grid_obj
+        
+        x, y    = m(rgo.lon_vec,rgo.lat_vec)
+        xx,yy   = np.meshgrid(x,y)
+ 
+        z       = rgo.data_arr[:-1,:-1]
+        # Masked array to hide NaNs.
+        Zm      = np.ma.masked_where(np.isnan(z),z)
+        
+        pcoll   = ax.pcolor(xx,yy,Zm,cmap=cmap,vmin=vmin,vmax=vmax)
+        
+        fig.colorbar(pcoll,label=label)
