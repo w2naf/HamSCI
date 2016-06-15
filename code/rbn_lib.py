@@ -274,6 +274,10 @@ class RbnDataSet(object):
 
         return (de_list,dx_list)
 
+    def create_geo_grid(self):
+        self.geo_grid = RbnGeoGrid(self.df)
+        return self.geo_grid
+
     def apply(self,function,arg_dct,new_data_set=None,comment=None):
         if new_data_set is None:
             new_data_set = function.func_name

@@ -102,10 +102,10 @@ for cTime in cTimes:
 
             rbn_map         = rbn_lib.RbnMap(rbn_obj,ax=ax0)
             rbn_map.default_plot()
-#            rbn_grid        = rbn_lib.RbnGeoGrid(rbn_map.df)
+            rbn_grid        = rbn_obj.active.create_geo_grid()
 #            rbn_grid.grid_mean()
 
-#            rbn_map.overlay_rbn_grid(rbn_grid)
+            rbn_map.overlay_rbn_grid(rbn_grid)
 
             print map_sTime
 
