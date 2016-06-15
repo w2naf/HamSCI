@@ -38,10 +38,8 @@ band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
 bandlist        = band_dict.keys()
 bandlist.sort(reverse=True)
 
-def read_rbn(sTime,eTime=None,data_dir=None,qrz_call='w2naf',qrz_passwd='hamscience'):
+def read_rbn(sTime,eTime=None,data_dir=None,qrz_call=None,qrz_passwd=None):
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
-
-    qz      = qrz.Session(qrz_call,qrz_passwd)
 
     ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
     eDay        =  datetime.datetime(eTime.year,eTime.month,eTime.day)

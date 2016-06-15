@@ -78,7 +78,7 @@ for cTime in cTimes:
             print '################################################################################'
             print 'Plotting RBN Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
 
-            rbn_obj = rbn_lib.RbnObject(map_sTime,map_eTime,data_dir='data/rbn',qrz_call='w2naf',qrz_passwd='hamscience')
+            rbn_obj = rbn_lib.RbnObject(map_sTime,map_eTime,data_dir='data/rbn')
             
             # Figure out how many records properly geolocated.
             good_loc        = rbn_obj.DS001_dropna.df
