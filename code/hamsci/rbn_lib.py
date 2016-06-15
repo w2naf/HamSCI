@@ -26,17 +26,93 @@ import matplotlib.patches as mpatches
 import matplotlib.markers as mmarkers
 from matplotlib.collections import PolyCollection
 
-# Set up a dictionary which identifies which bands we want and some plotting attributes for each band
-band_dict       = {}
-band_dict[28]   = {'name': '10 m',  'freq': '28 MHz',  'color':'red'}
-band_dict[21]   = {'name': '15 m',  'freq': '21 MHz',  'color':'orange'}
-band_dict[14]   = {'name': '20 m',  'freq': '14 MHz',  'color':'yellow'}
-band_dict[7]    = {'name': '40 m',  'freq': '7 MHz',   'color':'green'}
-band_dict[3]    = {'name': '80 m',  'freq': '3.5 MHz', 'color':'blue'}
-band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
+class BandData(object):
+    def __init__(self,cmap='HFRadio',vmin=0.,vmax=30.):
+        if cmap == 'HFRadio':
+            self.cmap   = self.hf_cmap(vmin=vmin,vmax=vmax)
+        else:
+            self.cmap   = matplotlib.cm.get_cmap(cmap)
 
-bandlist        = band_dict.keys()
-bandlist.sort(reverse=True)
+        self.norm   = matplotlib.colors.Normalize(vmin=vmin,vmax=vmax)
+
+        # Set up a dictionary which identifies which bands we want and some plotting attributes for each band
+        bands   = []
+        bands.append((28.0,  '10 m'))
+        bands.append((21.0,  '15 m'))
+        bands.append((14.0,  '20 m'))
+        bands.append(( 7.0,  '40 m'))
+        bands.append(( 3.5,  '80 m'))
+        bands.append(( 1.8, '160 m'))
+
+        self.__gen_band_dict__(bands)
+
+#        band_dict       = {}
+#        band_dict[28]   = {'name': '10 m',  'freq': '28 MHz',  'color':'red'}
+#        band_dict[21]   = {'name': '15 m',  'freq': '21 MHz',  'color':'orange'}
+#        band_dict[14]   = {'name': '20 m',  'freq': '14 MHz',  'color':'yellow'}
+#        band_dict[7]    = {'name': '40 m',  'freq': '7 MHz',   'color':'green'}
+#        band_dict[3]    = {'name': '80 m',  'freq': '3.5 MHz', 'color':'blue'}
+#        band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
+#
+#        self.band_dict  = band_dict
+#        self.band_list  = band_dict.keys()
+#        self.band_list.sort(reverse=True)
+
+    def __gen_band_dict__(self,bands):
+        dct = {}
+        for freq,name in bands:
+            key = int(freq)
+            tmp = {}
+            tmp['name']         = name
+            tmp['freq']         = freq
+            tmp['freq_name']    = '{:g} MHz'.format(freq)
+            tmp['color']        = self.get_rgba(freq)
+            dct[key]            = tmp
+        self.band_dict          = dct
+        self.band_list          = dct.keys()
+        self.band_list.sort(reverse=True)
+
+    def get_rgba(self,freq):
+        nrm     = self.norm(freq)
+        rgba    = self.cmap(nrm)
+        return rgba
+
+    def hf_cmap(self,name='HFRadio',vmin=0.,vmax=30.):
+	fc = {}
+	fc[ 0.0] = (  0,   0,   0)
+	fc[ 1.8] = (238, 130, 238) # violet
+	fc[ 3.0] = (  0,   0, 255) # blue
+	fc[ 8.0] = (  0, 255, 255) # aqua
+	fc[10.0] = (  0, 128,   0) # green
+	fc[16.0] = (255, 255,   0) # yellow
+	fc[18.0] = (241,  92,   7) # orange
+	fc[25.0] = (255,   0,   0) # red
+	fc[30.0] = (255,   0,   0) # red
+        my_cdict = fc
+
+	norm = matplotlib.colors.Normalize(vmin=vmin,vmax=vmax)
+	
+	red   = []
+	green = []
+	blue  = []
+	
+	keys = my_cdict.keys()
+	keys.sort()
+	
+	for x in keys:
+	    r,g,b, = my_cdict[x]
+	    x = norm(x)
+	    r = r/255.
+	    g = g/255.
+	    b = b/255.
+	    red.append(   (x, r, r))
+	    green.append( (x, g, g))
+	    blue.append(  (x, b, b))
+	cdict = {'red'   : tuple(red),
+		 'green' : tuple(green),
+		 'blue'  : tuple(blue)}
+	cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
+	return cmap
 
 def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None):
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
@@ -410,20 +486,23 @@ class RbnDataSet(object):
 
 
 def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
-        title=None,bbox_to_anchor=None,ncdxf=False,ncol=None):
+        title=None,bbox_to_anchor=None,ncdxf=False,ncol=None,band_data=None):
 
     if fig is None: fig = plt.gcf() 
+
+    if band_data is None:
+        band_data = BandData()
 
     handles = []
     labels  = []
 
     # Force freqs to go low to high regardless of plotting order.
-    bl_copy = bandlist[:]
+    bl_copy = band_data.band_list[:]
     bl_copy.sort()
 
     for band in bl_copy:
-        color = band_dict[band]['color']
-        label = band_dict[band]['freq']
+        color = band_data.band_dict[band]['color']
+        label = band_data.band_dict[band]['freq_name']
         handles.append(mpatches.Patch(color=color,label=label))
         labels.append(label)
 
@@ -481,7 +560,21 @@ class RbnGeoGrid(object):
         self.lon_col    = lon_col
         self.metadata   = metadata
 
-    def grid_mean(self,cmap='jet',vmin=0.,vmax=30.,label='Mean Frequency [MHz]'):
+    def grid_mean(self,cmap=None,vmin=None,vmax=None,
+            label='Mean Frequency [MHz]',band_data=None):
+
+        if band_data is None:
+            band_data = BandData()
+
+        if cmap is None:
+            cmap = band_data.cmap
+
+        if vmin is None:
+            vmin = band_data.norm.vmin
+
+        if vmax is None:
+            vmax = band_data.norm.vmax
+
         md          = self.metadata
         md['cmap']  = cmap
         md['vmin']  = vmin
@@ -511,6 +604,88 @@ class RbnGeoGrid(object):
 
         data_arr        = data_arr/1000.
         self.data_arr   = data_arr
+
+def rolling_counts_time(df,sTime=None,window_length=datetime.timedelta(minutes=15)):
+    """
+    Rolling counts of a RBN dataframe using a time-based data window.
+    """
+    eTime = df['date'].max().to_datetime()
+
+    if sTime is None:
+        sTime = df['date'].min().to_datetime()
+        
+    this_time   = sTime
+    next_time   = this_time + window_length
+    date_list, val_list = [], []
+    while next_time <= eTime:
+        tf  = np.logical_and(df['date'] >= this_time, df['date'] < next_time)
+        val = np.count_nonzero(tf)
+        
+        date_list.append(this_time)
+        val_list.append(val)
+
+        this_time = next_time
+        next_time = this_time + window_length
+
+    return pd.Series(val_list,index=date_list)
+
+class RbnCounts(object):
+    """
+    Plots counts of RBN data.
+    """
+    def __init__(self,rbn_obj,sTime=None,eTime=None,
+            integration_time=datetime.timedelta(minutes=15),
+            data_set='active',legend_loc='upper left',ax=None,
+            band_data=None):
+
+        if band_data is None:
+            band_data = BandData()
+
+        fig             = ax.get_figure()
+
+        self.rbn_obj    = rbn_obj
+        self.data_set   = getattr(rbn_obj,data_set)
+        ds              = self.data_set
+
+        if sTime is None:
+            sTime = ds.df['date'].min()
+        if eTime is None:
+            eTime = ds.df['date'].max()
+
+        for band in band_data.band_list:
+            this_group = self.data_set.get_band_group(band)
+            if this_group is None: continue
+
+            color       = band_data.band_dict[band]['color']
+            label       = band_data.band_dict[band]['name']
+
+            counts      = rolling_counts_time(this_group,sTime=sTime,window_length=integration_time)
+            ax.plot(counts.index,counts,color=color,label=label,lw=2)
+
+        ax.legend(loc=legend_loc,ncol=6)
+        ax.set_ylabel('RBN Counts')
+        ax.set_xlabel('UT')
+
+        title   = []
+        title.append('Reverse Beacon Network')
+        date_fmt    = '%Y %b %m %H%M UT'
+        date_str    = '{} - {}'.format(sTime.strftime(date_fmt), eTime.strftime(date_fmt))
+        title.append(date_str)
+        ax.set_title('\n'.join(title))
+        ax.grid(True)
+
+        xticks  = ax.get_xticks()
+        xtls    = []
+        for xtick in xticks:
+            xtd = matplotlib.dates.num2date(xtick)
+            if xtd.hour == 0 and xtd.minute == 0:
+                xtl = xtd.strftime('%H%M\n%d %b %Y')
+            else:
+                xtl = xtd.strftime('%H%M')
+            xtls.append(xtl)
+        ax.set_xticklabels(xtls)
+#        fig.autofmt_xdate()
+
         
 class RbnMap(object):
     """Plot Reverse Beacon Network data.
@@ -531,7 +706,8 @@ class RbnMap(object):
     Written by Nathaniel Frissell 2014 Sept 06
     """
     def __init__(self,rbn_obj,data_set='active',data_set_all='DS001_dropna',ax=None,
-            llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None,default_plot=True):
+            llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None,
+            band_data=None,default_plot=True):
         self.rbn_obj        = rbn_obj
         self.data_set       = getattr(rbn_obj,data_set)
         self.data_set_all   = getattr(rbn_obj,data_set_all)
@@ -556,6 +732,11 @@ class RbnMap(object):
         self.metadata['eTime'] = ds.df['date'].max()
 
 
+        if band_data is None:
+            band_data = BandData()
+
+        self.band_data = band_data
+
         self.__setup_map__(ax=ax,**self.latlon_bnds)
         if default_plot:
             self.default_plot()
@@ -579,7 +760,7 @@ class RbnMap(object):
         if plot_stats:
             self.plot_link_stats()
         if plot_legend:
-            self.plot_band_legend()
+            self.plot_band_legend(band_data=self.band_data)
 
     def __setup_map__(self,ax=None,llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
         sTime       = self.metadata['sTime']
@@ -619,24 +800,26 @@ class RbnMap(object):
                 s=s,zorder=zorder,**de_prop)
 
     def plot_midpoints(self):
-        for band in bandlist:
+        band_data = self.band_data
+        for band in band_data.band_list:
             this_group = self.data_set.get_band_group(band)
             if this_group is None: continue
 
-            color = band_dict[band]['color']
-            label = band_dict[band]['name']
+            color = band_data.band_dict[band]['color']
+            label = band_data.band_dict[band]['name']
 
             mid   = self.m.scatter(this_group['sp_mid_lon'],this_group['sp_mid_lat'],
                     alpha=0.25,facecolors=color,color=color,s=6,zorder=100)
 
     def plot_paths(self):
         m   = self.m
-        for band in bandlist:
+        band_data = self.band_data
+        for band in band_data.band_list:
             this_group = self.data_set.get_band_group(band)
             if this_group is None: continue
 
-            color = band_dict[band]['color']
-            label = band_dict[band]['name']
+            color = band_data.band_dict[band]['color']
+            label = band_data.band_dict[band]['name']
 
             for index,row in this_group.iterrows():
                 #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
@@ -691,7 +874,7 @@ class RbnMap(object):
     def overlay_grid_data(self,grid_obj,cmap=None,vmin=None,vmax=None,label=None):
         gmd     = grid_obj.metadata
         if cmap is None:
-            cmap = gmd.get('cmap','jet')
+            cmap = gmd.get('cmap',None)
         if vmin is None:
             vmin = gmd.get('vmin',None)
         if vmax is None:
