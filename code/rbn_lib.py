@@ -38,7 +38,7 @@ band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
 bandlist        = band_dict.keys()
 bandlist.sort(reverse=True)
 
-def read_rbn(sTime,eTime=None,data_dir=None,qrz_call=None,qrz_passwd=None):
+def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None):
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
     ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
@@ -174,7 +174,7 @@ def read_rbn(sTime,eTime=None,data_dir=None,qrz_call=None,qrz_passwd=None):
         return df
 
 class RbnObject(object):
-    def __init__(self,sTime=None,eTime=None,data_dir=None,
+    def __init__(self,sTime=None,eTime=None,data_dir='data/rbn',
             qrz_call=None,qrz_passwd=None,comment='Raw Data',df=None):
 
         if df is None:
@@ -196,7 +196,6 @@ class RbnObject(object):
 
         rbn_ds.dropna()
 
-
     def get_data_sets(self):
         """Return a sorted list of musicDataObj's contained in this musicArray.
 
@@ -216,6 +215,14 @@ class RbnObject(object):
                 data_sets.append(item)
         data_sets.sort()
         return data_sets
+
+    def geo_loc_stats(self,verbose=True):
+        # Figure out how many records properly geolocated.
+        good_loc        = rbn_obj.DS001_dropna.df
+        good_count_map  = good_loc['callsign'].count()
+        total_count_map = len(rbn_obj.DS000.df)
+        good_pct_map    = float(good_count_map) / total_count_map * 100.
+        print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
 
 def make_list(item):
     """ Force something to be iterable. """
@@ -251,6 +258,9 @@ class RbnDataSet(object):
         call_type is 'de' or 'dx'
         """
 
+        if calls is None:
+            return self
+
         if call_type == 'de': key = 'callsign'
         if call_type == 'dx': key = 'dx'
 
@@ -271,7 +281,7 @@ class RbnDataSet(object):
         new_ds      = self.copy(new_data_set,comment)
         new_ds.df   = df
         new_ds.set_active()
-        return df
+        return new_ds
 
     def latlon_filt(self,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
@@ -705,4 +715,5 @@ class RbnMap(object):
         pcoll   = ax.pcolor(xx,yy,Zm,cmap=cmap,vmin=vmin,vmax=vmax)
         
         fig.colorbar(pcoll,label=label)
+
 
