@@ -520,8 +520,8 @@ class RbnMap(object):
 
     Written by Nathaniel Frissell 2014 Sept 06
     """
-    def __init__(self,rbn_obj,data_set='active',data_set_all='DS001_dropna',ax=None,tick_font_size=None,
-            llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None):
+    def __init__(self,rbn_obj,data_set='active',data_set_all='DS001_dropna',ax=None,
+            llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None,default_plot=True):
         self.rbn_obj        = rbn_obj
         self.data_set       = getattr(rbn_obj,data_set)
         self.data_set_all   = getattr(rbn_obj,data_set_all)
@@ -545,7 +545,10 @@ class RbnMap(object):
         self.metadata['sTime'] = ds.df['date'].min()
         self.metadata['eTime'] = ds.df['date'].max()
 
-        self.__setup_map__(ax=ax,tick_font_size=tick_font_size,**self.latlon_bnds)
+
+        self.__setup_map__(ax=ax,**self.latlon_bnds)
+        if default_plot:
+            self.default_plot()
 
     def default_plot(self,
             plot_de         = True,
@@ -568,7 +571,7 @@ class RbnMap(object):
         if plot_legend:
             self.plot_band_legend()
 
-    def __setup_map__(self,ax=None,tick_font_size=None,llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
+    def __setup_map__(self,ax=None,llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
         sTime       = self.metadata['sTime']
         eTime       = self.metadata['eTime']
 
@@ -584,8 +587,8 @@ class RbnMap(object):
         ax.set_title(title)
 
         # draw parallels and meridians.
-        m.drawparallels(np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
-        m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True],fontsize=tick_font_size)
+        m.drawparallels(np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False])
+        m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True])
         m.drawcoastlines(color='0.65')
         m.drawmapboundary(fill_color='w')
         
@@ -702,3 +705,4 @@ class RbnMap(object):
         pcoll   = ax.pcolor(xx,yy,Zm,cmap=cmap,vmin=vmin,vmax=vmax)
         
         fig.colorbar(pcoll,label=label)
+
