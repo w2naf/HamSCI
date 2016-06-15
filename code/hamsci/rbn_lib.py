@@ -668,7 +668,7 @@ class RbnCounts(object):
 
         title   = []
         title.append('Reverse Beacon Network')
-        date_fmt    = '%Y %b %m %H%M UT'
+        date_fmt    = '%Y %b %d %H%M UT'
         date_str    = '{} - {}'.format(sTime.strftime(date_fmt), eTime.strftime(date_fmt))
         title.append(date_str)
         ax.set_title('\n'.join(title))
