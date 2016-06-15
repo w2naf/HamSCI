@@ -10,6 +10,7 @@ import datetime         # Really awesome module for working with dates and times
 import zipfile
 import urllib2          # Used to automatically download data files from the web.
 import pickle
+import copy
 
 import numpy as np      #Numerical python - provides array types and operations
 import pandas as pd     #This is a nice utility for working with time-series type data.
@@ -37,8 +38,7 @@ band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
 bandlist        = band_dict.keys()
 bandlist.sort(reverse=True)
 
-def read_rbn(sTime,eTime=None,data_dir=None,
-             qrz_call='w2naf',qrz_passwd='hamscience'):
+def read_rbn(sTime,eTime=None,data_dir=None,qrz_call='w2naf',qrz_passwd='hamscience'):
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
     qz      = qrz.Session(qrz_call,qrz_passwd)
@@ -177,6 +177,160 @@ def read_rbn(sTime,eTime=None,data_dir=None,
         df.loc[:,'sp_mid_lon']    = sp_mid_lon
 
         return df
+
+class RbnObject(object):
+    def __init__(self,sTime=None,eTime=None,data_dir=None,
+            qrz_call=None,qrz_passwd=None,comment='Raw Data',df=None):
+
+        if df is None:
+            df = read_rbn(sTime=sTime,eTime=eTime,data_dir=data_dir,
+                    qrz_call=qrz_call,qrz_passwd=qrz_passwd)
+
+        #Make metadata block to hold information about the processing.
+        metadata = {}
+
+        data_set                 = 'DS000'
+        metadata['data_set_name'] = data_set
+        metadata['serial']      = 0
+        cmt     = '[{}] {}'.format(data_set,comment)
+        #Save data to be returned as self.variables
+        
+        rbn_data_set    = RbnDataSet(df,parent=self,comment=comment)
+        setattr(self,data_set,rbn_data_set)
+        setattr(rbn_data_set,'metadata',metadata)
+
+        #Set the new data active.
+        rbn_data_set.set_active()
+
+    def get_data_sets(self):
+        """Return a sorted list of musicDataObj's contained in this musicArray.
+
+        Returns
+        -------
+        data_sets : list of str
+            Names of musicDataObj's contained in this musicArray.
+
+        Written by Nathaniel A. Frissell, Summer 2016
+        """
+
+        attrs = dir(self)
+
+        data_sets = []
+        for item in attrs:
+            if item.startswith('DS'):
+                data_sets.append(item)
+        data_sets.sort()
+        return data_sets
+
+class RbnDataSet(object):
+    def __init__(self, df, comment=None, parent=0, **metadata):
+        self.parent = parent
+
+        self.df     = df
+        self.metadata = {}
+        self.metadata.update(metadata)
+
+        self.history = {datetime.datetime.now():comment}
+
+    def apply(self,function,arg_dct,new_data_set=None,comment=None):
+        if new_data_set is None:
+            new_data_set = function.func_name
+
+        if comment is None:
+            comment = str(arg_dct)
+
+        new_ds      = self.copy(new_data_set,comment)
+        new_ds.df   = function(self.df)
+        new_ds.set_active()
+
+        return new_ds
+
+    def copy(self,new_data_set,comment):
+        """Copy a RbnDataSet object.  This deep copies data and metadata, updates the serial
+        number, and logs a comment in the history.  Methods such as plot are kept as a reference.
+
+        Parameters
+        ----------
+        new_data_set : str
+            Name for the new data_set object.
+        comment : str
+            Comment describing the new data_set object.
+
+        Returns
+        -------
+        new_data_set_obj : data_set 
+            Copy of the original data_set with new name and history entry.
+
+        Written by Nathaniel A. Frissell, Summer 2016
+        """
+
+        serial = self.metadata['serial'] + 1
+        new_data_set = '_'.join(['DS%03d' % serial,new_data_set])
+
+        new_data_set_obj    = copy.copy(self)
+        setattr(self.parent,new_data_set,new_data_set_obj)
+
+        new_data_set_obj.df         = self.df.copy()
+        new_data_set_obj.metadata   = copy.deepcopy(self.metadata)
+        new_data_set_obj.history    = copy.deepcopy(self.history)
+
+        new_data_set_obj.metadata['data_set_name']  = new_data_set
+        new_data_set_obj.metadata['serial']         = serial
+        new_data_set_obj.history[datetime.datetime.now()] = '['+new_data_set+'] '+comment
+        
+        return new_data_set_obj
+  
+    def set_active(self):
+        """Sets this as the currently active data_set.
+
+        Written by Nathaniel A. Frissell, Summer 2016
+        """
+        self.parent.active = self
+
+    def set_metadata(self,**metadata):
+        """Adds information to this data_set's  metadata dictionary.
+
+        Parameters
+        ----------
+        **metadata :
+            keywords sent to matplot lib, etc.
+
+        Written by Nathaniel A. Frissell, Summer 2016
+        """
+        self.metadata.update(metadata)
+
+    def print_metadata(self):
+        """Nicely print all of the metadata associated with the current data_set.
+
+        Written by Nathaniel A. Frissell, Summer 2016
+        """
+        keys = self.metadata.keys()
+        keys.sort()
+        for key in keys:
+            print key+':',self.metadata[key]
+
+    def append_history(self,comment):
+        """Add an entry to the processing history dictionary of the current data_set object.
+
+        Parameters
+        ----------
+        comment : string
+            Infomation to add to history dictionary.
+
+        Written by Nathaniel A. Frissell, Summer 2016
+        """
+        self.history[datetime.datetime.now()] = '['+self.metadata['data_set_name']+'] '+comment
+
+    def print_history(self):
+        """Nicely print all of the processing history associated with the current data_set object.
+
+        Written by Nathaniel A. Frissell, Summer 2016
+        """
+        keys = self.history.keys()
+        keys.sort()
+        for key in keys:
+            print key,self.history[key]
+
 
 def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
         title=None,bbox_to_anchor=None,ncdxf=False,ncol=None):
