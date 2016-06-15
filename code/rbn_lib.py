@@ -656,25 +656,3 @@ class RbnMap(object):
 #        pcoll   = PolyCollection(np.array(verts),edgecolors='face',closed=False,cmap=cmap,norm=norm,zorder=99)
 #        pcoll.set_array(np.array(scan))
 #        self.ax.add_collection(pcoll,autolim=False)
-
-def rbn_map_plot(df,ax=None,legend=True,tick_font_size=9,ncdxf=False,plot_paths=True,
-        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
-    """
-    Convenience wrapper to RbnMap to maintain backward compatibility with old
-    rbn_map_plot().
-    """
-
-    rbn_map = RbnMap(df,ax=ax,tick_font_size=tick_font_size,
-            llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat)
-
-    rbn_map.plot_de()
-    rbn_map.plot_midpoints()
-    if plot_paths:
-        rbn_map.plot_paths()
-    if ncdxf:
-        rbn_map.plot_ncdxf()
-    rbn_map.plot_link_stats()
-    if legend:
-        rbn_map.plot_band_legend()
-
-    return rbn_map
