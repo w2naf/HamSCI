@@ -52,7 +52,6 @@ def rbn_map(sTime,eTime,
     gli        = geoloc_info(rbn_obj)
 
     rbn_grid   = rbn_obj.active.create_geo_grid()
-#    rbn_grid.grid_mean()
 
     # Go plot!! ############################ 
     ## Determine the aspect ratio of subplot.
@@ -70,7 +69,8 @@ def rbn_map(sTime,eTime,
     rbn_map    = rbn_lib.RbnMap(rbn_obj,ax=ax0)
 
     rbn_map.overlay_grid(rbn_grid)
-#   rbn_map.overlay_grid_data(rbn_grid)
+#    rbn_grid.grid_mean()
+#    rbn_map.overlay_grid_data(rbn_grid)
 
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
