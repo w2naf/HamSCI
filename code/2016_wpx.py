@@ -78,12 +78,14 @@ for cTime in cTimes:
             print '################################################################################'
             print 'Plotting RBN Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
 
-            rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
+            rbn_obj = rbn_lib.RbnObject(map_sTime,map_eTime,data_dir='data/rbn',qrz_call='w2naf',qrz_passwd='hamscience')
+            
+#            rbn_df  = rbn_lib.read_rbn(map_sTime,map_eTime,data_dir='data/rbn')
 
             # Figure out how many records properly geolocated.
-            good_loc        = rbn_df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+            good_loc        = rbn_obj.DS001_dropna.df
             good_count_map  = good_loc['callsign'].count()
-            total_count_map = len(rbn_df)
+            total_count_map = len(rbn_obj.DS000.df)
             good_pct_map    = float(good_count_map) / total_count_map * 100.
 
             good_count      += good_count_map
@@ -95,13 +97,15 @@ for cTime in cTimes:
 #            latlon_bounds  = {'llcrnrlat':0.,'llcrnrlon':-180.,'urcrnrlat':90.,'urcrnrlon':0.}
 #            latlon_bounds  = {'llcrnrlat':-90.,'llcrnrlon':-180.,'urcrnrlat':90.,'urcrnrlon':180.}
             latlon_bounds  = {'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.}
-            rbn_map         = rbn_lib.RbnMap(rbn_df,ax=ax0,**latlon_bounds)
+
+            rbn_obj.active.latlon_filt(**latlon_bounds)
+
+            rbn_map         = rbn_lib.RbnMap(rbn_obj,ax=ax0)
             rbn_map.default_plot()
+#            rbn_grid        = rbn_lib.RbnGeoGrid(rbn_map.df)
+#            rbn_grid.grid_mean()
 
-            rbn_grid        = rbn_lib.RbnGeoGrid(rbn_map.df)
-            rbn_grid.grid_mean()
-
-            rbn_map.overlay_rbn_grid(rbn_grid)
+#            rbn_map.overlay_rbn_grid(rbn_grid)
 
             print map_sTime
 
