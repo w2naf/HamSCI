@@ -180,14 +180,26 @@ class GmeDataSet(object):
         elif (gme_param == 'omni_by'):
             df_raw  = pd.DataFrame(omni_df_raw['bym'])
 
-            plot_info['symbol']     = 'OMNI By'
+            plot_info['symbol']     = 'OMNI By GSM'
             plot_info['gme_label']  = 'OMNI By GSM [nT]'
 
         elif gme_param == 'omni_bz':
             df_raw  = pd.DataFrame(omni_df_raw['bzm'])
 
-            plot_info['symbol']     = 'OMNI Bz'
+            plot_info['symbol']     = 'OMNI Bz GSM'
             plot_info['gme_label']  = 'OMNI Bz GSM [nT]'
+
+        elif gme_param == 'omni_flowSpeed':
+            df_raw  = pd.DataFrame(omni_df_raw['flowSpeed'])
+
+            plot_info['symbol']     = 'OMNI v'
+            plot_info['gme_label']  = 'OMNI v [km/s]'
+
+        elif gme_param == 'omni_np':
+            df_raw  = pd.DataFrame(omni_df_raw['np'])
+
+            plot_info['symbol']     = 'OMNI Np'
+            plot_info['gme_label']  = 'OMNI Np [N/cm^3]'
 
         elif gme_param == 'omni_pdyn':
             df_raw  = pd.DataFrame(omni_df_raw['pDyn'])
