@@ -116,7 +116,7 @@ if __name__ == '__main__':
     interval_time       = datetime.timedelta(minutes=60)
 
     event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
-    output_dir          = os.path.join('output',event_dir)
+    output_dir          = os.path.join('output','maps',event_dir)
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
     dct['output_dir']   = output_dir
 
