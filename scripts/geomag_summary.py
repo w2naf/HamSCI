@@ -25,10 +25,10 @@ class GeomagSummary(object):
 
         # Go plot!! ############################ 
         ## Determine the aspect ratio of subplot.
-        self.xsize      = 10
+        self.xsize      = 15
         self.ysize      = 4
         self.nx_plots   = 1
-        self.ny_plots   = 2
+        self.ny_plots   = 4
         self.plot_nr    = 0
 
         rcp = mpl.rcParams
@@ -37,12 +37,19 @@ class GeomagSummary(object):
         rcp['axes.labelweight'] = 'bold'
         rcp['font.weight']      = 'bold'
 
+        leg_dct = {}
+        leg_dct['loc']      = 'upper left'
+        leg_dct['ncol']     = 2
+        self.legend_dict    = leg_dct
+
         fig         = plt.figure(figsize=(self.nx_plots*self.xsize,
                                           self.ny_plots*self.ysize))
         self.fig    = fig
 
-        self.plot_flow_np()
-        self.plot_by_bz()
+        self.plot_flow_np(xlabels=False)
+        self.plot_by_bz(xlabels=False)
+        self.plot_symh_kp(xlabels=False)
+        self.plot_ae()
 
         # Close up plot. #######################
         fig.tight_layout()
@@ -51,21 +58,23 @@ class GeomagSummary(object):
 
     def plot_flow_np(self,xlabels=True,ax=None):
         """
-        OMNI Flow Speed and Number Densityi
+        OMNI Flow Speed and Number Density
         """
         if ax is None:
             ax = self.new_ax()
 
         sTime       = self.sTime
         eTime       = self.eTime
-
         lines       =[]
+
+        # OMNI Flow Speed ######################
         data_obj    = GME(sTime,eTime,'omni_flowSpeed')
         ds          = data_obj.active
         tmp,        = ax.plot(ds.data.index,ds.data,label=ds.metadata['symbol'])
         lines.append(tmp)
         ax.set_ylabel(ds.metadata['gme_label'])
 
+        # OMNI Number Density ##################
         ax_1        = ax.twinx()
         ax.set_zorder(ax_1.get_zorder()+1)
         ax.patch.set_visible(False)
@@ -79,12 +88,14 @@ class GeomagSummary(object):
         for tl in ax_1.get_yticklabels():
             tl.set_color(color)
 
-        ax.legend(handles=lines,loc='upper right',ncol=2)
-        self.xtick_time_fmt(ax,show_labels=False)
+        dct = self.legend_dict.copy()
+        dct.update({'handles':lines})
+        ax.legend(**dct)
+        self.xtick_time_fmt(ax,show_labels=xlabels)
 
     def plot_by_bz(self,xlabels=True,ax=None):
         """
-        By/Bz GSM
+        OMNI By/Bz GSM
         """
         if ax is None:
             ax = self.new_ax()
@@ -101,10 +112,72 @@ class GeomagSummary(object):
         ax.plot(ds.data.index,ds.data,label=ds.metadata['symbol'])
         ax.set_ylabel('B [nT]')
 
-        ax.legend(loc='upper right',ncol=2)
-        self.xtick_time_fmt(ax,show_labels=True)
+        dct = self.legend_dict.copy()
+        ax.legend(**dct)
+        self.xtick_time_fmt(ax,show_labels=xlabels)
+
+    def plot_symh_kp(self,xlabels=True,ax=None):
+        """
+        Sym-H and Kp
+        """
+        if ax is None:
+            ax = self.new_ax()
+
+        sTime       = self.sTime
+        eTime       = self.eTime
+        lines       =[]
+
+        # SYM-H ################################
+        data_obj    = GME(sTime,eTime,'omni_symh')
+        ds          = data_obj.active
+        tmp,        = ax.plot(ds.data.index,ds.data,label=ds.metadata['symbol'],color='k')
+        ax.fill_between(ds.data.index,0,ds.data,color='0.75')
+        lines.append(tmp)
+        ax.set_ylabel(ds.metadata['gme_label'])
+        ax.axhline(0,color='k',ls='--')
+
+        # Kp ###################################
+#        ax_1        = ax.twinx()
+#        ax.set_zorder(ax_1.get_zorder()+1)
+#        ax.patch.set_visible(False)
+#        data_obj    = GME(sTime,eTime,'omni_np')
+#        ds          = data_obj.active
+#        color       = 'green'
+#        label       = ds.metadata['symbol']
+#        tmp,        = ax_1.plot(ds.data.index,ds.data,label=label,color=color)
+#        lines.append(tmp)
+#        ax_1.set_ylabel(ds.metadata['gme_label'],color=color)
+#        for tl in ax_1.get_yticklabels():
+#            tl.set_color(color)
+
+        dct = self.legend_dict.copy()
+        dct.update({'handles':lines})
+        ax.legend(**dct)
+        self.xtick_time_fmt(ax,show_labels=xlabels)
+
+    def plot_ae(self,xlabels=True,ax=None):
+        """
+        Auroral Electrojet (AE)
+        """
+        if ax is None:
+            ax = self.new_ax()
+
+        sTime       = self.sTime
+        eTime       = self.eTime
+
+        data_obj    = GME(sTime,eTime,'ae')
+        ds          = data_obj.active
+        ax.plot(ds.data.index,ds.data,label=ds.metadata['symbol'])
+        ax.set_ylabel(ds.metadata['gme_label'])
+
+        dct = self.legend_dict.copy()
+        ax.legend(**dct)
+        self.xtick_time_fmt(ax,show_labels=xlabels)
 
     def new_ax(self):
+        """
+        Create a new axis.
+        """
         fig = self.fig
         self.plot_nr += 1
         ax = fig.add_subplot(self.ny_plots,self.nx_plots,self.plot_nr)
@@ -131,6 +204,8 @@ class GeomagSummary(object):
         for xtl in ax.get_xticklabels():
             xtl.set_ha('left')
             xtl.set_visible(show_labels)
+
+        ax.set_xlabel('UT')
 
 if __name__ == '__main__':
     output_dir          = os.path.join('output','geomag_summary')
