@@ -26,6 +26,12 @@ import matplotlib.patches as mpatches
 import matplotlib.markers as mmarkers
 from matplotlib.collections import PolyCollection
 
+def cc255(color):
+    cc = matplotlib.colors.ColorConverter().to_rgb
+    trip = np.array(cc(color))*255
+    trip = [int(x) for x in trip]
+    return tuple(trip)
+
 class BandData(object):
     def __init__(self,cmap='HFRadio',vmin=0.,vmax=30.):
         if cmap == 'HFRadio':
@@ -79,17 +85,17 @@ class BandData(object):
 
     def hf_cmap(self,name='HFRadio',vmin=0.,vmax=30.):
 	fc = {}
-	fc[ 0.0] = (  0,   0,   0)
-	fc[ 1.8] = (238, 130, 238) # violet
-	fc[ 3.0] = (  0,   0, 255) # blue
-	fc[ 8.0] = (  0, 255, 255) # aqua
-	fc[10.0] = (  0, 128,   0) # green
-	fc[16.0] = (255, 255,   0) # yellow
-	fc[18.0] = (241,  92,   7) # orange
-	fc[25.0] = (255,   0,   0) # red
-	fc[30.0] = (255,   0,   0) # red
         my_cdict = fc
-
+	fc[ 0.0] = (  0,   0,   0)
+	fc[ 1.8] = cc255('violet')
+	fc[ 3.0] = cc255('blue')
+	fc[ 8.0] = cc255('aqua')
+	fc[10.0] = cc255('green')
+	fc[13.0] = cc255('green')
+	fc[17.0] = cc255('yellow')
+	fc[21.0] = cc255('orange')
+	fc[28.0] = cc255('red')
+	fc[30.0] = cc255('red')
 	norm = matplotlib.colors.Normalize(vmin=vmin,vmax=vmax)
 	
 	red   = []
@@ -636,7 +642,7 @@ class RbnCounts(object):
     def __init__(self,rbn_obj,sTime=None,eTime=None,
             integration_time=datetime.timedelta(minutes=15),
             data_set='active',legend_loc='upper left',ax=None,
-            band_data=None):
+            band_data=None,plot_all=False,plot_by_band=True):
 
         if band_data is None:
             band_data = BandData()
@@ -652,15 +658,23 @@ class RbnCounts(object):
         if eTime is None:
             eTime = ds.df['date'].max()
 
-        for band in band_data.band_list:
-            this_group = self.data_set.get_band_group(band)
-            if this_group is None: continue
+        if plot_by_band:
+            band_keys = band_data.band_list[:]
+            band_keys.sort()
+            for band in band_keys:
+                this_group = self.data_set.get_band_group(band)
+                if this_group is None: continue
 
-            color       = band_data.band_dict[band]['color']
-            label       = band_data.band_dict[band]['name']
+                color       = band_data.band_dict[band]['color']
+                label       = band_data.band_dict[band]['freq_name']
 
-            counts      = rolling_counts_time(this_group,sTime=sTime,window_length=integration_time)
-            ax.plot(counts.index,counts,color=color,label=label,lw=2)
+                counts      = rolling_counts_time(this_group,sTime=sTime,window_length=integration_time)
+                ax.plot(counts.index,counts,color=color,label=label,lw=3)
+
+        if plot_all:
+            counts  = rolling_counts_time(ds.df,sTime=sTime,window_length=integration_time)
+            ax.plot(counts.index,counts,color='k',label='All Spots',lw=2)
+
 
         ax.legend(loc=legend_loc,ncol=6)
         ax.set_ylabel('RBN Counts')

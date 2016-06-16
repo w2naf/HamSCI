@@ -38,7 +38,7 @@ def rbn_counts(sTime,eTime,
     xsize       = 15.0
     ysize       = 6.5
     nx_plots    = 1
-    ny_plots    = 1
+    ny_plots    = 2
 
     rcp = mpl.rcParams
     rcp['axes.titlesize']       = 'large'
@@ -46,23 +46,32 @@ def rbn_counts(sTime,eTime,
     rcp['axes.labelweight']     = 'bold'
     rcp['font.weight']          = 'bold'
 
-    fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
-    ax0        = fig.add_subplot(1,1,1)
+    fig     = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
 
-    rbn_cnt     = rbn_lib.RbnCounts(rbn_obj,ax=ax0,integration_time=integration_time)
+    ax0     = fig.add_subplot(ny_plots,nx_plots,1)
+    rbn_cnt = rbn_lib.RbnCounts(rbn_obj,ax=ax0,plot_by_band=False,plot_all=True,
+                    integration_time=integration_time)
+    ax0.set_ylim(0,25000)
 
+    ax0     = fig.add_subplot(ny_plots,nx_plots,2)
+    rbn_cnt = rbn_lib.RbnCounts(rbn_obj,ax=ax0,plot_by_band=True,plot_all=False,
+                    integration_time=integration_time)
+    ax0.set_ylim(0,14000)
+
+    fig.tight_layout()
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
 
 if __name__ == '__main__':
 #    # 2014 Nov Sweepstakes
-#    sTime   = datetime.datetime(2014,11,1)
-#    eTime   = datetime.datetime(2014,11,4)
+    sTime   = datetime.datetime(2014,11,1)
+    eTime   = datetime.datetime(2014,11,4)
+#    eTime   = datetime.datetime(2014,11,2)
 
-    # 2015 Nov Sweepstakes
-    sTime   = datetime.datetime(2015,11,7)
-#    eTime   = datetime.datetime(2015,11,8)
-    eTime   = datetime.datetime(2015,11,10)
+##    # 2015 Nov Sweepstakes
+#    sTime   = datetime.datetime(2015,11,7)
+##    eTime   = datetime.datetime(2015,11,8)
+#    eTime   = datetime.datetime(2015,11,10)
 
 #    # 2016 CQ WPX CW
 #    sTime   = datetime.datetime(2016,5,28)
@@ -71,9 +80,9 @@ if __name__ == '__main__':
     dct = {}
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
 
-    event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
-    output_dir          = os.path.join('output','counts',event_dir)
-    handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
+#    event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
+    output_dir          = os.path.join('output','counts')
+    handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
     dct['output_dir']   = output_dir
 
     rbn_counts(sTime,eTime,output_dir=output_dir)
