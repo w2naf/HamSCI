@@ -49,13 +49,17 @@ def rbn_counts(sTime,eTime,
     fig     = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
 
     ax0     = fig.add_subplot(ny_plots,nx_plots,1)
-    rbn_cnt = rbn_lib.RbnCounts(rbn_obj,ax=ax0,plot_by_band=False,plot_all=True,
-                    integration_time=integration_time)
+    rbn_obj.active.plot_spot_counts(sTime=sTime,eTime=eTime,
+            integration_time=integration_time,
+            plot_by_band=False,plot_all=True,
+            ax=ax0)
     ax0.set_ylim(0,25000)
 
     ax0     = fig.add_subplot(ny_plots,nx_plots,2)
-    rbn_cnt = rbn_lib.RbnCounts(rbn_obj,ax=ax0,plot_by_band=True,plot_all=False,
-                    integration_time=integration_time)
+    rbn_obj.active.plot_spot_counts(sTime=sTime,eTime=eTime,
+            integration_time=integration_time,
+            plot_by_band=True,plot_all=False,
+            ax=ax0)
     ax0.set_ylim(0,14000)
 
     fig.tight_layout()

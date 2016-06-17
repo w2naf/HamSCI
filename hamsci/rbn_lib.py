@@ -61,8 +61,6 @@ class BandData(object):
 #        band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
 #
 #        self.band_dict  = band_dict
-#        self.band_list  = band_dict.keys()
-#        self.band_list.sort(reverse=True)
 
     def __gen_band_dict__(self,bands):
         dct = {}
@@ -75,8 +73,6 @@ class BandData(object):
             tmp['color']        = self.get_rgba(freq)
             dct[key]            = tmp
         self.band_dict          = dct
-        self.band_list          = dct.keys()
-        self.band_list.sort(reverse=True)
 
     def get_rgba(self,freq):
         nrm     = self.norm(freq)
@@ -490,6 +486,71 @@ class RbnDataSet(object):
         for key in keys:
             print key,self.history[key]
 
+    def plot_spot_counts(self,sTime=None,eTime=None,
+            integration_time=datetime.timedelta(minutes=15),
+            plot_all        = True,     all_lw  = 2,
+            plot_by_band    = False,    band_lw = 3,
+            band_data=None,
+            plot_legend=True,legend_loc='upper left',
+            plot_title=True,format_xaxis=True,
+            ax=None):
+        """
+        Plots counts of RBN data.
+        """
+        if sTime is None:
+            sTime = self.df['date'].min()
+        if eTime is None:
+            eTime = self.df['date'].max()
+            
+        if ax is None:
+            ax  = plt.gca()
+
+        if plot_by_band:
+            if band_data is None:
+                band_data = BandData()
+
+            band_list = band_data.band_dict.keys()
+            band_list.sort()
+            for band in band_list:
+                this_group = self.get_band_group(band)
+                if this_group is None: continue
+
+                color       = band_data.band_dict[band]['color']
+                label       = band_data.band_dict[band]['freq_name']
+
+                counts      = rolling_counts_time(this_group,sTime=sTime,window_length=integration_time)
+                ax.plot(counts.index,counts,color=color,label=label,lw=band_lw)
+
+        if plot_all:
+            counts  = rolling_counts_time(self.df,sTime=sTime,window_length=integration_time)
+            ax.plot(counts.index,counts,color='k',label='All Spots',lw=all_lw)
+
+        ax.set_ylabel('RBN Counts')
+
+        if plot_legend:
+            ax.legend(loc=legend_loc,ncol=7)
+
+        if plot_title:
+            title   = []
+            title.append('Reverse Beacon Network')
+            date_fmt    = '%Y %b %d %H%M UT'
+            date_str    = '{} - {}'.format(sTime.strftime(date_fmt), eTime.strftime(date_fmt))
+            title.append(date_str)
+            ax.set_title('\n'.join(title))
+
+        if format_xaxis:
+            ax.set_xlabel('UT')
+            ax.set_xlim(sTime,eTime)
+            xticks  = ax.get_xticks()
+            xtls    = []
+            for xtick in xticks:
+                xtd = matplotlib.dates.num2date(xtick)
+                if xtd.hour == 0 and xtd.minute == 0:
+                    xtl = xtd.strftime('%H%M\n%d %b %Y')
+                else:
+                    xtl = xtd.strftime('%H%M')
+                xtls.append(xtl)
+            ax.set_xticklabels(xtls)
 
 def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
         title=None,bbox_to_anchor=None,ncdxf=False,ncol=None,band_data=None):
@@ -503,10 +564,9 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
     labels  = []
 
     # Force freqs to go low to high regardless of plotting order.
-    bl_copy = band_data.band_list[:]
-    bl_copy.sort()
-
-    for band in bl_copy:
+    band_list   = band_data.band_dict.keys()
+    band_list.sort()
+    for band in band_list:
         color = band_data.band_dict[band]['color']
         label = band_data.band_dict[band]['freq_name']
         handles.append(mpatches.Patch(color=color,label=label))
@@ -635,72 +695,6 @@ def rolling_counts_time(df,sTime=None,window_length=datetime.timedelta(minutes=1
 
     return pd.Series(val_list,index=date_list)
 
-class RbnCounts(object):
-    """
-    Plots counts of RBN data.
-    """
-    def __init__(self,rbn_obj,sTime=None,eTime=None,
-            integration_time=datetime.timedelta(minutes=15),
-            data_set='active',legend_loc='upper left',ax=None,
-            band_data=None,plot_all=False,plot_by_band=True):
-
-        if band_data is None:
-            band_data = BandData()
-
-        fig             = ax.get_figure()
-
-        self.rbn_obj    = rbn_obj
-        self.data_set   = getattr(rbn_obj,data_set)
-        ds              = self.data_set
-
-        if sTime is None:
-            sTime = ds.df['date'].min()
-        if eTime is None:
-            eTime = ds.df['date'].max()
-
-        if plot_by_band:
-            band_keys = band_data.band_list[:]
-            band_keys.sort()
-            for band in band_keys:
-                this_group = self.data_set.get_band_group(band)
-                if this_group is None: continue
-
-                color       = band_data.band_dict[band]['color']
-                label       = band_data.band_dict[band]['freq_name']
-
-                counts      = rolling_counts_time(this_group,sTime=sTime,window_length=integration_time)
-                ax.plot(counts.index,counts,color=color,label=label,lw=3)
-
-        if plot_all:
-            counts  = rolling_counts_time(ds.df,sTime=sTime,window_length=integration_time)
-            ax.plot(counts.index,counts,color='k',label='All Spots',lw=2)
-
-
-        ax.legend(loc=legend_loc,ncol=6)
-        ax.set_ylabel('RBN Counts')
-        ax.set_xlabel('UT')
-
-        title   = []
-        title.append('Reverse Beacon Network')
-        date_fmt    = '%Y %b %d %H%M UT'
-        date_str    = '{} - {}'.format(sTime.strftime(date_fmt), eTime.strftime(date_fmt))
-        title.append(date_str)
-        ax.set_title('\n'.join(title))
-        ax.grid(True)
-
-        xticks  = ax.get_xticks()
-        xtls    = []
-        for xtick in xticks:
-            xtd = matplotlib.dates.num2date(xtick)
-            if xtd.hour == 0 and xtd.minute == 0:
-                xtl = xtd.strftime('%H%M\n%d %b %Y')
-            else:
-                xtl = xtd.strftime('%H%M')
-            xtls.append(xtl)
-        ax.set_xticklabels(xtls)
-#        fig.autofmt_xdate()
-
-        
 class RbnMap(object):
     """Plot Reverse Beacon Network data.
 
@@ -814,8 +808,10 @@ class RbnMap(object):
                 s=s,zorder=zorder,**de_prop)
 
     def plot_midpoints(self):
-        band_data = self.band_data
-        for band in band_data.band_list:
+        band_data   = self.band_data
+        band_list   = band_data.keys()
+        band_list.sort(reverse=True)
+        for band in band_list:
             this_group = self.data_set.get_band_group(band)
             if this_group is None: continue
 
@@ -827,8 +823,9 @@ class RbnMap(object):
 
     def plot_paths(self):
         m   = self.m
-        band_data = self.band_data
-        for band in band_data.band_list:
+        band_list   = band_data.keys()
+        band_list.sort(reverse=True)
+        for band in band_list:
             this_group = self.data_set.get_band_group(band)
             if this_group is None: continue
 
