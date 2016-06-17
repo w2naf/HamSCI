@@ -25,22 +25,26 @@ class GeomagSummary(object):
 
         # Go plot!! ############################ 
         ## Determine the aspect ratio of subplot.
-        self.xsize      = 15
+        self.xsize      = 17.5
         self.ysize      = 4
         self.nx_plots   = 1
         self.ny_plots   = 4
         self.plot_nr    = 0
 
         rcp = mpl.rcParams
-        rcp['axes.titlesize']   = 'large'
+        rcp['axes.titlesize']   = 'x-large'
+        rcp['axes.labelsize']   = 'x-large'
+        rcp['xtick.labelsize']  = 'x-large'
+        rcp['ytick.labelsize']  = 'x-large'
         rcp['axes.titleweight'] = 'bold'
         rcp['axes.labelweight'] = 'bold'
         rcp['font.weight']      = 'bold'
 
         leg_dct = {}
-        leg_dct['loc']      = 'upper left'
+        leg_dct['loc']      = 'best'
         leg_dct['ncol']     = 2
         self.legend_dict    = leg_dct
+        self.legend_lw      = 4
 
         fig         = plt.figure(figsize=(self.nx_plots*self.xsize,
                                           self.ny_plots*self.ysize))
@@ -53,6 +57,15 @@ class GeomagSummary(object):
 
         # Close up plot. #######################
         fig.tight_layout()
+
+        title   = []
+        title.append('Geomagnetic Environment Summary')
+        date_fmt    = '%Y %b %d %H%M UT'
+        date_str    = '{} - {}'.format(sTime.strftime(date_fmt), eTime.strftime(date_fmt))
+        title.append(date_str)
+        fontdict    = {'size':'xx-large','weight':'bold'}
+        fig.text(0.5,0.99,'\n'.join(title),fontdict=fontdict,ha='center')
+
         fig.savefig(filepath,bbox_inches='tight')
         plt.close(fig)
 
@@ -90,7 +103,10 @@ class GeomagSummary(object):
 
         dct = self.legend_dict.copy()
         dct.update({'handles':lines})
-        ax.legend(**dct)
+        leg = ax.legend(**dct)
+        for legobj in leg.legendHandles:
+            legobj.set_linewidth(self.legend_lw)
+
         self.xtick_time_fmt(ax,show_labels=xlabels)
 
     def plot_by_bz(self,xlabels=True,ax=None):
@@ -112,8 +128,12 @@ class GeomagSummary(object):
         ax.plot(ds.data.index,ds.data,label=ds.metadata['symbol'])
         ax.set_ylabel('B [nT]')
 
+        ax.axhline(0,ls='--',color='k')
+
         dct = self.legend_dict.copy()
-        ax.legend(**dct)
+        leg = ax.legend(**dct)
+        for legobj in leg.legendHandles:
+            legobj.set_linewidth(self.legend_lw)
         self.xtick_time_fmt(ax,show_labels=xlabels)
 
     def plot_symh_kp(self,xlabels=True,ax=None):
@@ -136,23 +156,69 @@ class GeomagSummary(object):
         ax.set_ylabel(ds.metadata['gme_label'])
         ax.axhline(0,color='k',ls='--')
 
+
         # Kp ###################################
-#        ax_1        = ax.twinx()
+        ax_1        = ax.twinx()
 #        ax.set_zorder(ax_1.get_zorder()+1)
-#        ax.patch.set_visible(False)
-#        data_obj    = GME(sTime,eTime,'omni_np')
-#        ds          = data_obj.active
-#        color       = 'green'
-#        label       = ds.metadata['symbol']
-#        tmp,        = ax_1.plot(ds.data.index,ds.data,label=label,color=color)
-#        lines.append(tmp)
-#        ax_1.set_ylabel(ds.metadata['gme_label'],color=color)
-#        for tl in ax_1.get_yticklabels():
-#            tl.set_color(color)
+        ax.patch.set_visible(False)
+        kp          = hamsci.geomagenv.KpData(self.sTime,self.eTime) 
+        low_color   = 'green'
+        mid_color   = 'darkorange'
+        high_color  = 'red'
+        label       = ds.metadata['symbol']
+        xvals       = kp.kp.index + datetime.timedelta(minutes=90)
+
+        color       = low_color
+        kp_markersize = 10
+        markers,stems,base  = ax_1.stem(xvals,kp.kp,color=color)
+        for stem in stems:
+            stem.set_color(color)
+        markers.set_color(color)
+        markers.set_label('Kp Index')
+        markers.set_markersize(kp_markersize)
+        lines.append(markers)
+
+        tf = kp.kp == 4
+        if np.count_nonzero(tf) > 0:
+            xx      = xvals[tf]
+            yy      = kp.kp[tf]
+            color   = mid_color
+            markers,stems,base  = ax_1.stem(xx,yy,color=color)
+            for stem in stems:
+                stem.set_color(color)
+            markers.set_color(color)
+            markers.set_markersize(kp_markersize)
+            lines.append(markers)
+
+        tf = kp.kp > 5
+        if np.count_nonzero(tf) > 0:
+            xx      = xvals[tf]
+            yy      = kp.kp[tf]
+            color   = high_color
+            markers,stems,base  = ax_1.stem(xx,yy,color=color)
+            for stem in stems:
+                stem.set_color(color)
+            markers.set_color(color)
+            markers.set_markersize(kp_markersize)
+            lines.append(markers)
+
+        ax_1.set_ylabel('Kp Index')
+        ax_1.set_ylim(0,9)
+        for tk,tl in zip(ax_1.get_yticks(),ax_1.get_yticklabels()):
+            if tk < 4:
+                color = low_color
+            elif tk == 4:
+                color = mid_color
+            else:
+                color = high_color
+            tl.set_color(color)
 
         dct = self.legend_dict.copy()
         dct.update({'handles':lines})
-        ax.legend(**dct)
+        leg = ax.legend(**dct)
+        for legobj in leg.legendHandles:
+            legobj.set_linewidth(self.legend_lw)
+
         self.xtick_time_fmt(ax,show_labels=xlabels)
 
     def plot_ae(self,xlabels=True,ax=None):
@@ -171,7 +237,9 @@ class GeomagSummary(object):
         ax.set_ylabel(ds.metadata['gme_label'])
 
         dct = self.legend_dict.copy()
-        ax.legend(**dct)
+        leg = ax.legend(**dct)
+        for legobj in leg.legendHandles:
+            legobj.set_linewidth(self.legend_lw)
         self.xtick_time_fmt(ax,show_labels=xlabels)
 
     def new_ax(self):

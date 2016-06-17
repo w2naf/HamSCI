@@ -702,6 +702,49 @@ class GmeDataSet(object):
         #### Define xticks
         set_spectrum_xaxis(f_max,ax=ax)
 
-
         ax.set_ylabel('LSP S(f)')
         ax.grid(True)
+
+class KpData(object):
+    def __init__(self,sTime,eTime):
+        kp_obj  = gme.ind.readKp(sTime=sTime,eTime=eTime)
+        times   = []
+        vals    = []
+
+        dt      = datetime.timedelta(hours=3)
+        for kp_record in kp_obj:
+            this_time   = kp_record.time
+
+            if this_time < sTime or this_time >= eTime:
+                continue
+
+            for kp_str in kp_record.kp:
+                kp_val  = self.kp_num(kp_str)
+                times.append(this_time)
+                vals.append(kp_val)
+
+                this_time = this_time + dt
+
+        kp_series   = pd.Series(vals,index=times)
+        tf          = np.logical_and(kp_series.index >= sTime, kp_series.index < eTime)
+        kp_series   = kp_series[tf]
+        self.kp     = kp_series
+                
+    def kp_num(self,kp_str):
+        if kp_str[-1] == '-':
+            add = -0.33
+        elif kp_str[-1] == '+':
+            add = 0.33
+        else:
+            add = 0
+
+        kp_val = float(kp_str[0]) + add
+        return kp_val
+
+    def plot_kp(self,ax=None):
+        if ax is None:
+            plt.gca()
+
+        xvals   = self.kp.index + datetime.timedelta(minutes=90)
+        markers,stems,base  = ax.stem(xvals,self.kp)
+        ax.set_ylim(0,9)
