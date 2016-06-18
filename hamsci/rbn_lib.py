@@ -491,7 +491,7 @@ class RbnDataSet(object):
             plot_all        = True,     all_lw  = 2,
             plot_by_band    = False,    band_lw = 3,
             band_data=None,
-            plot_legend=True,legend_loc='upper left',
+            plot_legend=True,legend_loc='upper left',legend_lw=None,
             plot_title=True,format_xaxis=True,
             ax=None):
         """
@@ -528,7 +528,11 @@ class RbnDataSet(object):
         ax.set_ylabel('RBN Counts')
 
         if plot_legend:
-            ax.legend(loc=legend_loc,ncol=7)
+            leg = ax.legend(loc=legend_loc,ncol=7)
+
+            if legend_lw is not None:
+                for legobj in leg.legendHandles:
+                    legobj.set_linewidth(legend_lw)
 
         if plot_title:
             title   = []
@@ -809,7 +813,7 @@ class RbnMap(object):
 
     def plot_midpoints(self):
         band_data   = self.band_data
-        band_list   = band_data.keys()
+        band_list   = band_data.band_dict.keys()
         band_list.sort(reverse=True)
         for band in band_list:
             this_group = self.data_set.get_band_group(band)
@@ -821,9 +825,12 @@ class RbnMap(object):
             mid   = self.m.scatter(this_group['sp_mid_lon'],this_group['sp_mid_lat'],
                     alpha=0.25,facecolors=color,color=color,s=6,zorder=100)
 
-    def plot_paths(self):
+    def plot_paths(self,band_data=None):
         m   = self.m
-        band_list   = band_data.keys()
+        if band_data is None:
+            band_data = BandData()
+
+        band_list   = band_data.band_dict.keys()
         band_list.sort(reverse=True)
         for band in band_list:
             this_group = self.data_set.get_band_group(band)

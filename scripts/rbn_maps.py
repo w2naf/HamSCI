@@ -102,8 +102,10 @@ if __name__ == '__main__':
 #    eTime   = datetime.datetime(2014,11,4)
 
     # 2015 Nov Sweepstakes
-    sTime   = datetime.datetime(2015,11,7)
-    eTime   = datetime.datetime(2015,11,10)
+#    sTime   = datetime.datetime(2015,11,7)
+#    eTime   = datetime.datetime(2015,11,10)
+    sTime   = datetime.datetime(2015,11,8)
+    eTime   = datetime.datetime(2015,11,9)
 
 #    # 2016 CQ WPX CW
 #    sTime   = datetime.datetime(2016,5,28)
@@ -119,6 +121,7 @@ if __name__ == '__main__':
     output_dir          = os.path.join('output','maps',event_dir)
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
     dct['output_dir']   = output_dir
+    dct['call_filt_de'] = 'aa4vv'
 
     run_list            = gen_map_run_list(sTime,eTime,integration_time,interval_time,**dct)
 

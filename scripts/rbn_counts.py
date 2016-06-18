@@ -26,6 +26,11 @@ def rbn_counts(sTime,eTime,
     filepath    = os.path.join(output_dir,filename)
 
     rbn_obj     = rbn_lib.RbnObject(sTime,eTime)
+
+#    # Filter things East of 80 deg lon.
+#    tf = rbn_obj.active.df['de_lon'] <= -80.
+#    rbn_obj.active.df = rbn_obj.active.df[tf]
+
 #    rbn_obj.active.latlon_filt(**latlon_bnds)
     rbn_obj.active.filter_calls(call_filt_de,call_type='de')
     rbn_obj.active.filter_calls(call_filt_dx,call_type='dx')
@@ -35,7 +40,7 @@ def rbn_counts(sTime,eTime,
 
     # Go plot!! ############################ 
     ## Determine the aspect ratio of subplot.
-    xsize       = 15.0
+    xsize       = 18.0
     ysize       = 6.5
     nx_plots    = 1
     ny_plots    = 2
@@ -54,6 +59,7 @@ def rbn_counts(sTime,eTime,
             plot_by_band=False,plot_all=True,
             ax=ax0)
     ax0.set_ylim(0,25000)
+    ax0.grid(True)
 
     ax0     = fig.add_subplot(ny_plots,nx_plots,2)
     rbn_obj.active.plot_spot_counts(sTime=sTime,eTime=eTime,
@@ -61,20 +67,21 @@ def rbn_counts(sTime,eTime,
             plot_by_band=True,plot_all=False,
             ax=ax0)
     ax0.set_ylim(0,14000)
+    ax0.grid(True)
 
     fig.tight_layout()
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
 
 if __name__ == '__main__':
-#    # 2014 Nov Sweepstakes
+##    # 2014 Nov Sweepstakes
     sTime   = datetime.datetime(2014,11,1)
     eTime   = datetime.datetime(2014,11,4)
-#    eTime   = datetime.datetime(2014,11,2)
+##    eTime   = datetime.datetime(2014,11,2)
 
-##    # 2015 Nov Sweepstakes
+##    # 2015 nov sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
-##    eTime   = datetime.datetime(2015,11,8)
+##    etime   = datetime.datetime(2015,11,8)
 #    eTime   = datetime.datetime(2015,11,10)
 
 #    # 2016 CQ WPX CW
