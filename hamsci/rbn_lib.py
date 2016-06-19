@@ -853,7 +853,7 @@ class RbnMap(object):
         rx      = m.scatter(df['de_lon'],df['de_lat'],
                 s=s,zorder=zorder,**de_prop)
 
-    def plot_midpoints(self,s=25):
+    def plot_midpoints(self,s=20):
         band_data   = self.band_data
         band_list   = band_data.band_dict.keys()
         band_list.sort(reverse=True)
