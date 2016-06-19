@@ -17,6 +17,8 @@ import pandas as pd     #This is a nice utility for working with time-series typ
 
 from hamtools import qrz
 
+import davitpy
+
 import matplotlib
 matplotlib.use('Agg')
 
@@ -144,7 +146,6 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
              # File downloading code from: http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
              url = 'http://www.reversebeacon.net/raw_data/dl.php?f='+ymd
 
-             #import ipdb; ipdb.set_trace()
              u = urllib2.urlopen(url)
              f = open(data_path, 'wb')
              meta = u.info()
@@ -719,7 +720,9 @@ class RbnMap(object):
     """
     def __init__(self,rbn_obj,data_set='active',data_set_all='DS001_dropna',ax=None,
             llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None,
+            nightshade=True,solar_zenith=False,
             band_data=None,default_plot=True):
+
         self.rbn_obj        = rbn_obj
         self.data_set       = getattr(rbn_obj,data_set)
         self.data_set_all   = getattr(rbn_obj,data_set_all)
@@ -743,13 +746,18 @@ class RbnMap(object):
         self.metadata['sTime'] = ds.df['date'].min()
         self.metadata['eTime'] = ds.df['date'].max()
 
-
         if band_data is None:
             band_data = BandData()
 
         self.band_data = band_data
 
         self.__setup_map__(ax=ax,**self.latlon_bnds)
+        if nightshade:
+            self.plot_nightshade()
+
+        if solar_zenith:
+            self.plot_solar_zenith_angle()
+
         if default_plot:
             self.default_plot()
 
@@ -790,20 +798,57 @@ class RbnMap(object):
         ax.set_title(title)
 
         # draw parallels and meridians.
-        m.drawparallels(np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False])
+        m.drawparallels(np.arange( -90., 91.,45.),color='k',labels=[False,True,True,False])
         m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True])
         m.drawcoastlines(color='0.65')
         m.drawmapboundary(fill_color='w')
-        
-        # Overlay nighttime terminator.
-        half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
-        plot_mTime  = sTime + half_time
-        m.nightshade(plot_mTime,color='0.50')
 
-        # Expose select objects
+        # Expose select object
         self.fig        = fig
         self.ax         = ax
         self.m          = m
+
+    def center_time(self):
+        # Overlay nighttime terminator.
+        sTime       = self.metadata['sTime']
+        eTime       = self.metadata['eTime']
+        half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
+        return (sTime + half_time)
+        
+    def plot_nightshade(self,color='0.60'):
+        self.m.nightshade(self.center_time(),color=color)
+        
+    def plot_solar_zenith_angle(self,plot_colorbar=True):
+        llcrnrlat   = self.latlon_bnds['llcrnrlat'] 
+        llcrnrlon   = self.latlon_bnds['llcrnrlon'] 
+        urcrnrlat   = self.latlon_bnds['urcrnrlat'] 
+        urcrnrlon   = self.latlon_bnds['urcrnrlon'] 
+        plot_mTime  = self.center_time()
+
+        nlons       = int((urcrnrlon-llcrnrlon))
+        nlats       = int((urcrnrlat-llcrnrlat))
+        lats, lons, zen, term = davitpy.utils.calcTerminator( plot_mTime,
+                [llcrnrlat,urcrnrlat], [llcrnrlon,urcrnrlon],nlats=nlats,nlons=nlons )
+#        import ipdb; ipdb.set_trace()
+
+        x,y         = self.m(lons,lats)
+        xx,yy       = np.meshgrid(x,y)
+        z           = zen[:-1,:-1]
+        Zm          = np.ma.masked_where(np.isnan(z),z)
+        term_cmap   = matplotlib.cm.Greys
+        term_vmin   = -50.
+        term_vmax   = 160.
+#        term_cmap   = matplotlib.cm.afmhot_r
+#        term_vmin   = None
+#        term_vmax   = None
+        
+#        ny = zen.shape[0]; nx = zen.shape[1]
+#        zendat, x, y = self.m.transform_scalar(zen,lons,lats, nx, ny, returnxy=True)
+#        m.imshow(zendat, matplotlib.cm.afmhot_r, alpha=.8, zorder=1,interpolation='gaussian')
+
+        if plot_colorbar:
+            pcoll       = self.ax.pcolor(xx,yy,Zm,cmap=term_cmap,vmin=term_vmin,vmax=term_vmax)
+            term_cbar   = plt.colorbar(pcoll,label='Solar Zenith Angle',shrink=0.8)
 
     def plot_de(self,s=25,zorder=150):
         m       = self.m
