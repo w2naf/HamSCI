@@ -40,16 +40,21 @@ def rbn_counts(sTime,eTime,
 
     # Go plot!! ############################ 
     ## Determine the aspect ratio of subplot.
-    xsize       = 18.0
+    xsize       = 19.0
     ysize       = 6.5
     nx_plots    = 1
     ny_plots    = 2
 
     rcp = mpl.rcParams
-    rcp['axes.titlesize']       = 'large'
-    rcp['axes.titleweight']     = 'bold'
-    rcp['axes.labelweight']     = 'bold'
-    rcp['font.weight']          = 'bold'
+    rcp['axes.titlesize']   = 'xx-large'
+    rcp['axes.labelsize']   = 'xx-large'
+    rcp['xtick.labelsize']  = 'xx-large'
+    rcp['ytick.labelsize']  = 'xx-large'
+    rcp['legend.fontsize']  = 'xx-large'
+    rcp['legend.columnspacing'] = 1.8
+    rcp['axes.titleweight'] = 'bold'
+    rcp['axes.labelweight'] = 'bold'
+    rcp['font.weight']      = 'bold'
 
     fig     = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
 
@@ -59,14 +64,16 @@ def rbn_counts(sTime,eTime,
             plot_by_band=False,plot_all=True,
             ax=ax0)
     ax0.set_ylim(0,25000)
+    ax0.set_xlabel('')
     ax0.grid(True)
 
     ax0     = fig.add_subplot(ny_plots,nx_plots,2)
     rbn_obj.active.plot_spot_counts(sTime=sTime,eTime=eTime,
             integration_time=integration_time,
-            plot_by_band=True,plot_all=False,
+            plot_by_band=True,plot_all=False,legend_lw=7,
             ax=ax0)
-    ax0.set_ylim(0,14000)
+    ax0.set_ylim(0,15000)
+    ax0.set_title('')
     ax0.grid(True)
 
     fig.tight_layout()
@@ -77,9 +84,9 @@ if __name__ == '__main__':
 ##    # 2014 Nov Sweepstakes
     sTime   = datetime.datetime(2014,11,1)
     eTime   = datetime.datetime(2014,11,4)
-##    eTime   = datetime.datetime(2014,11,2)
+#    eTime   = datetime.datetime(2014,11,2)
 
-##    # 2015 nov sweepstakes
+#    # 2015 nov sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
 ##    etime   = datetime.datetime(2015,11,8)
 #    eTime   = datetime.datetime(2015,11,10)
