@@ -821,9 +821,10 @@ class RbnMap(object):
         if cmap is None:
             fc = {}
             fc[vmin] = cc255('white')
-            fc[80]   = cc255('white')
-            fc[90]   = cc255('0.6')
-            fc[vmax] = cc255('0.4')
+            fc[82]   = cc255('white')
+            fc[90]   = cc255('0.80')
+            fc[95]   = cc255('0.70')
+            fc[vmax] = cc255('0.30')
             cmap = cdict_to_cmap(fc,name='term_cmap',vmin=vmin,vmax=vmax)
 
         llcrnrlat   = self.latlon_bnds['llcrnrlat'] 
