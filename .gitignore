@@ -47,3 +47,6 @@ output/*
 *.dvi
 *.log
 .DS_Store
+notebooks/.ipynb_checkpoints
+output~
+tmp
