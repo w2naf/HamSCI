@@ -54,16 +54,6 @@ class BandData(object):
 
         self.__gen_band_dict__(bands)
 
-#        band_dict       = {}
-#        band_dict[28]   = {'name': '10 m',  'freq': '28 MHz',  'color':'red'}
-#        band_dict[21]   = {'name': '15 m',  'freq': '21 MHz',  'color':'orange'}
-#        band_dict[14]   = {'name': '20 m',  'freq': '14 MHz',  'color':'yellow'}
-#        band_dict[7]    = {'name': '40 m',  'freq': '7 MHz',   'color':'green'}
-#        band_dict[3]    = {'name': '80 m',  'freq': '3.5 MHz', 'color':'blue'}
-#        band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
-#
-#        self.band_dict  = band_dict
-
     def __gen_band_dict__(self,bands):
         dct = {}
         for freq,name in bands:
@@ -94,17 +84,21 @@ class BandData(object):
 	fc[21.0] = cc255('orange')
 	fc[28.0] = cc255('red')
 	fc[30.0] = cc255('red')
+        cmap    = cdict_to_cmap(fc,name=name,vmin=vmin,vmax=vmax)
+	return cmap
+
+def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
 	norm = matplotlib.colors.Normalize(vmin=vmin,vmax=vmax)
 	
 	red   = []
 	green = []
 	blue  = []
 	
-	keys = my_cdict.keys()
+	keys = cdict.keys()
 	keys.sort()
 	
 	for x in keys:
-	    r,g,b, = my_cdict[x]
+	    r,g,b, = cdict[x]
 	    x = norm(x)
 	    r = r/255.
 	    g = g/255.
@@ -557,6 +551,9 @@ class RbnDataSet(object):
                 xtls.append(xtl)
             ax.set_xticklabels(xtls)
 
+            for tl in ax.get_xticklabels():
+                tl.set_ha('left')
+
 def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
         title=None,bbox_to_anchor=None,ncdxf=False,ncol=None,band_data=None):
 
@@ -720,7 +717,7 @@ class RbnMap(object):
     """
     def __init__(self,rbn_obj,data_set='active',data_set_all='DS001_dropna',ax=None,
             llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None,
-            nightshade=True,solar_zenith=False,
+            nightshade=False,solar_zenith=True,solar_zenith_dict={},
             band_data=None,default_plot=True):
 
         self.rbn_obj        = rbn_obj
@@ -756,7 +753,7 @@ class RbnMap(object):
             self.plot_nightshade()
 
         if solar_zenith:
-            self.plot_solar_zenith_angle()
+            self.plot_solar_zenith_angle(**solar_zenith_dict)
 
         if default_plot:
             self.default_plot()
@@ -818,36 +815,36 @@ class RbnMap(object):
     def plot_nightshade(self,color='0.60'):
         self.m.nightshade(self.center_time(),color=color)
         
-    def plot_solar_zenith_angle(self,plot_colorbar=True):
+    def plot_solar_zenith_angle(self,
+            cmap=None,vmin=0,vmax=180,plot_colorbar=False):
+
+        if cmap is None:
+            fc = {}
+            fc[vmin] = cc255('white')
+            fc[75]   = cc255('white')
+            fc[90]   = cc255('0.4')
+            fc[vmax] = cc255('0.2')
+            cmap = cdict_to_cmap(fc,name='term_cmap',vmin=vmin,vmax=vmax)
+
         llcrnrlat   = self.latlon_bnds['llcrnrlat'] 
         llcrnrlon   = self.latlon_bnds['llcrnrlon'] 
         urcrnrlat   = self.latlon_bnds['urcrnrlat'] 
         urcrnrlon   = self.latlon_bnds['urcrnrlon'] 
         plot_mTime  = self.center_time()
 
-        nlons       = int((urcrnrlon-llcrnrlon))
-        nlats       = int((urcrnrlat-llcrnrlat))
+        nlons       = int((urcrnrlon-llcrnrlon)*4)
+        nlats       = int((urcrnrlat-llcrnrlat)*4)
         lats, lons, zen, term = davitpy.utils.calcTerminator( plot_mTime,
                 [llcrnrlat,urcrnrlat], [llcrnrlon,urcrnrlon],nlats=nlats,nlons=nlons )
-#        import ipdb; ipdb.set_trace()
 
         x,y         = self.m(lons,lats)
         xx,yy       = np.meshgrid(x,y)
         z           = zen[:-1,:-1]
         Zm          = np.ma.masked_where(np.isnan(z),z)
-        term_cmap   = matplotlib.cm.Greys
-        term_vmin   = -50.
-        term_vmax   = 160.
-#        term_cmap   = matplotlib.cm.afmhot_r
-#        term_vmin   = None
-#        term_vmax   = None
-        
-#        ny = zen.shape[0]; nx = zen.shape[1]
-#        zendat, x, y = self.m.transform_scalar(zen,lons,lats, nx, ny, returnxy=True)
-#        m.imshow(zendat, matplotlib.cm.afmhot_r, alpha=.8, zorder=1,interpolation='gaussian')
+
+        pcoll       = self.ax.pcolor(xx,yy,Zm,cmap=cmap,vmin=vmin,vmax=vmax)
 
         if plot_colorbar:
-            pcoll       = self.ax.pcolor(xx,yy,Zm,cmap=term_cmap,vmin=term_vmin,vmax=term_vmax)
             term_cbar   = plt.colorbar(pcoll,label='Solar Zenith Angle',shrink=0.8)
 
     def plot_de(self,s=25,zorder=150):
