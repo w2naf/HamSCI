@@ -853,7 +853,7 @@ class RbnMap(object):
         rx      = m.scatter(df['de_lon'],df['de_lat'],
                 s=s,zorder=zorder,**de_prop)
 
-    def plot_midpoints(self):
+    def plot_midpoints(self,s=10):
         band_data   = self.band_data
         band_list   = band_data.band_dict.keys()
         band_list.sort(reverse=True)
@@ -865,7 +865,7 @@ class RbnMap(object):
             label = band_data.band_dict[band]['name']
 
             mid   = self.m.scatter(this_group['sp_mid_lon'],this_group['sp_mid_lat'],
-                    alpha=0.25,facecolors=color,color=color,s=6,zorder=100)
+                    alpha=0.25,facecolors=color,color=color,s=s,zorder=100)
 
     def plot_paths(self,band_data=None):
         m   = self.m

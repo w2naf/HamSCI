@@ -95,13 +95,13 @@ def rbn_map_dct_wrapper(run_dct):
     rbn_map(**run_dct)
 
 if __name__ == '__main__':
-    multiproc   = False
+    multiproc   = True
 
 #    # 2014 Nov Sweepstakes
-#    sTime   = datetime.datetime(2014,11,1)
-#    eTime   = datetime.datetime(2014,11,4)
-    sTime   = datetime.datetime(2014,11,1,23)
-    eTime   = datetime.datetime(2014,11,2)
+    sTime   = datetime.datetime(2014,11,1)
+    eTime   = datetime.datetime(2014,11,4)
+#    sTime   = datetime.datetime(2014,11,1,23)
+##    eTime   = datetime.datetime(2014,11,2)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
