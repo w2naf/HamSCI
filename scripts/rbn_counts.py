@@ -16,11 +16,13 @@ from hamsci import rbn_lib
 from hamsci import handling
 
 def rbn_counts(sTime,eTime,
-#        llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
+        llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None, integration_time=datetime.timedelta(minutes=15),
         output_dir = 'output'):
 
-#    latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
+    latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
+
+    latlon_str  = 'Lat Range: {:.0f} to {:.0f} N; Lon Range: {:.0f} to {:.0f} E'.format(llcrnrlat,urcrnrlat,llcrnrlon,urcrnrlon) 
 
     filename    = 'rbn_counts-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(sTime,eTime)
     filepath    = os.path.join(output_dir,filename)
@@ -31,7 +33,7 @@ def rbn_counts(sTime,eTime,
 #    tf = rbn_obj.active.df['de_lon'] <= -80.
 #    rbn_obj.active.df = rbn_obj.active.df[tf]
 
-#    rbn_obj.active.latlon_filt(**latlon_bnds)
+    rbn_obj.active.latlon_filt(**latlon_bnds)
     rbn_obj.active.filter_calls(call_filt_de,call_type='de')
     rbn_obj.active.filter_calls(call_filt_dx,call_type='dx')
 
@@ -63,8 +65,14 @@ def rbn_counts(sTime,eTime,
             integration_time=integration_time,
             plot_by_band=False,plot_all=True,
             ax=ax0)
-    ax0.set_ylim(0,25000)
+    ax0.set_ylim(0,16000)
     ax0.set_xlabel('')
+    
+    title = []
+    title.append('Reverse Beacon Network')
+    title.append(latlon_str)
+    ax0.set_title('\n'.join(title))
+
     ax0.grid(True)
 
     ax0     = fig.add_subplot(ny_plots,nx_plots,2)
@@ -72,7 +80,7 @@ def rbn_counts(sTime,eTime,
             integration_time=integration_time,
             plot_by_band=True,plot_all=False,legend_lw=7,
             ax=ax0)
-    ax0.set_ylim(0,15000)
+    ax0.set_ylim(0,10000)
     ax0.set_title('')
     ax0.grid(True)
 
@@ -86,7 +94,7 @@ if __name__ == '__main__':
     eTime   = datetime.datetime(2014,11,4)
 #    eTime   = datetime.datetime(2014,11,2)
 
-#    # 2015 nov sweepstakes
+    # 2015 nov sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
 ##    etime   = datetime.datetime(2015,11,8)
 #    eTime   = datetime.datetime(2015,11,10)
@@ -103,4 +111,4 @@ if __name__ == '__main__':
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
     dct['output_dir']   = output_dir
 
-    rbn_counts(sTime,eTime,output_dir=output_dir)
+    rbn_counts(sTime,eTime,**dct)

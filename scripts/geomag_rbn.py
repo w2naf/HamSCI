@@ -16,7 +16,11 @@ import hamsci
 GME     = hamsci.geomagenv.GmeObject
 
 class GeomagSummary(object):
-    def __init__(self,sTime,eTime,output_dir='output'):
+    def __init__(self,sTime,eTime,
+        llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
+        output_dir='output'):
+
+        self.latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
         self.sTime  = sTime
         self.eTime  = eTime
 
@@ -257,6 +261,7 @@ class GeomagSummary(object):
         eTime       = self.eTime
 
         rbn_obj     = hamsci.rbn_lib.RbnObject(sTime,eTime)
+        rbn_obj.active.latlon_filt(**self.latlon_bnds)
         rbn_obj.active.plot_spot_counts(sTime=sTime,eTime=eTime,
                 integration_time=integration_time,
                 plot_by_band=plot_by_band,plot_all=plot_all,
@@ -303,12 +308,12 @@ if __name__ == '__main__':
     hamsci.general_lib.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
 
     # 2014 Nov Sweepstakes
-#    sTime   = datetime.datetime(2014,11,1)
-#    eTime   = datetime.datetime(2014,11,4)
+    sTime   = datetime.datetime(2014,11,1)
+    eTime   = datetime.datetime(2014,11,4)
 
-#    # 2015 Nov Sweepstakes
-    sTime   = datetime.datetime(2015,11,7)
-    eTime   = datetime.datetime(2015,11,10)
+##    # 2015 Nov Sweepstakes
+#    sTime   = datetime.datetime(2015,11,7)
+#    eTime   = datetime.datetime(2015,11,10)
 
 #    # 2016 CQ WPX CW
 #    sTime   = datetime.datetime(2016,5,28)
@@ -318,5 +323,6 @@ if __name__ == '__main__':
     dct['output_dir']   = output_dir
     dct['sTime']        = sTime
     dct['eTime']        = eTime
+    dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
 
     GeomagSummary(**dct)
