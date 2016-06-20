@@ -866,7 +866,7 @@ class RbnMap(object):
             label = band_data.band_dict[band]['name']
 
             mid   = self.m.scatter(this_group['sp_mid_lon'],this_group['sp_mid_lat'],
-                    alpha=0.25,edgecolors='none',facecolors=color,color=color,s=s,zorder=100)
+                    alpha=0.50,edgecolors='none',facecolors=color,color=color,s=s,zorder=100)
 
     def plot_paths(self,band_data=None):
         m   = self.m
