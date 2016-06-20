@@ -270,6 +270,14 @@ class GeomagSummary(object):
         ax.set_ylim(ylim)
         self.xtick_time_fmt(ax,show_labels=xlabels)
 
+        llcrnrlat   = self.latlon_bnds['llcrnrlat']
+        urcrnrlat   = self.latlon_bnds['urcrnrlat']
+        llcrnrlon   = self.latlon_bnds['llcrnrlon']
+        urcrnrlon   = self.latlon_bnds['urcrnrlon']
+
+        latlon_str  = 'Lat Range: {:.0f} to {:.0f}; N Lon Range: {:.0f} to {:.0f} E'.format(llcrnrlat,urcrnrlat,llcrnrlon,urcrnrlon) 
+        ax.text(0.990,0.925,latlon_str,transform=ax.transAxes,ha='right')
+
     def new_ax(self):
         """
         Create a new axis.
