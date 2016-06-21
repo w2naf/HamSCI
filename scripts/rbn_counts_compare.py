@@ -35,8 +35,10 @@ def get_rbn_obj(sTime,eTime,tmp_dir='tmp'):
     return rbn_obj
 
 def rbn_counts(call_filt_de = None, call_filt_dx = None, integration_time=datetime.timedelta(minutes=15),
+        llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         output_dir = 'output'):
 
+    latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
 
     filename    = 'rbn_counts_compare.png'
 #    filename    = 'rbn_counts_compare-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(sTime,eTime)
@@ -68,15 +70,15 @@ def rbn_counts(call_filt_de = None, call_filt_dx = None, integration_time=dateti
 
     # Choose only selected bands.
     band_data   = rbn_lib.BandData()
-    bands       = [ 3, 7]
+##    bands       = [ 3, 7]
 #    bands       = [14, 21]
-
-    new_bd      = {}
-    for key,item in band_data.band_dict.iteritems():
-        if key not in bands: continue
-        new_bd[key] = item
-
-    band_data.band_dict = new_bd
+#
+#    new_bd      = {}
+#    for key,item in band_data.band_dict.iteritems():
+#        if key not in bands: continue
+#        new_bd[key] = item
+#
+#    band_data.band_dict = new_bd
 
     pnl_list    = []
     tmp = {}
@@ -100,12 +102,13 @@ def rbn_counts(call_filt_de = None, call_filt_dx = None, integration_time=dateti
         eTime   = panel['eTime']
 
         rbn_obj = get_rbn_obj(sTime,eTime)
+        rbn_obj.active.latlon_filt(**latlon_bnds)
         ax0     = fig.add_subplot(ny_plots,nx_plots,plt_nr+1)
         rbn_obj.active.plot_spot_counts(sTime=sTime,eTime=eTime,
                 integration_time=integration_time,
                 plot_by_band=True,plot_all=False,legend_lw=7,
                 band_data=band_data,ax=ax0)
-        ax0.set_ylim(0,15000)
+        ax0.set_ylim(0,10000)
         if plt_nr == 0:
             ax0.set_xlabel('')
             ax0.set_title('Revserse Beacon Network')
@@ -117,6 +120,8 @@ def rbn_counts(call_filt_de = None, call_filt_dx = None, integration_time=dateti
         ax0.text(-0.130,0.5,ystr,fontdict=fontdict,va='center',transform=ax0.transAxes,
                 rotation=90)
         ax0.grid(True)
+        latlon_str  = 'Lat Range: {:.0f} to {:.0f}; N Lon Range: {:.0f} to {:.0f} E'.format(llcrnrlat,urcrnrlat,llcrnrlon,urcrnrlon) 
+        ax0.text(0.990,0.925,latlon_str,transform=ax0.transAxes,ha='right')
 
     fig.tight_layout()
     fig.savefig(filepath,bbox_inches='tight')
@@ -130,4 +135,4 @@ if __name__ == '__main__':
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
     dct['output_dir']   = output_dir
 
-    rbn_counts(output_dir=output_dir)
+    rbn_counts(**dct)
