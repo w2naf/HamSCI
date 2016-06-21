@@ -212,9 +212,13 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
                         except:
             #                print '{index:06d} LOOKUP ERROR - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
                             errors += 1
+
                     total   = success + errors
-                    pct     = success / float(total) * 100.
-                    print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
+                    if total == 0:
+                        print "No call signs geolocated."
+                    else:
+                        pct     = success / float(total) * 100.
+                        print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
                     df.to_pickle(p_filepath)
                 else:
                     with open(p_filepath,'rb') as fl:
