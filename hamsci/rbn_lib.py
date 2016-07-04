@@ -720,6 +720,7 @@ class RbnMap(object):
     Written by Nathaniel Frissell 2014 Sept 06
     """
     def __init__(self,rbn_obj,data_set='active',data_set_all='DS001_dropna',ax=None,
+            sTime=None,eTime=None,
             llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None,
             nightshade=False,solar_zenith=True,solar_zenith_dict={},
             band_data=None,default_plot=True):
@@ -744,8 +745,14 @@ class RbnMap(object):
         self.latlon_bnds    = llb
 
         self.metadata       = {}
-        self.metadata['sTime'] = ds.df['date'].min()
-        self.metadata['eTime'] = ds.df['date'].max()
+
+        if sTime is None:
+            sTime = ds.df['date'].min()
+        if eTime is None:
+            eTime = ds.df['date'].max()
+
+        self.metadata['sTime'] = sTime
+        self.metadata['eTime'] = eTime
 
         if band_data is None:
             band_data = BandData()
