@@ -200,7 +200,8 @@ num_bins=len(rbn_df2)-1
 freq=rbn_df2['foP']
 import ipdb; ipdb.set_trace()
 #n, bins, patches = plt.hist(rbn_df2.Freq_plasma, num_bins, normed=1, facecolor='green', alpha=0.5)
-n, bins, patches = plt.hist(fp, num_bins, normed=1, facecolor='green', alpha=0.5)
+#n, bins, patches = plt.hist(fp, num_bins, normed=1, facecolor='green', alpha=0.5)
+n, bins, patches = plt.hist(fp, facecolor='green', alpha=0.5)
 import ipdb; ipdb.set_trace()
 # add a 'best fit' line
 #y = mlab.normpdf(bins, mu, sigma)
@@ -208,6 +209,9 @@ import ipdb; ipdb.set_trace()
 plt.xlabel('foF2')
 plt.ylabel('Counts')
 plt.title('Histogram of Plasma Frequency from RBN')
+filename='RBN_foF2_hist_test_binning.jpg'
+filepath    = os.path.join(output_path,filename)
+fig.savefig(filepath,bbox_inches='tight')
 import ipdb; ipdb.set_trace()
 
 ##Graph foF2 values on 40m

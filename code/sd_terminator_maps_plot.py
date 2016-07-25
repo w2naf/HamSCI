@@ -45,12 +45,12 @@ space=0.05
 y2=y1+h1+space
 map_ax=[[x1,y1, w1, h1], [x1, y2, w1, h1]]
 
-#Define Eclipse Path limits
-eLimits=['ds_NL.csv', 'ds_SL.csv']
-#Define visual 
-eColor=(0.75,0.25,0.5)
-#pZorder is the zorder of the eclipse path with higher zorder=on top
-pZorder=9
+##Define Eclipse Path limits
+#eLimits=['ds_NL.csv', 'ds_SL.csv']
+##Define visual 
+#eColor=(0.75,0.25,0.5)
+##pZorder is the zorder of the eclipse path with higher zorder=on top
+#pZorder=9
 
 #define RBN alpha
 #path_alpha=0.3
@@ -75,6 +75,11 @@ gs=False
 #ax_dim=[0.125,0.099999,0.7, 0.22]
 #ax_dim=[0.125,0.099999,0.77, 0.22]
 ax_dim=[0.125,0.099999,0.78, 0.22]
+
+##Freq plot dim
+#fax_y=ax 
+#fax_dim=[cax_x, ax_dim[1],cax_w, ax_dim[3]]
+
 #cax_x=0.125+ax_dim[2]+.005
 #cax_x=0.125+ax_dim[2]+.075
 cax_x=0.125+ax_dim[2]+.055
@@ -92,8 +97,11 @@ sTime=datetime.datetime(2013,5,13,23,0)
 #sTime=datetime.datetime(2013,3,13,23,0)
 #sTime=datetime.datetime(2015,8,21,23,0)
 sTime=datetime.datetime(2013,5,14,1,0)
+sTime=datetime.datetime(2013,5,14,3,0)
+#sTime=datetime.datetime(2014,8,21,2,0)
 eTime = sTime + datetime.timedelta(hours=5) #
 eTime = sTime + datetime.timedelta(hours=7) #
+eTime = sTime + datetime.timedelta(hours=11) #
 #sTime = datetime.datetime(2014,9,10)
 #eTime = datetime.datetime(2014,9,11)
 sat_nr = 15
@@ -178,6 +186,9 @@ for rad in radars:
     #        #sTime=datetime.datetime(2015,8,21,23,0) with h= 5 eTime = sTime + datetime.timedelta(hours = h) #
     #        ##sTime=datetime.datetime(2013,5,14,1,0) with h= 4 eTime = sTime + datetime.timedelta(hours = h) #
     #        ##sTime=datetime.datetime(2013,5,14,1,0) with h= 4 eTime = sTime + datetime.timedelta(hours = h) #
+    #       sTime=datetime.datetime(2014,8,21,3,0)with h=7
+    #       sTime=datetime.datetime(2014,8,21,2,0)with h=7
+    #    sTime=datetime.datetime(2013,5,14,3,0) with h=11
         rbn_df  = rbn_lib.read_rbn(map_sTime,map_sTime + datetime.timedelta(minutes=1),data_dir='data/rbn')
     #    rbn_df  = rbn_lib.read_rbn_std(map_sTime,map_eTime,data_dir='data/rbn')
 
@@ -200,6 +211,7 @@ for rad in radars:
     #        ##sTime=datetime.datetime(2013,5,14,1,0) with h= 4 eTime = sTime + datetime.timedelta(hours = h) #
     #        ##sTime=datetime.datetime(2013,5,14,1,0) with h= 5 eTime = sTime + datetime.timedelta(hours = h) #
     #        ##sTime=datetime.datetime(2013,5,14,1,0) with h= 7 eTime = sTime + datetime.timedelta(hours = h) #
+    #       sTime=datetime.datetime(2014,8,21,3,0) with h=7
         rbn_df  = rbn_lib.read_rbn(map_sTime,map_sTime + datetime.timedelta(minutes=1),data_dir='data/rbn')
     #    rbn_df  = rbn_lib.read_rbn_std(map_sTime,map_eTime,data_dir='data/rbn')
 
@@ -274,7 +286,7 @@ for rad in radars:
 
     #goes_data_map = gme.sat.read_goes(goes_sTime,goes_eTime,sat_nr=sat_nr)
 
-    #Plot RTI plots for radars[0] (Radar at FHW)
+    #Plot RTI plots for rad
     #        ax      = fig.add_axes([0.125,0.099999,0.775, 0.22]) 
     ax      = fig.add_axes(ax_dim)
     #        ax      =fig.add_subplot(3,1,3)
@@ -283,7 +295,7 @@ for rad in radars:
     #rti_magda.plotRti(sTime=sTime, eTime=eTime, bmnum=beam, ax=ax, rad=radars[0], params=['power'], gsct=gs, cax=cax, xtick_size=18,ytick_size=18, plotTerminator=True)
 
 ##    rti_magda.plotRti(sTime=sTime, eTime=eTime, bmnum=beam, ax=ax, rad=radars[0], params=['power'],coords='geo', gsct=gs, cax=cax, xtick_size=18,ytick_size=18, plotTerminator=True)
-    rti_magda.plotRti(sTime=sTime, eTime=eTime, bmnum=beam, ax=ax, rad=rad, params=['power'],coords='geo', gsct=gs, cax=cax, xtick_size=18,ytick_size=18, plotTerminator=True)
+    rti_magda.plotRti(sTime=sTime, eTime=eTime, bmnum=beam, ax=ax, rad=rad, params=['power'],coords='geo',yrng=[45,70], gsct=gs, cax=cax, xtick_size=18,ytick_size=18, plotTerminator=True)
 #    rti_magda.plotRti(sTime=sTime, eTime=eTime, bmnum=beam, ax=ax, rad=rad, params=['power'], gsct=gs, cax=cax, xtick_size=18,ytick_size=18)
     
     #rti_magda.plotRti(sTime=sTime, eTime=eTime, bmnum=beam, ax=ax, rad=radars[0], params=['power'], gsct=gs, cax=cax, xtick_size=18,ytick_size=18)
@@ -358,12 +370,15 @@ for rad in radars:
     #Set title of SuperDARN RTI PLOT
 #    r=pydarn.radar.network().getRadarByCode(radars[0])
     r=pydarn.radar.network().getRadarByCode(rad)
-    ax.set_title(r.name+' (Beam: '+str(beam)+')')
+#    ax.set_title(r.name+' (Beam: '+str(beam)+')')
+    ax.set_title(r.name+' - '+map_sTime.strftime('%d/%m/%Y'))
     #       # ax.text(.015,.90,'(e)',transform=ax.transAxes,**letter_prop)
 
     xticks  = []
-    for x in range(7):
-        xticks.append(sTime + datetime.timedelta(hours=(1*x)))
+#    for x in range(7):
+    for x in range(6):
+#        xticks.append(sTime + datetime.timedelta(hours=(1*x)))
+        xticks.append(sTime + datetime.timedelta(hours=(2*x)))
     ax.xaxis.set_ticks(xticks)
 
     ax.title.set_fontsize(title_prop['size'])

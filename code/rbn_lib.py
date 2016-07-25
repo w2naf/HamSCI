@@ -133,7 +133,7 @@ def read_rbn_std(sTime,eTime=None,data_dir=None,
     #import ipdb; ipdb.set_trace()
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
-    qz      = qrz.Session(qrz_call,qrz_passwd)
+#    qz      = qrz.Session(qrz_call,qrz_passwd)
 
     ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
     eDay        =  datetime.datetime(eTime.year,eTime.month,eTime.day)
@@ -459,7 +459,7 @@ def k4kdj_rbn(sTime,eTime=None,data_dir=None,
 #                    errors += 1
 #            total   = success + errors
 #            pct     = success / float(total) * 100.
-#            print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
+#            print '{0:d} of {1:d} ({2:.1f} %) call signs Pgeolocated via qrz.com.'.format(success,total,pct)
             df.to_pickle(p_filepath)
         else:
             with open(p_filepath,'rb') as fl:
@@ -467,16 +467,24 @@ def k4kdj_rbn(sTime,eTime=None,data_dir=None,
 
         #import ipdb; ipdb.set_trace()
         return df
-
-
+#
+#
+## Set up a dictionary which identifies which bands we want and some plotting attributes for each band
+#band_dict       = {}
+#band_dict[28]   = {'name': '10 m',  'freq': '28 MHz',  'color':'red'}
+#band_dict[21]   = {'name': '15 m',  'freq': '21 MHz',  'color':'orange'}
+#band_dict[14]   = {'name': '20 m',  'freq': '14 MHz',  'color':'yellow'}
+#band_dict[7]    = {'name': '40 m',  'freq': '7 MHz',   'color':'green'}
+#band_dict[3]    = {'name': '80 m',  'freq': '3.5 MHz', 'color':'blue'}
+#band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
 # Set up a dictionary which identifies which bands we want and some plotting attributes for each band
 band_dict       = {}
 band_dict[28]   = {'name': '10 m',  'freq': '28 MHz',  'color':'red'}
 band_dict[21]   = {'name': '15 m',  'freq': '21 MHz',  'color':'orange'}
-band_dict[14]   = {'name': '20 m',  'freq': '14 MHz',  'color':'yellow'}
-band_dict[7]    = {'name': '40 m',  'freq': '7 MHz',   'color':'green'}
+band_dict[14]   = {'name': '20 m',  'freq': '14 MHz',  'color':'green'}
+band_dict[7]    = {'name': '40 m',  'freq': '7 MHz',   'color':'aqua'}
 band_dict[3]    = {'name': '80 m',  'freq': '3.5 MHz', 'color':'blue'}
-band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'aqua'}
+band_dict[1]    = {'name': '160 m', 'freq': '1.8 MHz', 'color':'violet'}
 
 bandlist        = band_dict.keys()
 bandlist.sort(reverse=True)
@@ -1187,6 +1195,276 @@ def rbn_map_node(df, sTime, eTime,m=None, ax=None, tick_font_size=None,ncdxf=Fal
 
     return m,fig
 
+def rbn_map_midpt(df,ax=None,legend=True,tick_font_size=None,ncdxf=False,plot_paths=True,
+        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,m=None,eclipse=False,path_alpha=None):
+    """Plot midpoint of Reverse Beacon Network data.
+
+    **Args**:
+        * **[sTime]**: datetime.datetime object for start of plotting.
+        * **[eTime]**: datetime.datetime object for end of plotting.
+        * **[ymin]**: Y-Axis minimum limit
+        * **[ymax]**: Y-Axis maximum limit
+        * **[legendSize]**: Character size of the legend
+
+    **Returns**:
+        * **fig**:      matplotlib figure object that was plotted to
+
+    .. note::
+        If a matplotlib figure currently exists, it will be modified by this routine.  If not, a new one will be created.
+
+    Written by Nathaniel Frissell 2014 Sept 06 and Magda Moses 2016 July
+    """
+    import datetime
+    
+    from matplotlib import pyplot as plt
+    from mpl_toolkits.basemap import Basemap
+
+    import numpy as np
+    import pandas as pd
+
+    import eclipse_lib
+
+    from davitpy.pydarn.radar import *
+    from davitpy.pydarn.plotting import *
+    from davitpy.utils import *
+
+    if ax is None:
+        fig     = plt.figure(figsize=(10,6))
+        ax      = fig.add_subplot(111)
+    else:
+        fig     = ax.get_figure()
+
+    #Drop NaNs (QSOs without Lat/Lons)
+    df = df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+
+    ##Sort the data by band and time, then group by band.
+    df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
+    srt         = df.sort(['band','date'])
+    grouped     = srt.groupby('band')
+
+    sTime       = df['date'].min()
+    eTime       = df['date'].max()
+
+    half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
+    plot_mTime = sTime + half_time
+
+    if m==None: #added to allow rbn to be plotted over maps of other data 
+        if basemapType:
+            m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax)
+        else:
+            m = plotUtils.mapObj(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax,fillContinents='None', fix_aspect=True)
+
+#    title = sTime.strftime('%H%M - ')+eTime.strftime('%H%M UT')
+#    title = sTime.strftime('Reverse Beacon Network %Y %b %d %H%M UT - ')+eTime.strftime('%Y %b %d %H%M UT')
+#    if m==None:
+        title = sTime.strftime('RBN: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
+        ax.set_title(title)
+
+        # draw parallels and meridians.
+        m.drawparallels(np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+        m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True],fontsize=tick_font_size)
+        m.drawcoastlines(color='0.65')
+        m.drawmapboundary(fill_color='w')
+        m.nightshade(plot_mTime,color='0.82')
+    #if plotting the 2017 eclipse map then also draw state boundaries
+    if eclipse:
+        m.drawcountries(color='0.65')#np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+        m.drawstates(color='0.65')
+    
+    de_list = []
+    dx_list = []
+    for band in bandlist:
+        try:
+            this_group = grouped.get_group(band)
+        except:
+            continue
+
+        color = band_dict[band]['color']
+        label = band_dict[band]['name']
+
+        for index,row in this_group.iterrows():
+            #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
+
+            Lat = row['midLat']
+            Lon = row['midLon']
+
+            if row['callsign'] not in de_list: de_list.append(row['callsign'])
+            if row['dx'] not in dx_list: dx_list.append(row['dx'])
+
+            mid_pt    = m.scatter(Lon,Lat,color=color,marker='s', s=2,zorder=100)
+
+#            rx    = m.scatter(de_lon,de_lat,color='k',s=2,zorder=100)
+#            if plot_paths:
+#                line, = m.drawgreatcircle(dx_lon,dx_lat,de_lon,de_lat,color=color, alpha=path_alpha)
+#
+#                p = line.get_path()
+#                # find the index which crosses the dateline (the delta is large)
+#                cut_point = np.where(np.abs(np.diff(p.vertices[:, 0])) > 200)[0]
+#                if cut_point:
+#                    cut_point = cut_point[0]
+#
+#                    # create new vertices with a nan inbetween and set those as the path's vertices
+#                   # import ipdb; ipdb.set_trace()
+#                    new_verts = np.concatenate(
+#                                               [p.vertices[:cut_point, :], 
+#                                                [[np.nan, np.nan]], 
+#                                                p.vertices[cut_point+1:, :]]
+#                                               )
+#                    p.codes = None
+#                    p.vertices = new_verts
+#                #
+##                cut_point_lat = np.where(np.abs(np.diff(p.vertices[:, 1])) > 90)[0]
+##                if cut_point_lat:
+##                    cut_point_lat = cut_point_lat[0]
+##
+##                    # create new vertices with a nan inbetween and set those as the path's vertices
+##                    import ipdb; ipdb.set_trace()
+##                    new_verts = np.concatenate(
+##                                               [p.vertices[:cut_point_lat,:], 
+##                                                [[np.nan, np.nan]], 
+##                                                p.vertices[cut_point_lat+1:,:]]
+##                                               )
+##                    p.codes = None
+##                    p.vertices = new_verts
+##                    import ipdb; ipdb.set_trace()
+    if ncdxf:
+        dxf_df = pd.DataFrame.from_csv('ncdxf.csv')
+        m.scatter(dxf_df['lon'],dxf_df['lat'],s=dxf_plot_size,**dxf_prop)
+
+    #if eclipse:
+     #   df_cl=eclipse_lib.eclipse_get_path(fname='ds_CL.csv')
+     #   m.plot(df_cl['eLon'],df_cl['eLat'],'m--',label='2017 Eclipse Central Line', linewidth=2, latlon=True)
+
+#    import ipdb; ipdb.set_trace()
+    text = []
+    text.append('TX Stations: {0:d}'.format(len(dx_list)))
+    text.append('RX Stations: {0:d}'.format(len(de_list)))
+    text.append('Plotted Paths: {0:d}'.format(len(df)))
+
+    props = dict(facecolor='white', alpha=0.9,pad=6)
+    ax.text(0.02,0.05,'\n'.join(text),transform=ax.transAxes,ha='left',va='bottom',size=9,bbox=props)
+
+    if legend:
+        band_legend()
+
+    return m,fig
+#def rbn_map_midpt(df,ax=None,legend=True,ssn='', kp='', tick_font_size=None,ncdxf=False,plot_paths=True,
+#        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,eclipse=False,path_alpha=None):
+#    """Plot link midpoints derived from Reverse Beacon Network data for the midpoints between two stations.
+#
+#    **Args**:
+#        * **[sTime]**: datetime.datetime object for start of plotting.
+#        * **[eTime]**: datetime.datetime object for end of plotting.
+#        * **[ymin]**: Y-Axis minimum limit
+#        * **[ymax]**: Y-Axis maximum limit
+#        * **[legendSize]**: Character size of the legend
+#        * **[df]**: DataFrame with 'midLat','midLon','foP' attributes/sections
+#
+#    **Returns**:
+#        * **fig**:      matplotlib figure object that was plotted to
+#
+#    .. note::
+#        If a matplotlib figure currently exists, it will be modified by this routine.  If not, a new one will be created.
+#
+#    Written by Magda Moses and Nathaniel Frissell 2015 Sept 12
+#    """
+#    import datetime
+#    
+#    from matplotlib import pyplot as plt
+#    from mpl_toolkits.basemap import Basemap
+#
+#    import numpy as np
+#    import pandas as pd
+#
+#    import eclipse_lib
+#
+#    from davitpy.pydarn.radar import *
+#    from davitpy.pydarn.plotting import *
+#    from davitpy.utils import *
+#
+#    if ax is None:
+#        fig     = plt.figure(figsize=(10,6))
+#        ax      = fig.add_subplot(111)
+#    else:
+#        fig     = ax.get_figure()
+#    
+#    #If spliting up into sub-bands
+#    #Write Code later
+#    #Drop NaNs (QSOs without Lat/Lons)
+#    df = df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+#
+#    ##Sort the data by band and time, then group by band.
+#    df['band']  = np.array((np.floor(df['foP']/1000.)),dtype=np.int)
+#    srt         = df.sort(['band','date'])
+#    grouped     = srt.groupby('band')
+#    
+#    sTime       = df['date'].min()
+#    eTime       = df['date'].max()
+#
+#    half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
+#    plot_mTime = sTime + half_time
+#    
+#    #Create Map
+#    #Use basemap if want to plot superdarn radars or other things with superdarn code on map
+#    if basemapType:
+#        m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax)
+#    else:
+#        m = plotUtils.mapObj(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax,fillContinents='None', fix_aspect=True)
+#
+##    title = sTime.strftime('%H%M - ')+eTime.strftime('%H%M UT')
+##    title = sTime.strftime('Reverse Beacon Network %Y %b %d %H%M UT - ')+eTime.strftime('%Y %b %d %H%M UT')
+#    title = sTime.strftime('RBN Derived Plasma Frequency: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
+#    ax.set_title(title)
+#
+#    # draw parallels and meridians.
+#    m.drawparallels(np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+#    m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True],fontsize=tick_font_size)
+#    m.drawcoastlines(color='0.65')
+#    m.drawmapboundary(fill_color='w')
+#    m.nightshade(plot_mTime,color='0.82')
+#    #if plotting the 2017 eclipse map then also draw state boundaries
+#    if eclipse:
+#        m.drawcountries(color='0.65')#np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+#        m.drawstates(color='0.65')
+##    fof2_pt    = m.scatter(Lon,Lat,color=color,s=2,zorder=100)
+##    Lat = row['midLat']
+##    Lon = row['midLon']
+#
+#    de_list = []
+#    dx_list = []
+#    for band in bandlist:
+#        try:
+#            this_group = grouped.get_group(band)
+#        except:
+#            continue
+#
+#        color = band_dict[band]['color']
+#        label = band_dict[band]['name']
+#
+#        for index,row in this_group.iterrows():
+#            #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
+#            Lat = row['midLat']
+#            Lon = row['midLon']
+#
+#            if row['callsign'] not in de_list: de_list.append(row['callsign'])
+#            if row['dx'] not in dx_list: dx_list.append(row['dx'])
+#
+#            fof2_pt    = m.scatter(Lon,Lat,color=color,marker='s', s=2,zorder=100)
+#
+#    text = []
+#    text.append('TX Stations: {0:d}'.format(len(dx_list)))
+#    text.append('RX Stations: {0:d}'.format(len(de_list)))
+#    text.append('Plotted Paths: {0:d}'.format(len(df)))
+##    text.append('KP: '+kp[0])
+#    text.append('SSN: '+str(ssn))
+#
+#    props = dict(facecolor='white', alpha=0.9,pad=6)
+#    ax.text(0.02,0.05,'\n'.join(text),transform=ax.transAxes,ha='left',va='bottom',size=9,bbox=props)
+#
+#    if legend:
+#        band_legend()
+##
+#    return m,fig
 def rbn_map_foF2(df,ax=None,legend=True,ssn='', kp='', tick_font_size=None,ncdxf=False,plot_paths=True,
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,eclipse=False,path_alpha=None):
     """Plot foF2 values derived from Reverse Beacon Network data for the midpoints between two stations.
@@ -1268,6 +1546,7 @@ def rbn_map_foF2(df,ax=None,legend=True,ssn='', kp='', tick_font_size=None,ncdxf
 #    fof2_pt    = m.scatter(Lon,Lat,color=color,s=2,zorder=100)
 #    Lat = row['midLat']
 #    Lon = row['midLon']
+
     de_list = []
     dx_list = []
     for band in bandlist:
@@ -1304,7 +1583,151 @@ def rbn_map_foF2(df,ax=None,legend=True,ssn='', kp='', tick_font_size=None,ncdxf
 #
     return m,fig
 
-def rbn_region(df, latMin, lonMin, latMax, lonMax, constr_de=True, constr_dx=True):
+def rbn_colormap_foF2(df,ax=None,legend=True,ssn='', kp='', cmapName='Greens',tick_font_size=None,ncdxf=False,plot_paths=True,
+        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,proj='cyl',basemapType=True,eclipse=False,path_alpha=None):
+    """Plot a colormap of foF2 values derived from Reverse Beacon Network data for the midpoints between two stations.
+
+    **Args**:
+        * **[sTime]**: datetime.datetime object for start of plotting.
+        * **[eTime]**: datetime.datetime object for end of plotting.
+        * **[ymin]**: Y-Axis minimum limit
+        * **[ymax]**: Y-Axis maximum limit
+        * **[legendSize]**: Character size of the legend
+        * **[df]**: DataFrame with 'midLat','midLon','foP' attributes/sections
+
+    **Returns**:
+        * **fig**:      matplotlib figure object that was plotted to
+
+    .. note::
+        If a matplotlib figure currently exists, it will be modified by this routine.  If not, a new one will be created.
+
+    Written by Magda Moses and Nathaniel Frissell 2015 Sept 12
+    """
+    import datetime
+    
+    from matplotlib import pyplot as plt
+    from mpl_toolkits.basemap import Basemap
+    from matplotlib import colors
+
+    import numpy as np
+    import pandas as pd
+
+    import eclipse_lib
+
+    from davitpy.pydarn.radar import *
+    from davitpy.pydarn.plotting import *
+    from davitpy.utils import *
+
+    if ax is None:
+        fig     = plt.figure(figsize=(10,6))
+        ax      = fig.add_subplot(111)
+    else:
+        fig     = ax.get_figure()
+    
+    #If spliting up into sub-bands
+    #Write Code later
+    #Drop NaNs (QSOs without Lat/Lons)
+    df = df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+
+    ##Sort the data by band and time, then group by band.
+    df['band']  = np.array((np.floor(df['foP']/1000.)),dtype=np.int)
+    srt         = df.sort(['band','date'])
+    grouped     = srt.groupby('band')
+    
+    sTime       = df['date'].min()
+    eTime       = df['date'].max()
+
+    half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
+    plot_mTime = sTime + half_time
+    
+    #Create Map
+    #Use basemap if want to plot superdarn radars or other things with superdarn code on map
+    if basemapType:
+        m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax)
+    else:
+        m = plotUtils.mapObj(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection=proj,ax=ax,fillContinents='None', fix_aspect=True)
+
+#    title = sTime.strftime('%H%M - ')+eTime.strftime('%H%M UT')
+#    title = sTime.strftime('Reverse Beacon Network %Y %b %d %H%M UT - ')+eTime.strftime('%Y %b %d %H%M UT')
+    title = sTime.strftime('RBN Derived Plasma Frequency: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
+    ax.set_title(title)
+
+    # draw parallels and meridians.
+    m.drawparallels(np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+    m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True],fontsize=tick_font_size)
+    m.drawcoastlines(color='0.65')
+    m.drawmapboundary(fill_color='w')
+    m.nightshade(plot_mTime,color='0.82')
+    #if plotting the 2017 eclipse map then also draw state boundaries
+    if eclipse:
+        m.drawcountries(color='0.65')#np.arange(-90.,91.,45.),color='k',labels=[False,True,True,False],fontsize=tick_font_size)
+        m.drawstates(color='0.65')
+#    fof2_pt    = m.scatter(Lon,Lat,color=color,s=2,zorder=100)
+#    Lat = row['midLat']
+#    Lon = row['midLon']
+##    im1 = m.pcolor(df.midLon,df.midLat ,df.foP,shading='flat',cmap=plt.cm.Greens,latlon=True)
+#
+##    Lat = row['midLat']
+##    Lon = row['midLon']
+##    fp  = row['foP']
+#
+    Lat=df.midLat.values
+    Lon=df.midLon.values
+    fp=df.foP.values
+    import ipdb; ipdb.set_trace()
+#    Lat = df['midLat'].tolist()
+#    Lon = df['midLon'].tolist()
+#    fp  = df['foP'].tolist()
+#    plt.scatter(w, M, c=p, marker='s')
+    fof2_pt    = m.scatter(Lon,Lat,c=fp,cmap=cmapName,norm=colors.Normalize(vmin=df.foP.min(), vmax=df.foP.max()), marker='s', s=2,zorder=100)
+###    import ipdb; ipdb.set_trace()
+##    lons, lats=np.meshgrid(Lon,Lat)
+###    im1 = m.pcolormesh(Lon,Lat ,fp,shading='flat',cmap=plt.cm.jet,latlon=True)
+###    im1 = m.pcolormesh(Lon,Lat ,fp,latlon=True)
+###    im1 = m.pcolormesh(Lon,Lat ,fp,cmap=plt.cm.Greens,latlon=True)
+##    im1 = m.pcolormesh(lons,lats ,fp,latlon=True)
+#    gradient=np.vstack((Lon, Lat))
+#    gradient=np.vstack((gradient,fp))
+#    m.imshow(gradient, ax=ax, aspect='auto', cmap=plt.get_cmap(cmapName))
+##    m.pcolor(Lon,Lat,fp, latlon=True,cmap=plt.get_cmap(cmapName))
+
+#    de_list = []
+#    dx_list = []
+#    for band in bandlist:
+#        try:
+#            this_group = grouped.get_group(band)
+#        except:
+#            continue
+#
+#        color = band_dict[band]['color']
+#        label = band_dict[band]['name']
+#
+#        for index,row in this_group.iterrows():
+#            #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
+#            Lat = row['midLat']
+#            Lon = row['midLon']
+#
+#            if row['callsign'] not in de_list: de_list.append(row['callsign'])
+#            if row['dx'] not in dx_list: dx_list.append(row['dx'])
+#
+#            fof2_pt    = m.scatter(Lon,Lat,color=color,marker='s', s=2,zorder=100)
+#
+#    text = []
+#    text.append('TX Stations: {0:d}'.format(len(dx_list)))
+#    text.append('RX Stations: {0:d}'.format(len(de_list)))
+#    text.append('Plotted Paths: {0:d}'.format(len(df)))
+##    text.append('KP: '+kp[0])
+#    text.append('SSN: '+str(ssn))
+#
+#    props = dict(facecolor='white', alpha=0.9,pad=6)
+#    ax.text(0.02,0.05,'\n'.join(text),transform=ax.transAxes,ha='left',va='bottom',size=9,bbox=props)
+#
+#    if legend:
+#        band_legend()
+##
+    return m,fig
+
+def rbn_region(df, latMin, lonMin, latMax, lonMax, constr_de=True, constr_dx=True, constr_mid=False):
     import numpy as np
     import pandas as pd
     """Limit the RBN links to a specific region
@@ -1316,6 +1739,7 @@ def rbn_region(df, latMin, lonMin, latMax, lonMax, constr_de=True, constr_dx=Tru
         * **[lonMax]: Upper Longitude Limit
         * **[constr_de]: Constrain the RBN recievers to the specified Lat/Lon limits
         * **[constr_dx]: Constrain the dx stations to the specified Lat/Lon limits
+        * **[constr_mid]: Constrain the link midpoints to the specified Lat/Lon limits
     **Returns**:
         * **[df2]: Dataframe containing only those links within the specified limits
     .. note:: Only Default conditions tested! By default constrains links to a given region but can be used to constrain only the de or dx stations by changing the args
@@ -1324,6 +1748,13 @@ def rbn_region(df, latMin, lonMin, latMax, lonMax, constr_de=True, constr_dx=Tru
     import numpy as np
     import pandas as pd
     #Select which locations to constrain
+#    if constr_mid: 
+#        df2=df[df['de_lat']>latMin] 
+#        df2=df2[df2['de_lat']<latMax] 
+#        df2=df2[df2['de_lon']>lonMin]
+#        df2=df2[df2['de_lon']<lonMax]
+       
+
     #Constrain Links
     if constr_de and constr_dx:
 #        for i in range(0, len(df)-1): 
@@ -1512,16 +1943,24 @@ def get_geomagInd(sTime, eTime=None):
             #Convert sTime and eTime date into day of year
             t0 = sTime.timetuple()
 #            t1 = eTime.timetuple()
-#            import ipdb; ipdb.set_trace()
             b=t0.tm_yday
 #            c=t1.tm_yday
-#            import ipdb; ipdb.set_trace()
             day=b-1
-            #Get data for desired day (sTime only for now!)
-            bb=aa[day]
-#            import ipdb; ipdb.set_trace()
 #            day=c-1
-#            cc=aa[day]
+
+            #Get data for desired day (sTime only for now!)
+            #Check time in range
+            if day < len(aa):
+                #Data on the requested date is avalible!
+                bb=aa[day]
+    #            day=c-1
+    #            cc=aa[day]
+            else:
+                #No data avalible for the requested date
+                #Use data from last availble day
+                bb=aa[len(aa)-1]
+    #            cc=aa[len(aa)-1]
+
 # Extract kp, ap and ssn values as integers
     kp=bb.kp
     ap=bb.ap
@@ -1620,9 +2059,66 @@ def get_hmF2(sTime,lat, lon, ssn=None, output=True):
     else:
         return hmF2
 
-#def rbn_fof2():
+def rbn_fof2(time, muf, deLat, deLon, dxLat, dxLon,in_iri=[0], output=False):
+    """Calculate foF2 at the midpoint between the two stations 
+    **Args**:
+        * **[time]:The time link occured (used in iri model)
+        * **[muf]:The frequency of the link (taken to be the Maximum Usable frequency (MUF))
+        * **[deLat]: Receiver Latitude
+        * **[deLon]: Receiver Longitude
+        * **[dxLat]: Transimitter Latitude
+        * **[dxLon]: Transimitter Longitude
+        * **[output]: Select output values. True=output all. False=Only output foF2,theta,h.
+
+        * **Following parameter NOT implemented yet!
+        * **[in_iri]: Array of additional input parameters to the IRI 
+                    * **in_iri[0]=[ssn]: Rz12 sunspot number
+    **Returns**:
+        * **[foF2]: The critical frequency of the F2 layer 
+        * **[theta]: The angle of incidence on the F2 layer 
+        * **[h]: hmF2 
+        * **[phi]: half the angular distance along the great cricle path of the link 
+        * **[x]: Half of Cord legnth
+        * **[z]: Distance from transmitter/reciever to the point of reflection
+        
+    .. note:: 
+    Example (output=False): foF2[i],theta[i],h[i] = rbn_lib.rbn_fof2(sTime, freq, deLat, deLon, dxLat,dxLon)
+    Example (output=True): foF2[i],theta[i],h[i],phi[i],x[i],z[i] = rbn_lib.rbn_fof2(sTime, freq, deLat, deLon, dxLat,dxLon, output=True)
+
+    Written by Magda Moses 2016 July 07
+    """
+    import numpy as np
+    from davitpy.models import *
+    from davitpy.utils import *
+    import rbn_lib
     
-#    return
+    r=6371.
+    ssn = in_iri[0]
+
+    #Calculate the midpoint and the distance between the two stations
+    midLat, midLon,dist,m_dist = rbn_lib.path_mid(deLat, deLon, dxLat, dxLon)
+
+    #Get parameters to calculate theta (the angle of reflection)
+    phi = (greatCircleDist(deLat, deLon, dxLat, dxLon))/2
+    alpha=(np.pi+phi)/2
+    x = r*np.sqrt(2*(1-np.cos(phi)))
+#    h,outf,oarr=rbn_lib.get_hmF2(sTime=time, lat=midLat, lon=midLon,ssn=ssn)
+    h,outf,oarr=rbn_lib.get_hmF2(sTime=time, lat=midLat, lon=midLon)
+    z=np.sqrt(h**2+x**2-2*h*x*np.cos(alpha))
+    theta=np.arcsin((x/z)*np.sin(alpha)) 
+
+    #Calculate foF2
+    foF2 = muf*np.cos(theta)
+
+    #Calculate iri fof2(kHz)
+    iri_foF2=np.sqrt(oarr[0]*(1e-2)**3)*(9e3)/1e3
+
+    #Return values
+    if output== True:
+        return foF2,theta,h,phi,x,z
+    else:
+        return foF2,theta,h, iri_foF2
+
 def count_band(df1, sTime, eTime,Inc_eTime=True,freq1=7000, freq2=14000, freq3=28000,dt=10,unit='minutes',xRot=False, ret_lim=False, rti_plot=False):
     import sys
     import os
@@ -2288,3 +2784,54 @@ def rbn_crit_freq(df, time, coord_center, freq1=14000, freq2=7000):
 
     return df_fc
 
+def color_band(freq, x, y, ax):
+    import numpy as np
+    from matplotlib import pyplot as plt
+#    fband=[]
+#    for fq in freq:
+#        fband.append(np.floor(fq))
+#        band=np.floor(fq)
+##    for band in fband:
+#        color = band_dict[band]['color']
+    for i in np.arange(0,len(freq)):
+        band=np.floor(freq[i])
+        color = band_dict[band]['color']
+        ax.scatter(x[i],y[i],color=color)
+    return ax
+
+def plot_band( df, x_param, y_param, ax, fig, title, x_ax, y_ax):
+    import numpy as np
+    from matplotlib import pyplot as plt
+
+    ##Sort the data by band and time, then group by band.
+    df['band']  = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
+    srt         = df.sort(['band','date'])
+    grouped     = srt.groupby('band')
+
+    for band in bandlist:
+        try:
+            this_group = grouped.get_group(band)
+        except:
+            continue
+
+        color = band_dict[band]['color']
+        label = band_dict[band]['name']
+
+        for index,row in this_group.iterrows():
+            #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
+            x= row[x_param]
+            y= row[y_param]
+
+#            if row['callsign'] not in de_list: de_list.append(row['callsign'])
+#            if row['dx'] not in dx_list: dx_list.append(row['dx'])
+
+            fof2_pt    = ax.scatter(x,y,color=color,marker='s', s=2)
+
+    
+    #Set plot titles and labels
+    ax.set_title(title)#'foF2 vs Link Frequency')
+    ax.set_xlabel(x_ax)#'Link Frequency (MHz)')
+    ax.set_ylabel(y_ax)#('foF2 (MHz)')
+
+#    return fof2_pt, fig
+    return ax, fig
