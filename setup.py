@@ -10,3 +10,7 @@ setup(name='hamsci',
         url='http://www.hamsci.org',
         packages=['hamsci'],
         )
+#Will also need to clone python-hamtools into home directory
+#in home directory type the following: 
+#	git clone https://github.com/n1ywb/python-hamtools.git
+#Then run setup.py
