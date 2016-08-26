@@ -594,3 +594,43 @@ def midpoint(lat1,lon1,lat2,lon2,alt=0.,Re=6371.):
     mid_lat,mid_lon = greatCircleMove(lat1,lon1,dist/2.,azm,alt=alt,Re=Re)
 
     return mid_lat, mid_lon
+
+def get_theta(lat1,lon1, lat2,  lon2,h=350,Re=6371., iri=False):
+    """Calculate the incident angle (theta) for the one-hop path 
+    **Args**:
+        * **[lat1]: Receiver Latitude
+        * **[lon1]: Receiver Longitude
+        * **[lat2]: Transimitter Latitude
+        * **[lon2]: Transimitter Longitude
+        * **[h]: hmF2 
+        * **[iri]: Option to use the hmF2 output by the IRI for h. (Default is False)
+        * **[]:  
+
+    **Returns**:
+        * **[theta]: The angle of incidence on the F2 layer 
+
+    **Other Variables**:
+        * **[phi]: half the angular distance along the great cricle path of the link 
+        * **[x]: Half of Cord legnth
+        * **[z]: Distance from transmitter/reciever to the point of reflection
+        
+    .. note:: 
+    Example : theta = rbn_ionofun.get_theta()
+
+    Written by Magda Moses Fall 2016 
+    """
+
+    #Get parameters to calculate theta (the angle of reflection)
+    phi = (greatCircleDist(lat1, lon1, lat2, lon2))/2
+    alpha=(np.pi+phi)/2
+    x = Re*np.sqrt(2*(1-np.cos(phi)))
+
+    #If want to use iri value of the height of the F2 Layer
+    if iri == True: 
+        midpoint(lat1,lon1,lat2,lon2)
+        h,outf,oarr=rbn_lib.get_hmF2(sTime=time, lat=midLat, lon=midLon)
+    #Calculate theta
+    z=np.sqrt(h**2+x**2-2*h*x*np.cos(alpha))
+    theta=np.arcsin((x/z)*np.sin(alpha)) 
+
+    return theta
