@@ -8,6 +8,8 @@ import datetime
 
 import davitpy
 
+import numpy as np 
+
 def muf():
 
     return 
@@ -39,7 +41,16 @@ def rbn_fof2():
 
     Written by Magda Moses 2016 July 07
     """
-    return
+    import geopack
+    if Re==None: Re=6371
+    #may need to check alt value
+#    midLat, midLon=geopack.midpoint(lat1,lon1,lat2,lon2)_
+
+    theta=geopack.get_theta(lat1, lon1,  lat2, lon2)
+    #Calculate foF2
+    foF2 = muf*np.cos(theta)
+
+    return foF2
 
 #def get_theta(deLat,deLon, dxLat,  dxLon,h=350, iri=False):
 #    """Calculate the incident angle (theta) for the one-hop path 

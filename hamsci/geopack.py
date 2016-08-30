@@ -595,7 +595,7 @@ def midpoint(lat1,lon1,lat2,lon2,alt=0.,Re=6371.):
 
     return mid_lat, mid_lon
 
-def get_theta(lat1,lon1, lat2,  lon2,h=350,Re=6371., iri=False):
+def get_theta(lat1,lon1, lat2,  lon2, sTime=None,h=350,Re=6371., iri=False):
     """Calculate the incident angle (theta) for the one-hop path 
     **Args**:
         * **[lat1]: Receiver Latitude
@@ -627,10 +627,9 @@ def get_theta(lat1,lon1, lat2,  lon2,h=350,Re=6371., iri=False):
 
     #If want to use iri value of the height of the F2 Layer
     if iri == True: 
-        midpoint(lat1,lon1,lat2,lon2)
-        h,outf,oarr=rbn_lib.get_hmF2(sTime=time, lat=midLat, lon=midLon)
+        midLat,midLon=midpoint(lat1,lon1,lat2,lon2)
+        h,outf,oarr=modelexp.get_iri(sTime=time, lat=midLat, lon=midLon)
     #Calculate theta
     z=np.sqrt(h**2+x**2-2*h*x*np.cos(alpha))
     theta=np.arcsin((x/z)*np.sin(alpha)) 
-
     return theta

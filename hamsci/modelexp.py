@@ -102,15 +102,28 @@ def get_iri(sTime,lat, lon, ssn=None, output=['hmF2']):
     outf=np.zeros(20)
     outf,oarr = iri.iri_sub(jf,jmag,alati,along,iyyyy,mmdd,dhour,heibeg,heiend,heistp,oarr)
 
-    #Extract Values from model output
-    hmF2=oarr[1]
-    #NmF2 in m-3
-    NmF2=oarr[0]
-    #Calculate iri fof2(kHz)
-    foF2=np.sqrt(oarr[0]*(1e-2)**3)*(9e3)/1e3
-#    foF2=np.sqrt(oarr[0]/(1.24e10))
+    myoutput=[]
 
-    if(output):
-        return hmF2, outf, oarr
-    else:
-        return hmF2
+    #Extract Values from model output
+    for param in output: 
+        #    if param == 'all':
+    #        myoutput
+        if param == 'hmF2' or param == 'all':
+            hmF2=oarr[1]
+#            myoutput.append(('hmF2',hmF2))
+            myoutput.append(hmF2)
+        if param == 'all' or param ==' NmF2':
+            #NmF2 in m-3
+            NmF2=oarr[0]
+            myoutput.append(('NmF2',NmF2))
+        if param == 'all' or param =='foF2':
+            #Calculate iri fof2(kHz)
+            foF2=np.sqrt(oarr[0]*(1e-2)**3)*(9e3)/1e3
+#            myoutput.append(('foF2',foF2))
+            myoutput.append(foF2)
+        #    foF2=np.sqrt(oarr[0]/(1.24e10))
+#    if(output):
+#        return hmF2, outf, oarr
+#    else:
+#        return hmF2
+    return myoutput
