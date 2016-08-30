@@ -174,3 +174,4 @@ if __name__ == '__main__':
     data_dir    = 'data/wspr' 
 
     df = read_wspr(sTime,eTime,data_dir)
+    import ipdb; ipdb.set_trace()
