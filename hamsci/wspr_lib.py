@@ -171,6 +171,9 @@ if __name__ == '__main__':
 
     sTime       = datetime.datetime(2014,2,1)
     eTime       = datetime.datetime(2014,2,28)
+
+    sTime       = datetime.datetime(2016,8,27)
+    eTime       = datetime.datetime(2016,8,28)
     data_dir    = 'data/wspr' 
 
     df = read_wspr(sTime,eTime,data_dir)
