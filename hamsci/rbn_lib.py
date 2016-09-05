@@ -492,6 +492,7 @@ class RbnDataSet(object):
             band_data=None,
             plot_legend=True,legend_loc='upper left',legend_lw=None,
             plot_title=True,format_xaxis=True,
+            xticks=None,
             ax=None):
         """
         Plots counts of RBN data.
@@ -540,6 +541,9 @@ class RbnDataSet(object):
             date_str    = '{} - {}'.format(sTime.strftime(date_fmt), eTime.strftime(date_fmt))
             title.append(date_str)
             ax.set_title('\n'.join(title))
+
+        if xticks is not None:
+            ax.set_xticks(xticks)
 
         if format_xaxis:
             ax.set_xlabel('UT')
