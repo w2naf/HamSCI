@@ -25,9 +25,9 @@ def loop_info(map_sTime,map_eTime):
 def geoloc_info(rbn_obj):
     # Figure out how many records properly geolocated.
     good_loc        = rbn_obj.DS001_dropna.df
-    good_count  = good_loc['callsign'].count()
-    total_count = len(rbn_obj.DS000.df)
-    good_pct    = float(good_count) / total_count * 100.
+    good_count      = good_loc['callsign'].count()
+    total_count     = len(rbn_obj.DS000.df)
+    good_pct        = float(good_count) / total_count * 100.
     print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count,total_count,good_pct)
 
     return {'good_count':good_count,'total_count':total_count}
@@ -44,14 +44,14 @@ def rbn_map(sTime,eTime,
 
     li          = loop_info(sTime,eTime)
 
-    rbn_obj    = rbn_lib.RbnObject(sTime,eTime)
+    rbn_obj     = rbn_lib.RbnObject(sTime,eTime)
     rbn_obj.active.latlon_filt(**latlon_bnds)
     rbn_obj.active.filter_calls(call_filt_de,call_type='de')
     rbn_obj.active.filter_calls(call_filt_dx,call_type='dx')
 
-    gli        = geoloc_info(rbn_obj)
+    gli         = geoloc_info(rbn_obj)
 
-    rbn_grid   = rbn_obj.active.create_geo_grid()
+    rbn_grid    = rbn_obj.active.create_geo_grid()
 
     # Go plot!! ############################ 
     ## Determine the aspect ratio of subplot.
@@ -66,15 +66,15 @@ def rbn_map(sTime,eTime,
 
     fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
     ax0        = fig.add_subplot(1,1,1)
-    rbn_map    = rbn_lib.RbnMap(rbn_obj,ax=ax0)
+    rbn_map_obj= rbn_lib.RbnMap(rbn_obj,ax=ax0)
 
-#    rbn_map.overlay_grid(rbn_grid)
-#    rbn_grid.grid_mean()
-#    rbn_map.overlay_grid_data(rbn_grid)
+    rbn_map_obj.overlay_grid(rbn_grid)
+    rbn_grid.grid_stat(stat='max',label='Max Frequency [MHz]')
+    rbn_map_obj.overlay_grid_data(rbn_grid)
 
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
-
+   
 def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
     dct_list    = []
     this_sTime  = sTime
@@ -95,13 +95,13 @@ def rbn_map_dct_wrapper(run_dct):
     rbn_map(**run_dct)
 
 if __name__ == '__main__':
-    multiproc   = True
+    multiproc   = False 
 
 #    # 2014 Nov Sweepstakes
-    sTime   = datetime.datetime(2014,11,1)
-    eTime   = datetime.datetime(2014,11,4)
-#    sTime   = datetime.datetime(2014,11,1,23)
-##    eTime   = datetime.datetime(2014,11,2)
+#    sTime   = datetime.datetime(2014,11,1)
+#    eTime   = datetime.datetime(2014,11,4)
+    sTime   = datetime.datetime(2014,11,1,23)
+    eTime   = datetime.datetime(2014,11,2)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)

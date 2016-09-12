@@ -617,7 +617,7 @@ class RbnGeoGrid(object):
     """
     def __init__(self,df=None,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
         lat_min=-90. ,lat_max=90. ,lat_step=1.0,
-        lon_min=-180.,lon_max=180.,lon_step=1.0,
+        lon_min=-180.,lon_max=180.,lon_step=2.0,
         metadata={}):
 
         lat_vec         = np.arange(lat_min,lat_max,lat_step)
@@ -636,7 +636,7 @@ class RbnGeoGrid(object):
         self.lon_col    = lon_col
         self.metadata   = metadata
 
-    def grid_mean(self,cmap=None,vmin=None,vmax=None,
+    def grid_stat(self,stat='mean',cmap=None,vmin=None,vmax=None,
             label='Mean Frequency [MHz]',band_data=None):
 
         if band_data is None:
@@ -675,7 +675,8 @@ class RbnGeoGrid(object):
                 tf      = np.logical_and(lat_tf,lon_tf)
                 if np.count_nonzero(tf) <= 0: continue
             
-                cell_freq                   = df[tf]['freq'].mean()
+#                cell_freq                   = df[tf]['freq'].mean()
+                cell_freq                   = getattr(df[tf]['freq'],stat)()
                 data_arr[lat_inx,lon_inx]   = cell_freq
 
         data_arr        = data_arr/1000.
