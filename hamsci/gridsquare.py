@@ -110,9 +110,15 @@ def gridsquare2latlon(gridsquare,position='center'):
         'upper right'
         'lower right'
     """
+    # Don't process lines that have no grid square.
+    gs_0        = np.array(gridsquare)
+    gs_1        = gs_0.flatten()
+    gs_good_tf  = gs_1 != ''
+    gs_2        = gs_1[gs_good_tf]
+
     # Make everything lower case and put into a character array
     # for easy slicing.
-    gss = np.char.array(gridsquare).lower()
+    gss = np.char.array(gs_2).lower()
 
     # Create string lookup lists for each of the codes.
     alpha_pd = pd.Series(range(26),index=alpha_lower)
@@ -124,7 +130,7 @@ def gridsquare2latlon(gridsquare,position='center'):
         # If a vector of gridsqaures is given without uniform precision,
         # there should be a subroutine to pad the gridsquares with less
         # to the center of the cell. e.g. FN20 --> FN20mm
-        raise('All input grid squares must be of same precision.')
+        raise Exception('All input grid squares must be of same precision.')
 
     # Seed values for field calculation.
     base               = 18.
@@ -193,7 +199,20 @@ def gridsquare2latlon(gridsquare,position='center'):
     elif position == 'lower right':
         lon += container_size_lon
     
-    return lat,lon
+    # Convert things back to include NaNs.
+    ret_lat     = np.ndarray([gs_1.size],dtype=np.float)
+    ret_lon     = np.ndarray([gs_1.size],dtype=np.float)
+
+    ret_lat[:]  = np.nan
+    ret_lon[:]  = np.nan
+
+    ret_lat[gs_good_tf] = lat
+    ret_lon[gs_good_tf] = lon
+
+    ret_lat.reshape(gs_0.shape)
+    ret_lon.reshape(gs_0.shape)
+
+    return ret_lat,ret_lon
 
 
 def gridsquare_grid(precision=4):
