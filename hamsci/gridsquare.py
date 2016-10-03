@@ -20,10 +20,18 @@ def latlon2gridsquare(lat,lon,precision=6):
     and 6 is standard for VHF/UHF. Any two locations within the same 
     6-character grid square are no more than 12 km apart.
     """
-    #### Pre-process
-    lats = np.array(lat)
-    lons = np.array(lon)
-    
+    #### Make sure input is numpy array with all finite values.
+    lats_0  = np.array(lat)
+    lons_0  = np.array(lon)
+
+    lats_1  = lats_0.flatten()
+    lons_1  = lons_0.flatten()
+
+    lat_lon_good_tf = np.logical_and(np.isfinite(lats_1), np.isfinite(lons_1))
+
+    lats    = lats_1[lat_lon_good_tf]
+    lons    = lons_1[lat_lon_good_tf]
+
     # Make sure all input lons are between -180 and +180 deg.
     tf = lons > 180.
     lons[tf] -= 360.
@@ -82,8 +90,13 @@ def latlon2gridsquare(lat,lon,precision=6):
         this_code   = lon_code + lat_code
         grid_square = grid_square + this_code
         curr_prec  += 2
+
+    # Build return array that puts NaNs back in place.
+    ret_arr                     = np.zeros([lats_1.size],dtype=grid_square.dtype)
+    ret_arr[lat_lon_good_tf]    = grid_square
+    ret_arr.reshape(lats_0.shape)
         
-    return grid_square
+    return ret_arr
 
 def gridsquare2latlon(gridsquare,position='center'):
     """
