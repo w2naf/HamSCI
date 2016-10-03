@@ -94,7 +94,7 @@ def latlon2gridsquare(lat,lon,precision=6):
     # Build return array that puts NaNs back in place.
     ret_arr                     = np.zeros([lats_1.size],dtype=grid_square.dtype)
     ret_arr[lat_lon_good_tf]    = grid_square
-    ret_arr.reshape(lats_0.shape)
+    ret_arr                     = ret_arr.reshape(lats_0.shape)
         
     return ret_arr
 
@@ -209,8 +209,8 @@ def gridsquare2latlon(gridsquare,position='center'):
     ret_lat[gs_good_tf] = lat
     ret_lon[gs_good_tf] = lon
 
-    ret_lat.reshape(gs_0.shape)
-    ret_lon.reshape(gs_0.shape)
+    ret_lat     = ret_lat.reshape(gs_0.shape)
+    ret_lon     = ret_lon.reshape(gs_0.shape)
 
     return ret_lat,ret_lon
 
