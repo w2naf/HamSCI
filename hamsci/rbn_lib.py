@@ -115,7 +115,7 @@ def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
 	return cmap
 
 def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None,
-        gridsquare_precision=4):
+        gridsquare_precision=4,reflection_type='sp_mid'):
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
     ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
@@ -162,7 +162,7 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None,
                  status = status + chr(8)*(len(status)+1)
                  print status,
              f.close()
-             status = 'Done downloading!  Now converting to Pandas dataframe and plotting...'
+             status = 'Done downloading!  Now converting to Pandas dataframe...'
              print status
 
         std_sTime=datetime.datetime(sTime.year,sTime.month,sTime.day, sTime.hour)
@@ -243,11 +243,13 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None,
         # Calculate Midpoints
         lat1, lon1  = df['de_lat'],df['de_lon']
         lat2, lon2  = df['dx_lat'],df['dx_lon']
-        sp_mid_lat, sp_mid_lon  = geopack.midpoint(lat1,lon1,lat2,lon2)
 
-        df.loc[:,'sp_mid_lat']  = sp_mid_lat
-        df.loc[:,'sp_mid_lon']  = sp_mid_lon
-        df.loc[:,'grid']        = gridsquare.latlon2gridsquare(sp_mid_lat,sp_mid_lon,
+        if reflection_type == "sp_mid":
+            ref_lat, ref_lon  = geopack.midpoint(lat1,lon1,lat2,lon2)
+            df.loc[:,'sp_mid_lat']  = ref_lat
+            df.loc[:,'sp_mid_lon']  = ref_lon
+
+        df.loc[:,'grid']        = gridsquare.latlon2gridsquare(ref_lat,ref_lon,
                                         precision=gridsquare_precision)
         # Calculate Band
         df.loc[:,'band']        = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
@@ -255,21 +257,29 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None,
         return df
 
 class RbnObject(object):
+    """
+    gridsquare_precision:   Even number, typically 4 or 6
+    reflection_type:        Model used to determine reflection point in ionopshere.
+                            'sp_mid': spherical midpoint
+    """
     def __init__(self,sTime=None,eTime=None,data_dir='data/rbn',
-            qrz_call=None,qrz_passwd=None,comment='Raw Data',df=None):
+            qrz_call=None,qrz_passwd=None,comment='Raw Data',df=None,
+            gridsquare_precision=4,reflection_type='sp_mid'):
 
         if df is None:
             df = read_rbn(sTime=sTime,eTime=eTime,data_dir=data_dir,
-                    qrz_call=qrz_call,qrz_passwd=qrz_passwd)
+                    qrz_call=qrz_call,qrz_passwd=qrz_passwd,
+                    reflection_type='sp_mid',
+                    gridsquare_precision=gridsquare_precision)
 
         #Make metadata block to hold information about the processing.
         metadata = {}
-
-        data_set                 = 'DS000'
-        metadata['data_set_name'] = data_set
-        metadata['serial']      = 0
+        data_set                            = 'DS000'
+        metadata['data_set_name']           = data_set
+        metadata['serial']                  = 0
+        metadata['gridsquare_precision']    = gridsquare_precision
+        metadata['reflection_type']         = reflection_type
         cmt     = '[{}] {}'.format(data_set,comment)
-        #Save data to be returned as self.variables
         
         rbn_ds  = RbnDataSet(df,parent=self,comment=cmt)
         setattr(self,data_set,rbn_ds)
@@ -322,6 +332,30 @@ class RbnDataSet(object):
         self.metadata.update(metadata)
 
         self.history = {datetime.datetime.now():comment}
+
+    def compute_grid_stats(self):
+        """
+        Create a dataframe with statistics for each grid square.
+        """
+
+        # Group the dataframe by grid square.
+        gs_grp  = self.df.groupby('grid')
+
+        # Get a list of the gridsquares in use.
+        grids   = gs_grp.indices.keys()
+
+        # Pull out the desired statistics.
+        dct     = {}
+        dct['counts']   = gs_grp.freq.count()
+        dct['f_max']    = gs_grp.freq.max()
+
+        # Put into a new dataframe organized by grid square.
+        grid_data       = pd.DataFrame(dct,index=grids)
+
+        # Attach the new dataframe to the RbnDataObj and return.
+        self.grid_data  = grid_data
+        return grid_data
+
 
     def dropna(self,new_data_set='dropna',comment='Remove Non-Geolocated Spots'):
         new_ds      = self.copy(new_data_set,comment)
