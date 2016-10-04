@@ -124,8 +124,8 @@ def gridsquare2latlon(gridsquare,position='center'):
     alpha_pd = pd.Series(range(26),index=alpha_lower)
 
     # Make sure precision of array is uniform.
-    precs = np.array([len(x) for x in gss.ravel()])
-    precision = precs.max()
+    precs       = np.array([len(x) for x in gss.ravel()])
+    precision   = precs.max()
     if np.unique(precs).size != 1:
         # If a vector of gridsqaures is given without uniform precision,
         # there should be a subroutine to pad the gridsquares with less
@@ -141,29 +141,21 @@ def gridsquare2latlon(gridsquare,position='center'):
     pos, zLat, zLon    = 0,0.,0.
     while pos < precision:
         # Get the 2 characters of the grid square we will work on.
-        tmp_0   = gss.ljust(pos+2)
-        tmp_1   = gss.ljust(pos)
-        if pos == 0: tmp_1[:] = ''
-        code    = tmp_0.lstrip(tmp_1)
-
-        lon_code = np.array([x[0] for x in code.ravel()])
-        lat_code = np.array([x[1] for x in code.ravel()])
+        codes               = [(x[pos],x[pos+1]) for x in gss]
+        lon_code, lat_code  = np.array(zip(*codes))
 
         # Convert code into an index number and choose a base.
         alpha        = not bool(pos/2 % 2)
         if alpha:
-            lon_inx = np.array(alpha_pd.loc[lon_code.ravel()].tolist(),dtype=np.float)
+            lon_inx = np.array(alpha_pd.loc[lon_code].tolist(),dtype=np.float)
 
-            lat_inx = np.array(alpha_pd.loc[lat_code.ravel()].tolist(),dtype=np.float)
+            lat_inx = np.array(alpha_pd.loc[lat_code].tolist(),dtype=np.float)
             if pos != 0: base = 24.
         else:
             lon_inx = np.array(lon_code,dtype=np.float)
             lat_inx = np.array(lat_code,dtype=np.float)
 
             base = 10.
-
-        lon_inx = lon_inx.reshape(code.shape)
-        lat_inx = lat_inx.reshape(code.shape)
 
         # Determine resolution for this loop.
         subdivide_size_lat = container_size_lat / base
