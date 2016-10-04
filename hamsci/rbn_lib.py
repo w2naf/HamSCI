@@ -356,17 +356,27 @@ class RbnDataSet(object):
         self.grid_data  = grid_data
         return grid_data
 
-    def gridsquare_grid(self):
+    def gridsquare_grid(self,precision=None):
         """
-        Return a grid square grid at the gridded precision of this dataset.
+        Return a grid square grid.
+
+        precision:
+            None:           Use the gridded precsion of this dataset.
+            Even integer:   Use specified precision.
         """
-        precision   = self.metadata.get('gridsquare_precision')
+        if precision is None:
+            precision   = self.metadata.get('gridsquare_precision')
+
         grid        = gridsquare.gridsquare_grid(precision=precision)
         return grid
 
-    def grid_latlons(self,position='center'):
+    def grid_latlons(self,precision=None,position='center'):
         """
-        Return a grid of lat/lons at the gridded precision of this dataset.
+        Return a grid of gridsquare-based lat/lons.
+
+        precision:
+            None:           Use the gridded precsion of this dataset.
+            Even integer:   Use specified precision.
 
         Position Options:
             'center'
@@ -375,7 +385,7 @@ class RbnDataSet(object):
             'upper right'
             'lower right'
         """
-        gs_grid = self.gridsquare_grid()
+        gs_grid     = self.gridsquare_grid(precision=precision)
         lat_lons    = gridsquare.gridsquare2latlon(gs_grid,position=position)
 
         return lat_lons
@@ -873,8 +883,9 @@ class RbnMap(object):
         ax.set_title(title)
 
         # draw parallels and meridians.
-        m.drawparallels(np.arange( -90., 91.,45.),color='k',labels=[False,True,True,False])
-        m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True])
+        # This is now done in the gridsquare overlay section...
+#        m.drawparallels(np.arange( -90., 91.,45.),color='k',labels=[False,True,True,False])
+#        m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True])
         m.drawcoastlines(color='0.65')
         m.drawmapboundary(fill_color='w')
 
@@ -1002,6 +1013,63 @@ class RbnMap(object):
 
     def plot_band_legend(self,*args,**kw_args):
         band_legend(*args,**kw_args)
+
+
+    def overlay_gridsquares(self,
+            major_precision = 2,    major_style = {'color':'k',   'dashes':[1,1]}, 
+            minor_precision = None, minor_style = {'color':'0.8', 'dashes':[1,1]},
+            label_precision = 2,    label_fontdict=None, label_zorder = 100):
+        """
+        Overlays a grid square grid.
+
+        Precsion options:
+            None:       Gridded resolution of data
+            0:          No plotting/labling
+            Even int:   Plot or label to specified precision
+        """
+    
+        # Get the dataset and map object.
+        ds          = self.data_set
+        m           = self.m
+        ax          = self.ax
+
+        # Determine the major and minor precision.
+        if major_precision is None:
+            maj_prec    = ds.metadata.get('gridsquare_precision',0)
+        else:
+            maj_prec    = major_precision
+
+        if minor_precision is None:
+            min_prec    = ds.metadata.get('gridsquare_precision',0)
+        else:
+            min_prec    = minor_precision
+
+        if label_precision is None:
+            label_prec  = ds.metadata.get('gridsquare_precision',0)
+        else:
+            label_prec  = label_precision
+
+	# Draw Major Grid Squares
+        if maj_prec > 0:
+            lats,lons   = ds.grid_latlons(maj_prec,position='lower left')
+
+            m.drawparallels(lats[0,:],labels=[False,True,True,False],**major_style)
+            m.drawmeridians(lons[:,0],labels=[True,False,False,True],**major_style)
+
+	# Draw minor Grid Squares
+        if min_prec > 0:
+            lats,lons   = ds.grid_latlons(min_prec,position='lower left')
+
+            m.drawparallels(lats[0,:],labels=[False,False,False,False],**minor_style)
+            m.drawmeridians(lons[:,0],labels=[False,False,False,False],**minor_style)
+
+	# Label Grid Squares
+	lats,lons   = ds.grid_latlons(label_prec,position='center')
+        grid_grid   = ds.gridsquare_grid(label_prec)
+	xx,yy = m(lons,lats)
+	for xxx,yyy,grd in zip(xx.ravel(),yy.ravel(),grid_grid.ravel()):
+	    ax.text(xxx,yyy,grd,ha='center',va='center',clip_on=True,
+                    fontdict=label_fontdict, zorder=label_zorder)
 
     def overlay_grid(self,grid_obj,color='0.8'):
         """
