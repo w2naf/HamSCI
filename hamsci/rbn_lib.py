@@ -356,6 +356,29 @@ class RbnDataSet(object):
         self.grid_data  = grid_data
         return grid_data
 
+    def gridsquare_grid(self):
+        """
+        Return a grid square grid at the gridded precision of this dataset.
+        """
+        precision   = self.metadata.get('gridsquare_precision')
+        grid        = gridsquare.gridsquare_grid(precision=precision)
+        return grid
+
+    def grid_latlons(self,position='center'):
+        """
+        Return a grid of lat/lons at the gridded precision of this dataset.
+
+        Position Options:
+            'center'
+            'lower left'
+            'upper left'
+            'upper right'
+            'lower right'
+        """
+        gs_grid = self.gridsquare_grid()
+        lat_lons    = gridsquare.gridsquare2latlon(gs_grid,position=position)
+
+        return lat_lons
 
     def dropna(self,new_data_set='dropna',comment='Remove Non-Geolocated Spots'):
         new_ds      = self.copy(new_data_set,comment)
