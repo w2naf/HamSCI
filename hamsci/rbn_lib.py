@@ -28,6 +28,8 @@ import matplotlib.patches as mpatches
 import matplotlib.markers as mmarkers
 from matplotlib.collections import PolyCollection
 
+import gridsquare
+
 def cc255(color):
     cc = matplotlib.colors.ColorConverter().to_rgb
     trip = np.array(cc(color))*255
@@ -112,7 +114,8 @@ def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
 	cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
 	return cmap
 
-def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None):
+def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None,
+        gridsquare_precision=4):
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
     ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
@@ -244,7 +247,8 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
 
         df.loc[:,'sp_mid_lat']  = sp_mid_lat
         df.loc[:,'sp_mid_lon']  = sp_mid_lon
-
+        df.loc[:,'grid']        = gridsquare.latlon2gridsquare(sp_mid_lat,sp_mid_lon,
+                                        precision=gridsquare_precision)
         # Calculate Band
         df.loc[:,'band']        = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
 
@@ -614,6 +618,7 @@ def latlon_filt(df,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
 class RbnGeoGrid(object):
     """
     Define a geographic grid and bin RBN data.
+    !!! This is probably going to be deprecated. !!!
     """
     def __init__(self,df=None,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
         lat_min=-90. ,lat_max=90. ,lat_step=1.0,
