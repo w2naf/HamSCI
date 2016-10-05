@@ -153,10 +153,20 @@ def rbn_map_multiview(run_dct):
         rbn_map(**run_dct)
         serial  += 1
 
-def create_webview(output_dir='output',width=500):
+def create_webview(tags=None,html_fname='0001-multiview.html',
+        output_dir='output',width=500):
     # Get the names of the directories in the output_dir.
-    fname_tags  = os.walk(output_dir).next()[1] 
-    fname_tags.sort()
+    dirs    = os.walk(output_dir).next()[1] 
+    dirs.sort()
+    if tags is None:
+        fname_tags  = dirs
+    else:
+        # Find the actual directory matching the user-specified tags.
+        fname_tags  = []
+        for tag in tags:
+            matching = [s for s in dirs if tag in s]
+            if matching != []:
+                fname_tags.append(matching[0])
 
     # Identify all of the time slots we have some plots for.
     file_codes  = []
@@ -178,7 +188,7 @@ def create_webview(output_dir='output',width=500):
     # Add in the headers.
     html.append('     <tr>')
     for fname_tag in fname_tags:
-        html.append('       <th>{}</th>'.format(fname_tag))
+        html.append('       <th>{}</th>'.format(fname_tag[4:]))
     html.append('     </tr>')
 
     # Create row for each date and insert img.
@@ -196,8 +206,8 @@ def create_webview(output_dir='output',width=500):
     html.append('</html>')
 
     # Write out html file.
-    html_fname  = os.path.join(output_dir,'0001-multiview.html')
-    with open(html_fname,'w') as fl:
+    html_fpath  = os.path.join(output_dir,html_fname)
+    with open(html_fpath,'w') as fl:
         fl.write('\n'.join(html))
 
 if __name__ == '__main__':
@@ -242,3 +252,11 @@ if __name__ == '__main__':
             rbn_map_multiview(run_dct)
 
     create_webview(output_dir=output_dir)
+
+    name    = '0001-fof2.html'
+    tags    = ['f_max_MHz','R_gc_min','counts']
+    create_webview(tags=tags,html_fname=name,output_dir=output_dir)
+
+    name    = '0001-rgc.html'
+    tags    = ['R_gc_min','R_gc_max','R_gc_mean']
+    create_webview(tags=tags,html_fname=name,output_dir=output_dir)
