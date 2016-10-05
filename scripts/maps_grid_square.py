@@ -44,18 +44,23 @@ def rbn_map(sTime,eTime,
         overlay_gridsquares     = True,
         overlay_gridsquare_data = True,
         gridsquare_data_param   = 'f_max_MHz',
+        fname_tag               = None,
         output_dir              = 'output'):
+    """
+    Creates a nicely formated RBN data map.
+    """
 
     latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
 
-    filename    = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(gridsquare_data_param,sTime,eTime)
+    if fname_tag is None:
+        fname_tag = gridsquare_data_param
+    filename    = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(fname_tag,sTime,eTime)
     filepath    = os.path.join(output_dir,filename)
 
     li          = loop_info(sTime,eTime)
 
     t0 = datetime.datetime.now()
     rbn_obj     = rbn_lib.RbnObject(sTime,eTime,gridsquare_precision=4)
-
 
     rbn_obj.active.latlon_filt(**latlon_bnds)
     rbn_obj.active.filter_calls(call_filt_de,call_type='de')
@@ -97,6 +102,7 @@ def rbn_map(sTime,eTime,
 
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
+
    
 def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
     dct_list    = []
@@ -116,6 +122,30 @@ def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
 
 def rbn_map_dct_wrapper(run_dct):
     rbn_map(**run_dct)
+
+def rbn_map_multiview(run_dct):
+    run_dct['plot_de']                  = True
+    run_dct['plot_ncdxf']               = False
+    run_dct['plot_stats']               = True
+    run_dct['plot_legend']              = True
+    run_dct['plot_paths']               = False
+    run_dct['overlay_gridsquares']      = True
+
+    run_dct['plot_midpoints']           = True
+    run_dct['overlay_gridsquare_data']  = False
+    run_dct['fname_tag']                = 'midpoints'
+    rbn_map(**run_dct)
+
+    run_dct['plot_midpoints']           = False
+    run_dct['overlay_gridsquare_data']  = True
+    run_dct['gridsquare_data_param']    = 'f_max_MHz'
+    run_dct['fname_tag']                = None
+    rbn_map(**run_dct)
+
+#    run_dct['plot_midpoints']           = False
+#    run_dct['overlay_gridsquare_data']  = True
+#    run_dct['gridsquare_data_param']    = 'f_max_MHz'
+#    rbn_map(**run_dct)
 
 if __name__ == '__main__':
     multiproc   = False 
@@ -155,6 +185,7 @@ if __name__ == '__main__':
         pool.join()
     else:
         for run_dct in run_list:
-            rbn_map_dct_wrapper(run_dct)
+#            rbn_map_dct_wrapper(run_dct)
+            rbn_map_multiview(run_dct)
 
 
