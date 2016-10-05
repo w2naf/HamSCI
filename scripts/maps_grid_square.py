@@ -55,7 +55,9 @@ def rbn_map(sTime,eTime,
     if fname_tag is None:
         fname_tag = gridsquare_data_param
     filename    = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(fname_tag,sTime,eTime)
+    output_dir  = os.path.join(output_dir,fname_tag)
     filepath    = os.path.join(output_dir,filename)
+    handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
 
     li          = loop_info(sTime,eTime)
 
@@ -142,10 +144,11 @@ def rbn_map_multiview(run_dct):
     run_dct['fname_tag']                = None
     rbn_map(**run_dct)
 
-#    run_dct['plot_midpoints']           = False
-#    run_dct['overlay_gridsquare_data']  = True
-#    run_dct['gridsquare_data_param']    = 'f_max_MHz'
-#    rbn_map(**run_dct)
+    run_dct['plot_midpoints']           = False
+    run_dct['overlay_gridsquare_data']  = True
+    run_dct['gridsquare_data_param']    = 'counts'
+    run_dct['fname_tag']                = None
+    rbn_map(**run_dct)
 
 if __name__ == '__main__':
     multiproc   = False 

@@ -1090,6 +1090,7 @@ class RbnMap(object):
         Overlay gridsquare data on a map.
         """
 
+        grid_data   = self.data_set.grid_data
 
         param_info = {}
         key                 = 'f_max_MHz'
@@ -1097,7 +1098,15 @@ class RbnMap(object):
         param_info[key]     = tmp
         tmp['cbar_ticks']   = [1.8,3.5,7.,10.,14.,21.,24.,28.]
         tmp['label']        = 'F_max [MHz]'
-        
+
+        key                 = 'counts'
+        tmp                 = {}
+        param_info[key]     = tmp
+        tmp['label']        = 'Counts'
+        tmp['vmin']         = 0
+        tmp['vmax']         = int(grid_data.counts.mean() + 3.*grid_data.counts.std())
+        tmp['cmap']         = matplotlib.cm.jet
+
         param_dict  = param_info.get(param,{})
         if band_data is None:
             band_data   = param_dict.get('band_data',BandData())
@@ -1116,7 +1125,6 @@ class RbnMap(object):
         ax          = self.ax
         m           = self.m
 
-        grid_data   = self.data_set.grid_data
 
         ll                  = gridsquare.gridsquare2latlon
         lats_ll, lons_ll    = ll(grid_data.index,'lower left')
