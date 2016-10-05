@@ -1090,16 +1090,27 @@ class RbnMap(object):
         Overlay gridsquare data on a map.
         """
 
+
+        param_info = {}
+        key                 = 'f_max_MHz'
+        tmp                 = {}
+        param_info[key]     = tmp
+        tmp['cbar_ticks']   = [1.8,3.5,7.,10.,14.,21.,24.,28.]
+        tmp['label']        = 'F_max [MHz]'
+        
+        param_dict  = param_info.get(param,{})
         if band_data is None:
-            band_data = BandData()
+            band_data   = param_dict.get('band_data',BandData())
         if cmap is None:
-            cmap = band_data.cmap
+            cmap        = param_dict.get('cmap',band_data.cmap)
         if vmin is None:
-            vmin = band_data.norm.vmin
+            vmin        = param_dict.get('vmin',band_data.norm.vmin)
         if vmax is None:
-            vmax = band_data.norm.vmax
+            vmax        = param_dict.get('vmax',band_data.norm.vmax)
         if label is None:
-            label = param
+            label       = param_dict.get('label',param)
+
+        cbar_ticks  = param_dict.get('cbar_ticks')
 
         fig         = self.fig
         ax          = self.ax
@@ -1129,11 +1140,13 @@ class RbnMap(object):
         bounds  = np.linspace(vmin,vmax,256)
         norm    = matplotlib.colors.BoundaryNorm(bounds,cmap.N)
 
-        pcoll = PolyCollection(np.array(verts),edgecolors='face',closed=False,cmap=cmap,norm=norm,zorder=99)
+        pcoll   = PolyCollection(np.array(verts),edgecolors='face',closed=False,cmap=cmap,norm=norm,zorder=99)
         pcoll.set_array(np.array(vals))
         ax.add_collection(pcoll,autolim=False)
 
-        fig.colorbar(pcoll,label=label)
+        cbar    = fig.colorbar(pcoll,label=label)
+        if cbar_ticks:
+            cbar.set_ticks(cbar_ticks)
 
     def overlay_grid(self,grid_obj,color='0.8'):
         """

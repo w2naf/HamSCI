@@ -35,11 +35,20 @@ def geoloc_info(rbn_obj):
 def rbn_map(sTime,eTime,
         llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None,
-        output_dir = 'output'):
+        plot_de                 = True,
+        plot_midpoints          = True,
+        plot_paths              = False,
+        plot_ncdxf              = False,
+        plot_stats              = True,
+        plot_legend             = True,
+        overlay_gridsquares     = True,
+        overlay_gridsquare_data = True,
+        gridsquare_data_param   = 'f_max_MHz',
+        output_dir              = 'output'):
 
     latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
 
-    filename    = 'rbn_map-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(sTime,eTime)
+    filename    = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(gridsquare_data_param,sTime,eTime)
     filepath    = os.path.join(output_dir,filename)
 
     li          = loop_info(sTime,eTime)
@@ -67,10 +76,24 @@ def rbn_map(sTime,eTime,
 
     fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
     ax0        = fig.add_subplot(1,1,1)
-    rbn_map_obj= rbn_lib.RbnMap(rbn_obj,ax=ax0)
 
-    rbn_map_obj.overlay_gridsquares()
-    rbn_map_obj.overlay_gridsquare_data()
+    rbn_map_obj= rbn_lib.RbnMap(rbn_obj,ax=ax0,default_plot=False)
+    if plot_de:
+        rbn_map_obj.plot_de()
+    if plot_midpoints:
+        rbn_map_obj.plot_midpoints()
+    if plot_paths:
+        rbn_map_obj.plot_paths()
+    if plot_ncdxf:
+        rbn_map_obj.plot_ncdxf()
+    if plot_stats:
+        rbn_map_obj.plot_link_stats()
+    if plot_legend:
+        rbn_map_obj.plot_band_legend(band_data=rbn_map_obj.band_data)
+    if overlay_gridsquares:
+        rbn_map_obj.overlay_gridsquares()
+    if overlay_gridsquare_data:
+        rbn_map_obj.overlay_gridsquare_data(param=gridsquare_data_param)
 
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
