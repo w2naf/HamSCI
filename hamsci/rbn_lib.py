@@ -3,6 +3,7 @@ de_prop         = {'marker':'^','edgecolor':'k','facecolor':'white'}
 dxf_prop        = {'marker':'*','color':'blue'}
 dxf_leg_size    = 150
 dxf_plot_size   = 50
+Re              = 6371  # Radius of the Earth
 
 import geopack
 import os               # Provides utilities that help us do os-level operations like create directories
@@ -248,6 +249,10 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None,
             ref_lat, ref_lon  = geopack.midpoint(lat1,lon1,lat2,lon2)
             df.loc[:,'sp_mid_lat']  = ref_lat
             df.loc[:,'sp_mid_lon']  = ref_lon
+            
+            # Calculate Great Circle Distance
+            R_gc    = Re*geopack.greatCircleDist(lat1,lon1,lat2,lon2)
+            df.loc[:,'R_gc']        = R_gc
 
         df.loc[:,'grid']        = gridsquare.latlon2gridsquare(ref_lat,ref_lon,
                                         precision=gridsquare_precision)
@@ -348,6 +353,10 @@ class RbnDataSet(object):
         dct     = {}
         dct['counts']       = gs_grp.freq.count()
         dct['f_max_MHz']    = gs_grp.freq.max()/1000.
+        dct['R_gc_min']     = gs_grp.R_gc.min()
+        dct['R_gc_max']     = gs_grp.R_gc.max()
+        dct['R_gc_mean']    = gs_grp.R_gc.mean()
+        dct['R_gc_std']     = gs_grp.R_gc.std()
 
         # Put into a new dataframe organized by grid square.
         grid_data       = pd.DataFrame(dct,index=grids)
@@ -1106,6 +1115,17 @@ class RbnMap(object):
         tmp['vmin']         = 0
         tmp['vmax']         = int(grid_data.counts.mean() + 3.*grid_data.counts.std())
         tmp['cmap']         = matplotlib.cm.jet
+        
+        for stat in ['min','max','mean']:
+            key                 = 'R_gc_{}'.format(stat)
+            tmp                 = {}
+            param_info[key]     = tmp
+            tmp['label']        = '{} R_gc [km]'.format(stat)
+            tmp['vmin']         = 0
+#            tmp['vmax']         = int(grid_data[key].mean() + 3.*grid_data[key].std())
+            tmp['vmax']         = 10000.
+            tmp['cbar_ticks']   = np.arange(0,10001,1000)
+            tmp['cmap']         = matplotlib.cm.jet
 
         param_dict  = param_info.get(param,{})
         if band_data is None:
@@ -1153,7 +1173,7 @@ class RbnMap(object):
         ax.add_collection(pcoll,autolim=False)
 
         cbar    = fig.colorbar(pcoll,label=label)
-        if cbar_ticks:
+        if cbar_ticks is not None:
             cbar.set_ticks(cbar_ticks)
 
     def overlay_grid(self,grid_obj,color='0.8'):

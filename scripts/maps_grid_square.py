@@ -143,21 +143,15 @@ def rbn_map_multiview(run_dct):
     rbn_map(**run_dct)
     serial  += 1
 
-    run_dct['plot_midpoints']           = False
-    run_dct['overlay_gridsquare_data']  = True
-    param                               = 'f_max_MHz'
-    run_dct['gridsquare_data_param']    = param
-    run_dct['fname_tag']                = '{:03d}-{}'.format(serial,param)
-    rbn_map(**run_dct)
-    serial  += 1
 
-    run_dct['plot_midpoints']           = False
-    run_dct['overlay_gridsquare_data']  = True
-    param                               = 'counts'
-    run_dct['gridsquare_data_param']    = param
-    run_dct['fname_tag']                = '{:03d}-{}'.format(serial,param)
-    rbn_map(**run_dct)
-    serial  += 1
+    params  = ['f_max_MHz','counts','R_gc_min','R_gc_max','R_gc_mean']
+    for param in params:
+        run_dct['plot_midpoints']           = False
+        run_dct['overlay_gridsquare_data']  = True
+        run_dct['gridsquare_data_param']    = param
+        run_dct['fname_tag']                = '{:03d}-{}'.format(serial,param)
+        rbn_map(**run_dct)
+        serial  += 1
 
 def create_webview(output_dir='output',width=500):
     # Get the names of the directories in the output_dir.
