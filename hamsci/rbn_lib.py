@@ -346,8 +346,8 @@ class RbnDataSet(object):
 
         # Pull out the desired statistics.
         dct     = {}
-        dct['counts']   = gs_grp.freq.count()
-        dct['f_max']    = gs_grp.freq.max()
+        dct['counts']       = gs_grp.freq.count()
+        dct['f_max_MHz']    = gs_grp.freq.max()/1000.
 
         # Put into a new dataframe organized by grid square.
         grid_data       = pd.DataFrame(dct,index=grids)
@@ -356,7 +356,7 @@ class RbnDataSet(object):
         self.grid_data  = grid_data
         return grid_data
 
-    def gridsquare_grid(self,precision=None):
+    def gridsquare_grid(self,precision=None,mesh=True):
         """
         Return a grid square grid.
 
@@ -367,10 +367,17 @@ class RbnDataSet(object):
         if precision is None:
             precision   = self.metadata.get('gridsquare_precision')
 
-        grid        = gridsquare.gridsquare_grid(precision=precision)
-        return grid
+        grid    = gridsquare.gridsquare_grid(precision=precision)
+        if mesh:
+            ret_val = grid
+        else:
+            xx = grid[:,0]
+            yy = grid[0,:]
 
-    def grid_latlons(self,precision=None,position='center'):
+            ret_val = (xx,yy)
+        return ret_val 
+
+    def grid_latlons(self,precision=None,position='center',mesh=True):
         """
         Return a grid of gridsquare-based lat/lons.
 
@@ -385,8 +392,13 @@ class RbnDataSet(object):
             'upper right'
             'lower right'
         """
-        gs_grid     = self.gridsquare_grid(precision=precision)
+        gs_grid     = self.gridsquare_grid(precision=precision,mesh=mesh)
         lat_lons    = gridsquare.gridsquare2latlon(gs_grid,position=position)
+       
+        if mesh is False:
+            lats        = lat_lons[0][1,:]
+            lons        = lat_lons[1][0,:]
+            lat_lons    = (lats,lons)
 
         return lat_lons
 
@@ -1051,17 +1063,17 @@ class RbnMap(object):
 
 	# Draw Major Grid Squares
         if maj_prec > 0:
-            lats,lons   = ds.grid_latlons(maj_prec,position='lower left')
+            lats,lons   = ds.grid_latlons(maj_prec,position='lower left',mesh=False)
 
-            m.drawparallels(lats[0,:],labels=[False,True,True,False],**major_style)
-            m.drawmeridians(lons[:,0],labels=[True,False,False,True],**major_style)
+            m.drawparallels(lats,labels=[False,True,True,False],**major_style)
+            m.drawmeridians(lons,labels=[True,False,False,True],**major_style)
 
 	# Draw minor Grid Squares
         if min_prec > 0:
-            lats,lons   = ds.grid_latlons(min_prec,position='lower left')
+            lats,lons   = ds.grid_latlons(min_prec,position='lower left',mesh=False)
 
-            m.drawparallels(lats[0,:],labels=[False,False,False,False],**minor_style)
-            m.drawmeridians(lons[:,0],labels=[False,False,False,False],**minor_style)
+            m.drawparallels(lats,labels=[False,False,False,False],**minor_style)
+            m.drawmeridians(lons,labels=[False,False,False,False],**minor_style)
 
 	# Label Grid Squares
 	lats,lons   = ds.grid_latlons(label_prec,position='center')
@@ -1071,14 +1083,71 @@ class RbnMap(object):
 	    ax.text(xxx,yyy,grd,ha='center',va='center',clip_on=True,
                     fontdict=label_fontdict, zorder=label_zorder)
 
+    def overlay_gridsquare_data(self, param='f_max_MHz',
+            cmap=None,vmin=None,vmax=None,label=None,
+            band_data=None):
+        """
+        Overlay gridsquare data on a map.
+        """
+
+        if band_data is None:
+            band_data = BandData()
+        if cmap is None:
+            cmap = band_data.cmap
+        if vmin is None:
+            vmin = band_data.norm.vmin
+        if vmax is None:
+            vmax = band_data.norm.vmax
+        if label is None:
+            label = param
+
+        fig         = self.fig
+        ax          = self.ax
+        m           = self.m
+
+        grid_data   = self.data_set.grid_data
+
+        ll                  = gridsquare.gridsquare2latlon
+        lats_ll, lons_ll    = ll(grid_data.index,'lower left')
+        lats_lr, lons_lr    = ll(grid_data.index,'lower right')
+        lats_ur, lons_ur    = ll(grid_data.index,'upper right')
+        lats_ul, lons_ul    = ll(grid_data.index,'upper left')
+
+        coords  = zip(lats_ll,lons_ll,lats_lr,lons_lr,
+                      lats_ur,lons_ur,lats_ul,lons_ul)
+
+        verts   = []
+        for lat_ll,lon_ll,lat_lr,lon_lr,lat_ur,lon_ur,lat_ul,lon_ul in coords:
+            x1,y1 = m(lon_ll,lat_ll)
+            x2,y2 = m(lon_lr,lat_lr)
+            x3,y3 = m(lon_ur,lat_ur)
+            x4,y4 = m(lon_ul,lat_ul)
+            verts.append(((x1,y1),(x2,y2),(x3,y3),(x4,y4),(x1,y1)))
+
+        vals    = grid_data[param]
+
+        bounds  = np.linspace(vmin,vmax,256)
+        norm    = matplotlib.colors.BoundaryNorm(bounds,cmap.N)
+
+        pcoll = PolyCollection(np.array(verts),edgecolors='face',closed=False,cmap=cmap,norm=norm,zorder=99)
+        pcoll.set_array(np.array(vals))
+        ax.add_collection(pcoll,autolim=False)
+
+        fig.colorbar(pcoll,label=label)
+
     def overlay_grid(self,grid_obj,color='0.8'):
         """
         Overlay the grid from a GeoGrid object.
+        THIS WILL PROBABLY BE DEPRECATED.
         """
         self.m.drawparallels(grid_obj.lat_vec,color=color)
         self.m.drawmeridians(grid_obj.lon_vec,color=color)
         
     def overlay_grid_data(self,grid_obj,cmap=None,vmin=None,vmax=None,label=None):
+        """
+        For old GeoGrid object.
+        THIS WILL PROBABLY BE DEPRECATED.
+        """
         gmd     = grid_obj.metadata
         if cmap is None:
             cmap = gmd.get('cmap',None)
@@ -1105,5 +1174,3 @@ class RbnMap(object):
         pcoll   = ax.pcolor(xx,yy,Zm,cmap=cmap,vmin=vmin,vmax=vmax)
         
         fig.colorbar(pcoll,label=label)
-
-
