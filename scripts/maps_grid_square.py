@@ -3,6 +3,7 @@
 
 import sys
 import os
+import glob
 import datetime
 import multiprocessing
 
@@ -126,6 +127,8 @@ def rbn_map_dct_wrapper(run_dct):
     rbn_map(**run_dct)
 
 def rbn_map_multiview(run_dct):
+    serial  = 0
+
     run_dct['plot_de']                  = True
     run_dct['plot_ncdxf']               = False
     run_dct['plot_stats']               = True
@@ -135,20 +138,73 @@ def rbn_map_multiview(run_dct):
 
     run_dct['plot_midpoints']           = True
     run_dct['overlay_gridsquare_data']  = False
-    run_dct['fname_tag']                = 'midpoints'
+    param                               = 'midpoints'
+    run_dct['fname_tag']                = '{:03d}-{}'.format(serial,param)
     rbn_map(**run_dct)
+    serial  += 1
 
     run_dct['plot_midpoints']           = False
     run_dct['overlay_gridsquare_data']  = True
-    run_dct['gridsquare_data_param']    = 'f_max_MHz'
-    run_dct['fname_tag']                = None
+    param                               = 'f_max_MHz'
+    run_dct['gridsquare_data_param']    = param
+    run_dct['fname_tag']                = '{:03d}-{}'.format(serial,param)
     rbn_map(**run_dct)
+    serial  += 1
 
     run_dct['plot_midpoints']           = False
     run_dct['overlay_gridsquare_data']  = True
-    run_dct['gridsquare_data_param']    = 'counts'
-    run_dct['fname_tag']                = None
+    param                               = 'counts'
+    run_dct['gridsquare_data_param']    = param
+    run_dct['fname_tag']                = '{:03d}-{}'.format(serial,param)
     rbn_map(**run_dct)
+    serial  += 1
+
+def create_webview(output_dir='output',width=500):
+    # Get the names of the directories in the output_dir.
+    fname_tags  = os.walk(output_dir).next()[1] 
+    fname_tags.sort()
+
+    # Identify all of the time slots we have some plots for.
+    file_codes  = []
+    for fname_tag in fname_tags:
+        these_files = glob.glob(os.path.join(output_dir,fname_tag,'*.png'))
+        length      = len(fname_tag)
+        tmp = [os.path.basename(x)[length:] for x in these_files]
+        file_codes  += tmp
+    file_codes = np.unique(file_codes)
+
+    # Create the HTML.
+    html = []
+    html.append('<html>')
+    html.append(' <head>')
+    html.append(' </head>')
+    html.append(' <body>')
+    html.append('   <table border=1>')
+
+    # Add in the headers.
+    html.append('     <tr>')
+    for fname_tag in fname_tags:
+        html.append('       <th>{}</th>'.format(fname_tag))
+    html.append('     </tr>')
+
+    # Create row for each date and insert img.
+    for file_code in file_codes:
+        html.append('     <tr>')
+        for fname_tag in fname_tags:
+            fpath = os.path.join(fname_tag,'{}{}'.format(fname_tag,file_code))
+            txt = '<a href="'+fpath+'"><img src="'+fpath+'" width="'+'{:.0f}'.format(width)+'px" /></a>'
+            html.append('       <td>{}</td>'.format(txt))
+        html.append('     </tr>')
+
+
+    html.append('   </table>')
+    html.append(' </body>')
+    html.append('</html>')
+
+    # Write out html file.
+    html_fname  = os.path.join(output_dir,'0001-multiview.html')
+    with open(html_fname,'w') as fl:
+        fl.write('\n'.join(html))
 
 if __name__ == '__main__':
     multiproc   = False 
@@ -191,4 +247,4 @@ if __name__ == '__main__':
 #            rbn_map_dct_wrapper(run_dct)
             rbn_map_multiview(run_dct)
 
-
+    create_webview(output_dir=output_dir)
