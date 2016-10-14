@@ -48,6 +48,7 @@ class BandData(object):
         bands.append((28.0,  '10 m'))
         bands.append((21.0,  '15 m'))
         bands.append((14.0,  '20 m'))
+        bands.append((10.0,  '30 m'))
         bands.append(( 7.0,  '40 m'))
         bands.append(( 3.5,  '80 m'))
         bands.append(( 1.8, '160 m'))
