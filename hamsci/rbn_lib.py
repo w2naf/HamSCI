@@ -338,9 +338,11 @@ class RbnDataSet(object):
 
         self.history = {datetime.datetime.now():comment}
 
-    def compute_grid_stats(self):
+    def compute_grid_stats(self,hgt=300.):
         """
         Create a dataframe with statistics for each grid square.
+
+        hgt: Assumed altitude of reflection [km]
         """
 
         # Group the dataframe by grid square.
@@ -357,6 +359,13 @@ class RbnDataSet(object):
         dct['R_gc_max']     = gs_grp.R_gc.max()
         dct['R_gc_mean']    = gs_grp.R_gc.mean()
         dct['R_gc_std']     = gs_grp.R_gc.std()
+
+        # Compute Zenith Angle Theta and FoF2.
+        lambda_by_2         = dct['R_gc_min']/Re
+        theta               = np.arctan( np.sin(lambda_by_2)/( (Re+hgt)/Re - np.cos(lambda_by_2) ) )
+        foF2                = dct['f_max_MHz']*np.cos(theta)
+        dct['theta']        = theta
+        dct['foF2']         = foF2
 
         # Put into a new dataframe organized by grid square.
         grid_data       = pd.DataFrame(dct,index=grids)
@@ -1116,6 +1125,23 @@ class RbnMap(object):
         tmp['vmax']         = int(grid_data.counts.mean() + 3.*grid_data.counts.std())
         tmp['cmap']         = matplotlib.cm.jet
         
+        key                 = 'theta'
+        tmp                 = {}
+        param_info[key]     = tmp
+        tmp['label']        = 'Zenith Angle Theta'
+        tmp['vmin']         = 0
+        tmp['vmax']         = 90.
+        tmp['cbar_ticks']   = np.arange(0,91,10)
+        tmp['cmap']         = matplotlib.cm.jet
+
+        key                 = 'foF2'
+        tmp                 = {}
+        param_info[key]     = tmp
+        tmp['vmin']         = 0
+        tmp['vmax']         = 30
+        tmp['cbar_ticks']   = np.arange(0,31,5)
+        tmp['label']        = 'RBN foF2 [MHz]'
+
         for stat in ['min','max','mean']:
             key                 = 'R_gc_{}'.format(stat)
             tmp                 = {}
@@ -1134,6 +1160,7 @@ class RbnMap(object):
             cmap        = param_dict.get('cmap',band_data.cmap)
         if vmin is None:
             vmin        = param_dict.get('vmin',band_data.norm.vmin)
+        param_info = {}
         if vmax is None:
             vmax        = param_dict.get('vmax',band_data.norm.vmax)
         if label is None:
@@ -1144,7 +1171,6 @@ class RbnMap(object):
         fig         = self.fig
         ax          = self.ax
         m           = self.m
-
 
         ll                  = gridsquare.gridsquare2latlon
         lats_ll, lons_ll    = ll(grid_data.index,'lower left')
@@ -1164,6 +1190,9 @@ class RbnMap(object):
             verts.append(((x1,y1),(x2,y2),(x3,y3),(x4,y4),(x1,y1)))
 
         vals    = grid_data[param]
+
+        if param == 'theta':
+            vals = (180./np.pi)*vals # Convert to degrees
 
         bounds  = np.linspace(vmin,vmax,256)
         norm    = matplotlib.colors.BoundaryNorm(bounds,cmap.N)

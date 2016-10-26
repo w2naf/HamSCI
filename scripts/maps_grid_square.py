@@ -144,7 +144,7 @@ def rbn_map_multiview(run_dct):
     serial  += 1
 
 
-    params  = ['f_max_MHz','counts','R_gc_min','R_gc_max','R_gc_mean']
+    params  = ['foF2','f_max_MHz','theta','R_gc_min','R_gc_max','R_gc_mean','counts']
     for param in params:
         run_dct['plot_midpoints']           = False
         run_dct['overlay_gridsquare_data']  = True
@@ -211,13 +211,13 @@ def create_webview(tags=None,html_fname='0001-multiview.html',
         fl.write('\n'.join(html))
 
 if __name__ == '__main__':
-    multiproc   = False 
+    multiproc   = True
 
 #    # 2014 Nov Sweepstakes
-#    sTime   = datetime.datetime(2014,11,1)
-#    eTime   = datetime.datetime(2014,11,4)
-    sTime   = datetime.datetime(2014,11,1,23)
-    eTime   = datetime.datetime(2014,11,2)
+    sTime   = datetime.datetime(2014,11,1)
+    eTime   = datetime.datetime(2014,11,4)
+#    sTime   = datetime.datetime(2014,11,1,23)
+#    eTime   = datetime.datetime(2014,11,2)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
@@ -243,7 +243,8 @@ if __name__ == '__main__':
 
     if multiproc:
         pool = multiprocessing.Pool()
-        pool.map(rbn_map_dct_wrapper,run_list)
+#        pool.map(rbn_map_dct_wrapper,run_list)
+        pool.map(rbn_map_multiview,run_list)
         pool.close()
         pool.join()
     else:
@@ -254,7 +255,7 @@ if __name__ == '__main__':
     create_webview(output_dir=output_dir)
 
     name    = '0001-fof2.html'
-    tags    = ['f_max_MHz','R_gc_min','counts']
+    tags    = ['foF2','f_max_MHz','theta','R_gc_min','counts','midpoints']
     create_webview(tags=tags,html_fname=name,output_dir=output_dir)
 
     name    = '0001-rgc.html'
