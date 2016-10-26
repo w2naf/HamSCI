@@ -253,6 +253,9 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None,
             # Calculate Great Circle Distance
             R_gc    = Re*geopack.greatCircleDist(lat1,lon1,lat2,lon2)
             df.loc[:,'R_gc']        = R_gc
+        elif reflection_type == "miller_2015":
+            import ipdb; ipdb.set_trace()
+
 
         df.loc[:,'grid']        = gridsquare.latlon2gridsquare(ref_lat,ref_lon,
                                         precision=gridsquare_precision)
@@ -274,7 +277,7 @@ class RbnObject(object):
         if df is None:
             df = read_rbn(sTime=sTime,eTime=eTime,data_dir=data_dir,
                     qrz_call=qrz_call,qrz_passwd=qrz_passwd,
-                    reflection_type='sp_mid',
+                    reflection_type=reflection_type,
                     gridsquare_precision=gridsquare_precision)
 
         #Make metadata block to hold information about the processing.
