@@ -115,8 +115,7 @@ def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
 	cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
 	return cmap
 
-def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None,
-        gridsquare_precision=4,reflection_type='sp_mid'):
+def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None):
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
     ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
@@ -241,24 +240,12 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None,
         # Trim dataframe to just the entries we need.
         df = df_comp[np.logical_and(df_comp['date'] >= sTime,df_comp['date'] < eTime)]
 
-        # Calculate Midpoints
-        lat1, lon1  = df['de_lat'],df['de_lon']
-        lat2, lon2  = df['dx_lat'],df['dx_lon']
+        # Calculate Total Great Circle Path Distance
+        lat1, lon1          = df['de_lat'],df['de_lon']
+        lat2, lon2          = df['dx_lat'],df['dx_lon']
+        R_gc                = Re*geopack.greatCircleDist(lat1,lon1,lat2,lon2)
+        df.loc[:,'R_gc']    = R_gc
 
-        if reflection_type == "sp_mid":
-            ref_lat, ref_lon  = geopack.midpoint(lat1,lon1,lat2,lon2)
-            df.loc[:,'sp_mid_lat']  = ref_lat
-            df.loc[:,'sp_mid_lon']  = ref_lon
-            
-            # Calculate Great Circle Distance
-            R_gc    = Re*geopack.greatCircleDist(lat1,lon1,lat2,lon2)
-            df.loc[:,'R_gc']        = R_gc
-        elif reflection_type == "miller_2015":
-            import ipdb; ipdb.set_trace()
-
-
-        df.loc[:,'grid']        = gridsquare.latlon2gridsquare(ref_lat,ref_lon,
-                                        precision=gridsquare_precision)
         # Calculate Band
         df.loc[:,'band']        = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
 
@@ -276,24 +263,25 @@ class RbnObject(object):
 
         if df is None:
             df = read_rbn(sTime=sTime,eTime=eTime,data_dir=data_dir,
-                    qrz_call=qrz_call,qrz_passwd=qrz_passwd,
-                    reflection_type=reflection_type,
-                    gridsquare_precision=gridsquare_precision)
+                    qrz_call=qrz_call,qrz_passwd=qrz_passwd)
 
         #Make metadata block to hold information about the processing.
         metadata = {}
         data_set                            = 'DS000'
         metadata['data_set_name']           = data_set
         metadata['serial']                  = 0
-        metadata['gridsquare_precision']    = gridsquare_precision
-        metadata['reflection_type']         = reflection_type
         cmt     = '[{}] {}'.format(data_set,comment)
         
         rbn_ds  = RbnDataSet(df,parent=self,comment=cmt)
         setattr(self,data_set,rbn_ds)
         setattr(rbn_ds,'metadata',metadata)
 
-        rbn_ds.dropna()
+        rbn_ds  = rbn_ds.dropna()
+
+        if reflection_type == 'sp_mid':
+            rbn_ds = rbn_ds.calc_reflection_sp_mid()
+
+        rbn_ds.grid_data(gridsquare_precision=gridsquare_precision) 
 
     def get_data_sets(self):
         """Return a sorted list of musicDataObj's contained in this musicArray.
@@ -349,7 +337,7 @@ class RbnDataSet(object):
         """
 
         # Group the dataframe by grid square.
-        gs_grp  = self.df.groupby('grid')
+        gs_grp  = self.df.groupby('refl_grid')
 
         # Get a list of the gridsquares in use.
         grids   = gs_grp.indices.keys()
@@ -424,11 +412,60 @@ class RbnDataSet(object):
         return lat_lons
 
     def dropna(self,new_data_set='dropna',comment='Remove Non-Geolocated Spots'):
+        """
+        Removes spots that do not have geolocated Transmitters or Recievers.
+        """
         new_ds      = self.copy(new_data_set,comment)
         new_ds.df   = new_ds.df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
         new_ds.set_active()
         return new_ds
 
+    def calc_reflection_sp_mid(self,new_data_set='sp_mid',comment='Great Circle Midpoints'):
+        """
+        Determine the path reflection point using a simple great circle
+        midpoint method.
+
+        This method creates a new dataset.
+        """
+        new_ds                  = self.copy(new_data_set,comment)
+        df                      = new_ds.df
+        md                      = new_ds.metadata
+        lat1, lon1              = df['de_lat'],df['de_lon']
+        lat2, lon2              = df['dx_lat'],df['dx_lon']
+        refl_lat, refl_lon      = geopack.midpoint(lat1,lon1,lat2,lon2)
+        df.loc[:,'refl_lat']    = refl_lat
+        df.loc[:,'refl_lon']    = refl_lon
+
+        md['reflection_type']   = 'sp_mid'
+        new_ds.set_active()
+
+        return new_ds
+
+    def calc_reflection_miller2015(self,hgt=300.):
+        lbd_gc_max              = 2*np.arccos( Re/(Re+hgt) )
+        R_F_gc_max              = Re*lbd_gc_max
+        N_F                     = np.floor(R_gc/R_F_gc_max)
+        R_gc_mean               = R_gc/N_F
+        import ipdb; ipdb.set_trace()
+
+    def grid_data(self,gridsquare_precision=4,
+            lat_key='refl_lat',lon_key='refl_lon',grid_key='refl_grid'):
+        """
+        Determine gridsquares for the data.
+
+        The method appends gridsquares to current dataframe and does
+        NOT create a new dataset.
+        """
+        df                          = self.df
+        md                          = self.metadata
+        lats                        = df[lat_key]
+        lons                        = df[lon_key]
+        df.loc[:,grid_key]          = gridsquare.latlon2gridsquare(lats,lons,
+                                        precision=gridsquare_precision)
+        md['gridsquare_precision']  = gridsquare_precision
+
+        return self
+        
     def filter_calls(self,calls,call_type='de',new_data_set='filter_calls',comment=None):
         """
         Filter data frame for specific calls.
@@ -464,7 +501,7 @@ class RbnDataSet(object):
         new_ds.set_active()
         return new_ds
 
-    def latlon_filt(self,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
+    def latlon_filt(self,lat_col='refl_lat',lon_col='refl_lon',
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
 
         arg_dct = {'lat_col':lat_col,'lon_col':lon_col,'llcrnrlon':llcrnrlon,'llcrnrlat':llcrnrlat,'urcrnrlon':urcrnrlon,'urcrnrlat':urcrnrlat}
@@ -703,7 +740,7 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
     legend = fig.legend(handles,labels,ncol=ncol,loc=loc,markerscale=markerscale,prop=prop,title=title,bbox_to_anchor=bbox_to_anchor,scatterpoints=1)
     return legend
 
-def latlon_filt(df,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
+def latlon_filt(df,lat_col='refl_lat',lon_col='refl_lon',
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
     """
     Return an RBN Dataframe with entries only within a specified lat/lon box.
@@ -720,7 +757,7 @@ class RbnGeoGrid(object):
     Define a geographic grid and bin RBN data.
     !!! This is probably going to be deprecated. !!!
     """
-    def __init__(self,df=None,lat_col='sp_mid_lat',lon_col='sp_mid_lon',
+    def __init__(self,df=None,lat_col='refl_lat',lon_col='refl_lon',
         lat_min=-90. ,lat_max=90. ,lat_step=1.0,
         lon_min=-180.,lon_max=180.,lon_step=2.0,
         metadata={}):
@@ -987,7 +1024,7 @@ class RbnMap(object):
             color = band_data.band_dict[band]['color']
             label = band_data.band_dict[band]['name']
 
-            mid   = self.m.scatter(this_group['sp_mid_lon'],this_group['sp_mid_lat'],
+            mid   = self.m.scatter(this_group['refl_lon'],this_group['refl_lat'],
                     alpha=0.50,edgecolors='none',facecolors=color,color=color,s=s,zorder=100)
 
     def plot_paths(self,band_data=None):

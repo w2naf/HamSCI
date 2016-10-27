@@ -36,6 +36,7 @@ def geoloc_info(rbn_obj):
 def rbn_map(sTime,eTime,
         llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None,
+        reflection_type         = 'sp_mid',
         plot_de                 = True,
         plot_midpoints          = True,
         plot_paths              = False,
@@ -63,7 +64,7 @@ def rbn_map(sTime,eTime,
     li          = loop_info(sTime,eTime)
 
     t0 = datetime.datetime.now()
-    rbn_obj     = rbn_lib.RbnObject(sTime,eTime,gridsquare_precision=4)
+    rbn_obj     = rbn_lib.RbnObject(sTime,eTime,gridsquare_precision=4,reflection_type=reflection_type)
 
     rbn_obj.active.latlon_filt(**latlon_bnds)
     rbn_obj.active.filter_calls(call_filt_de,call_type='de')
@@ -211,13 +212,13 @@ def create_webview(tags=None,html_fname='0001-multiview.html',
         fl.write('\n'.join(html))
 
 if __name__ == '__main__':
-    multiproc   = True
+    multiproc   = False
 
 #    # 2014 Nov Sweepstakes
-    sTime   = datetime.datetime(2014,11,1)
-    eTime   = datetime.datetime(2014,11,4)
-#    sTime   = datetime.datetime(2014,11,1,23)
-#    eTime   = datetime.datetime(2014,11,2)
+#    sTime   = datetime.datetime(2014,11,1)
+#    eTime   = datetime.datetime(2014,11,4)
+    sTime   = datetime.datetime(2014,11,1,23)
+    eTime   = datetime.datetime(2014,11,2)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
@@ -230,13 +231,15 @@ if __name__ == '__main__':
     dct = {}
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
 
-    integration_time    = datetime.timedelta(minutes=15)
-    interval_time       = datetime.timedelta(minutes=60)
+    integration_time        = datetime.timedelta(minutes=15)
+    interval_time           = datetime.timedelta(minutes=60)
 
-    event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
-    output_dir          = os.path.join('output','maps',event_dir)
+    event_dir               = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
+    output_dir              = os.path.join('output','maps',event_dir)
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
-    dct['output_dir']   = output_dir
+
+    dct['output_dir']       = output_dir
+#    dct['reflection_type']  = 'miller_2015'
 #    dct['call_filt_de'] = 'aa4vv'
 
     run_list            = gen_map_run_list(sTime,eTime,integration_time,interval_time,**dct)
