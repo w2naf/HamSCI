@@ -941,7 +941,12 @@ class RbnMap(object):
         m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection='cyl',ax=ax)
 
         title = sTime.strftime('RBN: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
-        ax.set_title(title)
+        fontdict = {'size':matplotlib.rcParams['axes.titlesize'],'weight':matplotlib.rcParams['axes.titleweight']}
+        ax.text(0.5,1.075,title,fontdict=fontdict,transform=ax.transAxes,ha='center')
+
+        subtitle = 'Reflection Type: {}'.format(self.data_set.metadata.get('reflection_type'))
+        fontdict = {'weight':'normal'}
+        ax.text(0.5,1.025,subtitle,fontdict=fontdict,transform=ax.transAxes,ha='center')
 
         # draw parallels and meridians.
         # This is now done in the gridsquare overlay section...
@@ -1001,6 +1006,12 @@ class RbnMap(object):
     def plot_de(self,s=25,zorder=150):
         m       = self.m
         df      = self.data_set.df
+
+        # Only plot the actual receiver location.
+        if 'hop_nr' in df.keys():
+            tf  = df.hop_nr == 0
+            df  = df[tf]
+
         rx      = m.scatter(df['de_lon'],df['de_lat'],
                 s=s,zorder=zorder,**de_prop)
 
@@ -1066,7 +1077,7 @@ class RbnMap(object):
         text = []
         text.append('TX All: {0:d}; TX Map: {1:d}'.format( len(dx_list_all), len(dx_list_map) ))
         text.append('RX All: {0:d}; RX Map: {1:d}'.format( len(de_list_all), len(de_list_map) ))
-        text.append('Plotted links: {0:d}'.format(len(self.data_set.df)))
+        text.append('Relfection Points: {0:d}'.format(len(self.data_set.df)))
 
         props = dict(facecolor='white', alpha=0.25,pad=6)
         self.ax.text(0.02,0.05,'\n'.join(text),transform=self.ax.transAxes,
