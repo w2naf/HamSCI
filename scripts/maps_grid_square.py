@@ -106,6 +106,7 @@ def rbn_map(sTime,eTime,
 
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
+    import ipdb; ipdb.set_trace()
 
    
 def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
