@@ -239,7 +239,7 @@ if __name__ == '__main__':
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
 
     dct['output_dir']       = output_dir
-#    dct['reflection_type']  = 'miller_2015'
+    dct['reflection_type']  = 'miller2015'
 #    dct['call_filt_de'] = 'aa4vv'
 
     run_list            = gen_map_run_list(sTime,eTime,integration_time,interval_time,**dct)

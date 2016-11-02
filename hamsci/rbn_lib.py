@@ -16,6 +16,12 @@ import copy
 import numpy as np      #Numerical python - provides array types and operations
 import pandas as pd     #This is a nice utility for working with time-series type data.
 
+# Some view options for debugging.
+pd.set_option('display.height', 1000)
+pd.set_option('display.max_rows', 500)
+pd.set_option('display.max_columns', 500)
+pd.set_option('display.width', 1000)
+
 from hamtools import qrz
 
 import davitpy
@@ -30,6 +36,7 @@ import matplotlib.markers as mmarkers
 from matplotlib.collections import PolyCollection
 
 import gridsquare
+
 
 def cc255(color):
     cc = matplotlib.colors.ColorConverter().to_rgb
@@ -280,6 +287,8 @@ class RbnObject(object):
 
         if reflection_type == 'sp_mid':
             rbn_ds = rbn_ds.calc_reflection_sp_mid()
+        elif reflection_type == 'miller2015':
+            rbn_ds = rbn_ds.calc_reflection_miller2015()
 
         rbn_ds.grid_data(gridsquare_precision=gridsquare_precision) 
 
@@ -438,15 +447,69 @@ class RbnDataSet(object):
 
         md['reflection_type']   = 'sp_mid'
         new_ds.set_active()
-
         return new_ds
 
-    def calc_reflection_miller2015(self,hgt=300.):
+    def calc_reflection_miller2015(self,hgt=300.,
+            new_data_set='miller2015',comment='Miller et al 2015 Reflection Points'):
+        """
+        Determine the path reflection points using the multipoint scheme described
+        by Miller et al. [2015].
+
+        This method creates a new dataset.
+        """
+        
+        new_ds                  = self.copy(new_data_set,comment)
+        df                      = new_ds.df
+        md                      = new_ds.metadata
+
+        R_gc                    = df['R_gc']
+    
+        azm                     = geopack.greatCircleAzm(df.de_lat,df.de_lon,df.dx_lat,df.dx_lon)
+
         lbd_gc_max              = 2*np.arccos( Re/(Re+hgt) )
         R_F_gc_max              = Re*lbd_gc_max
-        N_F                     = np.floor(R_gc/R_F_gc_max)
-        R_gc_mean               = R_gc/N_F
-        import ipdb; ipdb.set_trace()
+        N_hops                  = np.array(np.ceil(R_gc/R_F_gc_max),dtype=np.int)
+        R_gc_mean               = R_gc/N_hops
+
+        df['azm']               = azm
+        df['N_hops']            = N_hops
+        df['R_gc_mean']         = R_gc_mean
+
+        new_df_list = []
+        for inx,row in df.iterrows():
+#            print ''
+#            print '<<<<<---------->>>>>'
+#            print 'DE: {!s} DX: {!s}'.format(row.callsign,row.dx)
+#            print '        Old DE: {:f}, {:f}; DX: {:f},{:f}'.format(row.de_lat,row.de_lon,row.dx_lat,row.dx_lon)
+            for hop in range(row.N_hops):
+                new_row = row.copy()
+
+                new_de  = geopack.greatCircleMove(row.de_lat,row.de_lon,(hop+0)*row.R_gc_mean,row.azm)
+                new_dx  = geopack.greatCircleMove(row.de_lat,row.de_lon,(hop+1)*row.R_gc_mean,row.azm)
+                
+                new_row['de_lat']   = float(new_de[0])
+                new_row['de_lon']   = float(new_de[1])
+                new_row['dx_lat']   = float(new_dx[0])
+                new_row['dx_lon']   = float(new_dx[1])
+                new_row['hop_nr']   = hop
+
+                new_df_list.append(new_row)
+
+#                print '({:02d}/{:02d}) New DE: {:f}, {:f}; DX: {:f},{:f}'.format(
+#                        row.N_hops,hop,new_row.de_lat,new_row.de_lon,new_row.dx_lat,new_row.dx_lon)
+
+        new_df                      = pd.DataFrame(new_df_list)
+        new_ds.df                   = new_df
+
+        lat1, lon1                  = new_df['de_lat'],new_df['de_lon']
+        lat2, lon2                  = new_df['dx_lat'],new_df['dx_lon']
+        refl_lat, refl_lon          = geopack.midpoint(lat1,lon1,lat2,lon2)
+        new_df.loc[:,'refl_lat']    = refl_lat
+        new_df.loc[:,'refl_lon']    = refl_lon
+
+        md['reflection_type']       = 'miller2015'
+        new_ds.set_active()
+        return new_ds
 
     def grid_data(self,gridsquare_precision=4,
             lat_key='refl_lat',lon_key='refl_lon',grid_key='refl_grid'):
