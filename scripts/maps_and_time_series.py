@@ -66,6 +66,20 @@ def rbn_map_multiview(run_dct):
     run_dct['plot_ncdxf']               = False
     run_dct['plot_stats']               = True
     run_dct['plot_legend']              = True
+    run_dct['plot_paths']               = True
+    run_dct['overlay_gridsquares']      = True
+
+    run_dct['plot_midpoints']           = True
+    run_dct['overlay_gridsquare_data']  = False
+    param                               = 'paths'
+    run_dct['fname_tag']                = '{:03d}-{}'.format(serial,param)
+    rbn_map(**run_dct)
+    serial  += 1
+
+    run_dct['plot_de']                  = True
+    run_dct['plot_ncdxf']               = False
+    run_dct['plot_stats']               = True
+    run_dct['plot_legend']              = True
     run_dct['plot_paths']               = False
     run_dct['overlay_gridsquares']      = True
 
@@ -261,8 +275,9 @@ def plot_grid_timeseries(run_list,
     gs_param    = gridsquare_data_param
     grid_square = str(hamsci.gridsquare.latlon2gridsquare(lat,lon,gridsquare_precision))
 
-    fname_tag   = '_'.join([grid_square,gridsquare_data_param])
-    filename    = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(fname_tag,sTime,eTime)
+    fname_tag   = gridsquare_data_param
+    filename    = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(
+            '_'.join([grid_square,gridsquare_data_param]),sTime,eTime)
     output_dir  = os.path.join(output_dir,fname_tag)
     filepath    = os.path.join(output_dir,filename)
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
@@ -385,9 +400,12 @@ def plot_grid_timeseries(run_list,
 if __name__ == '__main__':
     multiproc           = True
     create_rbn_objs     = False
-    plot_maps           = False
+    plot_maps           = True
     plot_foF2           = True
-    clear_foF2_cache    = False
+    clear_foF2_cache    = True
+
+#    reflection_type     = 'miller2015'
+    reflection_type     = 'sp_mid'
 
 #    # 2014 Nov Sweepstakes
     sTime   = datetime.datetime(2014,11,1)
@@ -409,13 +427,13 @@ if __name__ == '__main__':
     integration_time        = datetime.timedelta(minutes=15)
     interval_time           = datetime.timedelta(minutes=60)
 
-    event_dir               = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
-    output_dir              = os.path.join('output','maps',event_dir)
+    event_dir               = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}-{}'.format(sTime,eTime,reflection_type)
+    output_dir              = os.path.join('output',event_dir)
     rbn_fof2_dir            = os.path.join('data','rbn_fof2',event_dir)
 
     dct['output_dir']       = output_dir
     dct['rbn_fof2_dir']     = rbn_fof2_dir
-    dct['reflection_type']  = 'miller2015'
+    dct['reflection_type']  = reflection_type
 #    dct['call_filt_de'] = 'aa4vv'
 
     run_list            = gen_map_run_list(sTime,eTime,integration_time,interval_time,**dct)
@@ -455,4 +473,4 @@ if __name__ == '__main__':
         create_webview(tags=tags,html_fname=name,output_dir=output_dir)
 
     if plot_foF2:
-        plot_grid_timeseries(run_list,clear_cache=clear_foF2_cache)
+        plot_grid_timeseries(run_list,output_dir=output_dir,clear_cache=clear_foF2_cache)
