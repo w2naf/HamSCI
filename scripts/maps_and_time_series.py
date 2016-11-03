@@ -399,13 +399,13 @@ def plot_grid_timeseries(run_list,
 
 if __name__ == '__main__':
     multiproc           = True
-    create_rbn_objs     = False
+    create_rbn_objs     = True
     plot_maps           = True
     plot_foF2           = True
     clear_foF2_cache    = True
 
-#    reflection_type     = 'miller2015'
-    reflection_type     = 'sp_mid'
+    reflection_type     = 'miller2015'
+#    reflection_type     = 'sp_mid'
 
 #    # 2014 Nov Sweepstakes
     sTime   = datetime.datetime(2014,11,1)
@@ -425,7 +425,8 @@ if __name__ == '__main__':
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
 
     integration_time        = datetime.timedelta(minutes=15)
-    interval_time           = datetime.timedelta(minutes=60)
+#    interval_time           = datetime.timedelta(minutes=60)
+    interval_time           = datetime.timedelta(minutes=15)
 
     event_dir               = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}-{}'.format(sTime,eTime,reflection_type)
     output_dir              = os.path.join('output',event_dir)
