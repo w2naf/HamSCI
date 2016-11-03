@@ -252,6 +252,7 @@ def plot_grid_timeseries(run_list,
         lon                     = 284.5,    # Wallops Island VA
         data_set                = 'active',
         gridsquare_data_param   = 'foF2',
+        clear_cache             = True,
         output_dir              = 'output',):
     """
     Creates a nicely formated RBN data map.
@@ -269,7 +270,6 @@ def plot_grid_timeseries(run_list,
     t0          = datetime.datetime.now()
 
     # Load in data.
-    clear_cache     = False
     cache_dir       = os.path.join('data','cache')
     handling.prepare_output_dirs({0:cache_dir},clear_output_dirs=clear_cache)
     cache_file      = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.cache.p'.format(fname_tag,sTime,eTime)
@@ -290,9 +290,11 @@ def plot_grid_timeseries(run_list,
             ds              = getattr(rbn_obj,data_set)
 
             if grid_square in ds.grid_data.index:
-                tmp             = {}
-                tmp['time_ut']  = (this_eTime-this_sTime)/2 + this_sTime
-                tmp['rbn_'+gs_param]   = ds.grid_data.loc[grid_square,gs_param]
+                tmp                     = {}
+                tmp['time_ut']          = (this_eTime-this_sTime)/2 + this_sTime
+                tmp['rbn_'+gs_param]    = ds.grid_data.loc[grid_square,gs_param]
+                tmp['rbn_'+gs_param+'_err_low'] = ds.grid_data.loc[grid_square,gs_param+'_err_low']
+                tmp['rbn_'+gs_param+'_err_up']  = ds.grid_data.loc[grid_square,gs_param+'_err_up']
                 data_list.append(tmp)
 
         df_ts   = pd.DataFrame(data_list)
@@ -311,8 +313,10 @@ def plot_grid_timeseries(run_list,
     ny_plots    = 1
 
     rcp = mpl.rcParams
-    rcp['axes.titlesize']     = 'large'
-    rcp['axes.titleweight']   = 'bold'
+    rcp['axes.titlesize']       = 'x-large'
+    rcp['axes.titleweight']     = 'bold'
+    rcp['axes.labelsize']       = 'large'
+    rcp['axes.labelweight']     = 'bold'
 
     fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
     ax         = fig.add_subplot(1,1,1)
@@ -320,8 +324,11 @@ def plot_grid_timeseries(run_list,
     # RBN foF2 #############################
     xvals       = df_ts['time_ut']
     yvals       = df_ts['rbn_'+gs_param]
+    yerr_0      = df_ts['rbn_'+gs_param+'_err_low']
+    yerr_1      = df_ts['rbn_'+gs_param+'_err_up']
     label       = 'RBN {!s} ({!s})'.format(gs_param,grid_square)
-    ax.plot(xvals,yvals,marker='o',label=label)
+#    ax.plot(xvals,yvals,marker='o',label=label)
+    ax.errorbar(xvals,yvals,yerr=[yerr_0,yerr_1],fmt='-o',label=label,zorder=10)
 
     # Wallops Island Ionosonde #############
     iono_path   = 'data/ionograms/wal_viper.txt'
@@ -342,7 +349,8 @@ def plot_grid_timeseries(run_list,
     xvals       = iono_df['date']
     yvals       = iono_df['foF2']
     label       = 'Wallops VIPER'
-    ax.plot(xvals,yvals,marker='o',label=label)
+#    ax.plot(xvals,yvals,marker='o',label=label)
+    ax.errorbar(xvals,yvals,yerr=0.1*yvals,fmt='-o',label=label)
 
     # Take care of some labeling. ##########
     ax.set_xlabel('Time [UT]')
@@ -351,7 +359,7 @@ def plot_grid_timeseries(run_list,
         ylabel = 'foF2 [MHz]'
     ax.set_ylabel(ylabel)
 
-    ax.legend(loc='upper right',fontsize='x-small')
+    ax.legend(loc='upper right',fontsize='large')
 
 
     title   = '{:%d %b %Y %H:%M} - {:%d %b %Y %H:%M}'.format(sTime,eTime)
@@ -364,15 +372,22 @@ def plot_grid_timeseries(run_list,
         xtl.set_rotation(70)
 #        xtl.set_verticalalignment('top')
         xtl.set_horizontalalignment('center')
+        xtl.set_fontsize('large')
+        xtl.set_fontweight('bold')
+
+    for ytl in ax.yaxis.get_ticklabels():
+        ytl.set_fontsize('large')
+        ytl.set_fontweight('bold')
 
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
 
 if __name__ == '__main__':
-    multiproc       = True
-    create_rbn_objs = False
-    plot_maps       = False
-    plot_fof2       = True
+    multiproc           = True
+    create_rbn_objs     = False
+    plot_maps           = False
+    plot_foF2           = True
+    clear_foF2_cache    = False
 
 #    # 2014 Nov Sweepstakes
     sTime   = datetime.datetime(2014,11,1)
@@ -439,5 +454,5 @@ if __name__ == '__main__':
         tags    = ['R_gc_min','R_gc_max','R_gc_mean']
         create_webview(tags=tags,html_fname=name,output_dir=output_dir)
 
-    if plot_fof2:
-        plot_grid_timeseries(run_list)
+    if plot_foF2:
+        plot_grid_timeseries(run_list,clear_cache=clear_foF2_cache)

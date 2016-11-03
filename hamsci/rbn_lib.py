@@ -122,21 +122,33 @@ def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
 	cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
 	return cmap
 
-def ham_band_errorbars(freq):
+def ham_band_errorbars(freqs):
     """
     Return error bars based on ham radio band discretization.
     """
+
+    freqs   = np.array(freqs)
+    if freqs.shape == (): freqs.shape = (1,)
+
     bands   = [ 1.80,  3.5,  7.0,  10.0,  14.0,  18.1,  21.0,
                24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
     bands   = np.array(bands)
 
-    diff    = np.abs(bands - freq)
-    argmin  = diff.argmin()
-    lower   = bands[argmin-1]
-    if argmin-1 < 0: lower = 0.
-    upper   = bands[argmin+1]
+    low_lst = []
+    upp_lst = []
+
+    for freq in freqs:
+        diff    = np.abs(bands - freq)
+        argmin  = diff.argmin()
+        lower   = bands[argmin-1]
+        upper   = bands[argmin+1]
+
+        if argmin-1 < 0: lower = 0.
+
+        low_lst.append(lower)
+        upp_lst.append(upper)
     
-    return (lower,upper)
+    return (np.array(low_lst),np.array(upp_lst))
 
 def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None):
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
@@ -376,15 +388,34 @@ class RbnDataSet(object):
         dct['R_gc_mean']    = gs_grp.R_gc.mean()
         dct['R_gc_std']     = gs_grp.R_gc.std()
 
+        # Error bar info.
+        f_max               = dct['f_max_MHz']
+        lower,upper         = ham_band_errorbars(f_max)
+
         # Compute Zenith Angle Theta and FoF2.
         lambda_by_2         = dct['R_gc_min']/Re
         theta               = np.arctan( np.sin(lambda_by_2)/( (Re+hgt)/Re - np.cos(lambda_by_2) ) )
         foF2                = dct['f_max_MHz']*np.cos(theta)
+        foF2_err_low        = lower*np.cos(theta)
+        foF2_err_up         = upper*np.cos(theta)
         dct['theta']        = theta
         dct['foF2']         = foF2
+        dct['foF2_err_low'] = foF2_err_low
+        dct['foF2_err_up']  = foF2_err_up
 
         # Put into a new dataframe organized by grid square.
         grid_data       = pd.DataFrame(dct,index=grids)
+
+#        fig     = plt.figure()
+#        ax  = fig.add_subplot(111)
+#        ax.plot(foF2.tolist(),label='foF2')
+#        ax.plot(foF2_err_low.tolist(),label='foF2_err_low')
+#        ax.plot(foF2_err_up.tolist(),label='foF2_err_up')
+#        ax.set_ylabel('foF2 [MHz]')
+#        ax.set_xlabel('Grid Square')
+#        ax.legend(loc='upper right')
+#        ax.set_ylim(0,50)
+#        fig.savefig('error.png',bbox_inches='tight')
 
         # Attach the new dataframe to the RbnDataObj and return.
         self.grid_data  = grid_data
