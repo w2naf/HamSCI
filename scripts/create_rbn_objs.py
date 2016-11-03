@@ -11,12 +11,17 @@ import pickle
 import matplotlib as mpl
 mpl.use('Agg')
 from matplotlib import pyplot as plt
+import matplotlib.dates as mdates
 
 import numpy as np
 import pandas as pd
 
+import hamsci
 from hamsci import rbn_lib
 from hamsci import handling
+
+# Set default gridsquare precision
+gridsquare_precision = 4
 
 def loop_info(map_sTime,map_eTime):
     print ''
@@ -232,7 +237,7 @@ def create_rbn_obj(sTime,eTime,
     output_dir  = os.path.split(filepath)[0]
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
 
-    rbn_obj     = rbn_lib.RbnObject(sTime,eTime,gridsquare_precision=4,reflection_type=reflection_type)
+    rbn_obj     = rbn_lib.RbnObject(sTime,eTime,gridsquare_precision=gridsquare_precision,reflection_type=reflection_type)
 
     rbn_obj.active.latlon_filt(**latlon_bnds)
     rbn_obj.active.filter_calls(call_filt_de,call_type='de')
@@ -242,11 +247,132 @@ def create_rbn_obj(sTime,eTime,
     with open(filepath,'wb') as fl:
         pickle.dump(rbn_obj,fl)
 
+def plot_grid_timeseries(run_list,
+        lat                     =  37.9,    # Wallops Island VA
+        lon                     = 284.5,    # Wallops Island VA
+        data_set                = 'active',
+        gridsquare_data_param   = 'foF2',
+        output_dir              = 'output',):
+    """
+    Creates a nicely formated RBN data map.
+    """
+
+    gs_param    = gridsquare_data_param
+    grid_square = str(hamsci.gridsquare.latlon2gridsquare(lat,lon,gridsquare_precision))
+
+    fname_tag   = '_'.join([grid_square,gridsquare_data_param])
+    filename    = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(fname_tag,sTime,eTime)
+    output_dir  = os.path.join(output_dir,fname_tag)
+    filepath    = os.path.join(output_dir,filename)
+    handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
+
+    t0          = datetime.datetime.now()
+
+    # Load in data.
+    clear_cache     = False
+    cache_dir       = os.path.join('data','cache')
+    handling.prepare_output_dirs({0:cache_dir},clear_output_dirs=clear_cache)
+    cache_file      = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.cache.p'.format(fname_tag,sTime,eTime)
+    cache_fpath     = os.path.join(cache_dir,cache_file)
+
+    if not os.path.exists(cache_fpath):
+        data_list   = []
+        for run_dct in run_list:
+            rbn_fof2_dir    = run_dct.get('rbn_fof2_dir')
+            reflection_type = run_dct.get('reflection_type')
+            this_sTime      = run_dct.get('sTime')
+            this_eTime      = run_dct.get('eTime')
+
+            rbn_fof2_fp = get_rbn_obj_path(rbn_fof2_dir,reflection_type,this_sTime,this_eTime)
+            with open(rbn_fof2_fp,'rb') as fl:
+                rbn_obj = pickle.load(fl)
+
+            ds              = getattr(rbn_obj,data_set)
+
+            if grid_square in ds.grid_data.index:
+                tmp             = {}
+                tmp['time_ut']  = (this_eTime-this_sTime)/2 + this_sTime
+                tmp['rbn_'+gs_param]   = ds.grid_data.loc[grid_square,gs_param]
+                data_list.append(tmp)
+
+        df_ts   = pd.DataFrame(data_list)
+
+        with open(cache_fpath,'wb') as fl:
+            pickle.dump(df_ts,fl)
+    else:
+        with open(cache_fpath,'rb') as fl:
+            df_ts   = pickle.load(fl)
+
+    # Go plot!! ############################ 
+    ## Determine the aspect ratio of subplot.
+    xsize       = 15.0
+    ysize       = 6.5
+    nx_plots    = 1
+    ny_plots    = 1
+
+    rcp = mpl.rcParams
+    rcp['axes.titlesize']     = 'large'
+    rcp['axes.titleweight']   = 'bold'
+
+    fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+    ax         = fig.add_subplot(1,1,1)
+
+    # RBN foF2 #############################
+    xvals       = df_ts['time_ut']
+    yvals       = df_ts['rbn_'+gs_param]
+    label       = 'RBN {!s} ({!s})'.format(gs_param,grid_square)
+    ax.plot(xvals,yvals,marker='o',label=label)
+
+    # Wallops Island Ionosonde #############
+    iono_path   = 'data/ionograms/wal_viper.txt'
+    iono_df     = pd.read_csv(iono_path,skiprows=10,header=None,sep=None)
+
+    new_lst     = []
+    for inx,row in iono_df.iterrows():
+
+        date_code   = ' '.join([row[0],row[1]])
+        this_dt     = datetime.datetime.strptime(date_code,'%Y-%m-%d %H:%M')
+        foF2        = float(row[4])
+
+        tmp = {'date':this_dt,'foF2':foF2}
+        new_lst.append(tmp)
+
+    iono_df = pd.DataFrame(new_lst)
+
+    xvals       = iono_df['date']
+    yvals       = iono_df['foF2']
+    label       = 'Wallops VIPER'
+    ax.plot(xvals,yvals,marker='o',label=label)
+
+    # Take care of some labeling. ##########
+    ax.set_xlabel('Time [UT]')
+
+    if gs_param == 'foF2':
+        ylabel = 'foF2 [MHz]'
+    ax.set_ylabel(ylabel)
+
+    ax.legend(loc='upper right',fontsize='x-small')
+
+
+    title   = '{:%d %b %Y %H:%M} - {:%d %b %Y %H:%M}'.format(sTime,eTime)
+    ax.set_title(title)
+
+    fmt = mdates.DateFormatter('%d %b\n%H:%M')
+    ax.xaxis.set_major_formatter(fmt)
+    
+    for xtl in ax.xaxis.get_ticklabels():
+        xtl.set_rotation(70)
+#        xtl.set_verticalalignment('top')
+        xtl.set_horizontalalignment('center')
+
+    fig.savefig(filepath,bbox_inches='tight')
+    plt.close(fig)
+
 if __name__ == '__main__':
     multiproc       = True
     create_rbn_objs = False
     plot_maps       = False
-    plot_ionogram   = True
+    plot_fof2       = True
 
 #    # 2014 Nov Sweepstakes
     sTime   = datetime.datetime(2014,11,1)
@@ -312,3 +438,6 @@ if __name__ == '__main__':
         name    = '0001-rgc.html'
         tags    = ['R_gc_min','R_gc_max','R_gc_mean']
         create_webview(tags=tags,html_fname=name,output_dir=output_dir)
+
+    if plot_fof2:
+        plot_grid_timeseries(run_list)
