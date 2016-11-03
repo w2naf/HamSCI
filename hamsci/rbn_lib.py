@@ -122,6 +122,22 @@ def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
 	cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
 	return cmap
 
+def ham_band_errorbars(freq):
+    """
+    Return error bars based on ham radio band discretization.
+    """
+    bands   = [ 1.80,  3.5,  7.0,  10.0,  14.0,  18.1,  21.0,
+               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+    bands   = np.array(bands)
+
+    diff    = np.abs(bands - freq)
+    argmin  = diff.argmin()
+    lower   = bands[argmin-1]
+    if argmin-1 < 0: lower = 0.
+    upper   = bands[argmin+1]
+    
+    return (lower,upper)
+
 def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None):
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
