@@ -125,6 +125,9 @@ def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
 def ham_band_errorbars(freqs):
     """
     Return error bars based on ham radio band discretization.
+
+    Upper error bar is the bottom of the next highest ham radio band.
+    Lower error bar is 90% of the original frequency.
     """
 
     freqs   = np.array(freqs)
@@ -140,12 +143,11 @@ def ham_band_errorbars(freqs):
     for freq in freqs:
         diff    = np.abs(bands - freq)
         argmin  = diff.argmin()
-        lower   = bands[argmin-1]
-        upper   = bands[argmin+1]
 
-        if argmin-1 < 0: lower = 0.
-
+        lower   = 0.10 * freq
         low_lst.append(lower)
+
+        upper   = bands[argmin+1] - freq
         upp_lst.append(upper)
     
     return (np.array(low_lst),np.array(upp_lst))

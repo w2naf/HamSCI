@@ -402,20 +402,20 @@ def plot_grid_timeseries(run_list,
     plt.close(fig)
 
 if __name__ == '__main__':
-    multiproc           = False
+    multiproc           = True
     create_rbn_objs     = True
     plot_maps           = True
-    plot_foF2           = False
+    plot_foF2           = True
     clear_foF2_cache    = True
 
     reflection_type     = 'miller2015'
 #    reflection_type     = 'sp_mid'
 
 #    # 2014 Nov Sweepstakes
-#    sTime   = datetime.datetime(2014,11,1)
-#    eTime   = datetime.datetime(2014,11,4)
-    sTime   = datetime.datetime(2014,11,1,23)
-    eTime   = datetime.datetime(2014,11,2)
+    sTime   = datetime.datetime(2014,11,1)
+    eTime   = datetime.datetime(2014,11,4)
+#    sTime   = datetime.datetime(2014,11,1,23)
+#    eTime   = datetime.datetime(2014,11,2)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
@@ -430,7 +430,7 @@ if __name__ == '__main__':
 
     integration_time        = datetime.timedelta(minutes=15)
 #    interval_time           = datetime.timedelta(minutes=60)
-    interval_time           = datetime.timedelta(minutes=60)
+    interval_time           = datetime.timedelta(minutes=15)
 
     event_dir               = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}-{}'.format(sTime,eTime,reflection_type)
     output_dir              = os.path.join('output',event_dir)
