@@ -616,33 +616,31 @@ class RbnDataSet(object):
         new_ds.set_active()
         return new_ds
 
-#    def filter_pathlength(self,min_length=None,max_length=None,
-#            new_data_set='pathlength_filter',comment=None):
-#        """
-#        Filter data frame for specific calls.
-#
-#        Calls is not case sensitive and may be a single call
-#        or a list.
-#
-#        call_type is 'de' or 'dx'
-#        """
-#
-#        if min_length is None and max_length is None:
-#            return self
-#
-#        if calls is None:
-#            return self
-#
-#        df          = self.df
-#
-#        import ipdb; ipdb.set_trace()
-#        if comment is None:
-#            comment = '{}: {!s}'.format(call_type.upper(),calls)
-#
-#        new_ds      = self.copy(new_data_set,comment)
-#        new_ds.df   = df
-#        new_ds.set_active()
-#        return new_ds
+    def filter_pathlength(self,min_length=None,max_length=None,
+            new_data_set='pathlength_filter',comment=None):
+        """
+        """
+
+        if min_length is None and max_length is None:
+            return self
+
+        if comment is None:
+            comment = 'Pathlength Filter: {!s}'.format((min_length,max_length))
+
+        new_ds                  = self.copy(new_data_set,comment)
+        df                      = new_ds.df
+
+        if min_length is not None:
+            tf  = df.R_gc >= min_length
+            df  = df[tf]
+
+        if max_length is not None:
+            tf  = df.R_gc < max_length
+            df  = df[tf]
+        
+        new_ds.df = df
+        new_ds.set_active()
+        return new_ds
 
     def latlon_filt(self,lat_col='refl_lat',lon_col='refl_lon',
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):

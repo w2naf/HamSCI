@@ -254,6 +254,7 @@ def create_rbn_obj(sTime,eTime,
     rbn_obj     = rbn_lib.RbnObject(sTime,eTime)
 
     rbn_obj.active.dropna()
+    rbn_obj.active.filter_pathlength(500.)
     rbn_obj.active.calc_reflection_points(reflection_type)
     rbn_obj.active.grid_data(gridsquare_precision)
     rbn_obj.active.latlon_filt(**latlon_bnds)
