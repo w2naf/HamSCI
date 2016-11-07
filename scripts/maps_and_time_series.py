@@ -251,8 +251,11 @@ def create_rbn_obj(sTime,eTime,
     output_dir  = os.path.split(filepath)[0]
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
 
-    rbn_obj     = rbn_lib.RbnObject(sTime,eTime,gridsquare_precision=gridsquare_precision,reflection_type=reflection_type)
+    rbn_obj     = rbn_lib.RbnObject(sTime,eTime)
 
+    rbn_obj.active.dropna()
+    rbn_obj.active.calc_reflection_points(reflection_type)
+    rbn_obj.active.grid_data(gridsquare_precision)
     rbn_obj.active.latlon_filt(**latlon_bnds)
     rbn_obj.active.filter_calls(call_filt_de,call_type='de')
     rbn_obj.active.filter_calls(call_filt_dx,call_type='dx')
@@ -398,20 +401,20 @@ def plot_grid_timeseries(run_list,
     plt.close(fig)
 
 if __name__ == '__main__':
-    multiproc           = True
+    multiproc           = False
     create_rbn_objs     = True
     plot_maps           = True
-    plot_foF2           = True
+    plot_foF2           = False
     clear_foF2_cache    = True
 
     reflection_type     = 'miller2015'
 #    reflection_type     = 'sp_mid'
 
 #    # 2014 Nov Sweepstakes
-    sTime   = datetime.datetime(2014,11,1)
-    eTime   = datetime.datetime(2014,11,4)
-#    sTime   = datetime.datetime(2014,11,1,23)
-#    eTime   = datetime.datetime(2014,11,2)
+#    sTime   = datetime.datetime(2014,11,1)
+#    eTime   = datetime.datetime(2014,11,4)
+    sTime   = datetime.datetime(2014,11,1,23)
+    eTime   = datetime.datetime(2014,11,2)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
@@ -426,7 +429,7 @@ if __name__ == '__main__':
 
     integration_time        = datetime.timedelta(minutes=15)
 #    interval_time           = datetime.timedelta(minutes=60)
-    interval_time           = datetime.timedelta(minutes=15)
+    interval_time           = datetime.timedelta(minutes=60)
 
     event_dir               = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}-{}'.format(sTime,eTime,reflection_type)
     output_dir              = os.path.join('output',event_dir)
