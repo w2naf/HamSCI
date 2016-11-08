@@ -1024,8 +1024,14 @@ class RbnMap(object):
         fontdict = {'size':matplotlib.rcParams['axes.titlesize'],'weight':matplotlib.rcParams['axes.titleweight']}
         ax.text(0.5,1.075,title,fontdict=fontdict,transform=ax.transAxes,ha='center')
 
-        subtitle = 'Reflection Type: {}'.format(self.data_set.metadata.get('reflection_type'))
-        fontdict = {'weight':'normal'}
+        rft         = self.data_set.metadata.get('reflection_type')
+        if rft == 'sp_mid':
+            rft = 'Great Circle Midpoints'
+        elif rft == 'miller2015':
+            rft = 'Multihop'
+
+        subtitle    = 'Reflection Type: {}'.format(rft)
+        fontdict    = {'weight':'normal'}
         ax.text(0.5,1.025,subtitle,fontdict=fontdict,transform=ax.transAxes,ha='center')
 
         # draw parallels and meridians.
