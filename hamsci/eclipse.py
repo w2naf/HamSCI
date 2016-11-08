@@ -62,6 +62,23 @@ class Eclipse2017(object):
 
         return label
 
+    def overlay_umbra(self,m,label='Eclipse Centerline',
+            ec_color='blue',bound_style='--'):
+
+        #Eclipse Centerline
+        fl_inx, pm_inx = 1,1
+        lats,lons      = self.get_latlon(fl_inx,pm_inx)
+        m.plot(lons,lats,color=ec_color,label=label)
+
+        fl_inx, pm_inx = 1,0
+        lats,lons      = self.get_latlon(fl_inx,pm_inx)
+        m.plot(lons,lats,color=ec_color,ls=bound_style)
+
+        fl_inx, pm_inx = 1,2
+        lats,lons      = self.get_latlon(fl_inx,pm_inx)
+        m.plot(lons,lats,color=ec_color,ls=bound_style)
+
+
 if __name__ == '__main__':
     ecl = Eclipse2017()
 
@@ -100,23 +117,7 @@ if __name__ == '__main__':
     m.drawparallels(lats[0,:],color='0.85',labels=[False,False,False,False])
     m.drawmeridians(lons[:,0],color='0.85',labels=[False,False,False,False])
 
-    #Eclipse Centerline
-    ec_color       = 'blue'
-    bound_style    = '--'
-
-    fl_inx, pm_inx = 1,1
-    label          = ecl.get_label(fl_inx,pm_inx)
-    lats,lons      = ecl.get_latlon(fl_inx,pm_inx)
-    m.plot(lons,lats,color=ec_color)
-
-    fl_inx, pm_inx = 1,0
-    label          = ecl.get_label(fl_inx,pm_inx)
-    lats,lons      = ecl.get_latlon(fl_inx,pm_inx)
-    m.plot(lons,lats,color=ec_color,ls=bound_style)
-
-    fl_inx, pm_inx = 1,2
-    label          = ecl.get_label(fl_inx,pm_inx)
-    lats,lons      = ecl.get_latlon(fl_inx,pm_inx)
-    m.plot(lons,lats,color=ec_color,ls=bound_style)
+    ecl.overlay_umbra(m)
+    ax.legend(loc='upper right')
 
     plt.show()
