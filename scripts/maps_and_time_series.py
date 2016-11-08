@@ -226,6 +226,12 @@ def rbn_map(sTime,eTime,
     if overlay_gridsquare_data:
         rbn_map_obj.overlay_gridsquare_data(param=gridsquare_data_param)
 
+    ecl         = hamsci.eclipse.Eclipse2017()
+    line, lbl   = ecl.overlay_umbra(rbn_map_obj.m,color='k')
+
+    leg = ax0.legend([line],[lbl],loc='upper left',fontsize='small')
+    leg.set_zorder(100)
+
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
 
@@ -402,8 +408,8 @@ def plot_grid_timeseries(run_list,
     plt.close(fig)
 
 if __name__ == '__main__':
-    multiproc           = True
-    create_rbn_objs     = True
+    multiproc           = False
+    create_rbn_objs     = False
     plot_maps           = True
     plot_foF2           = True
     clear_foF2_cache    = True
@@ -412,10 +418,10 @@ if __name__ == '__main__':
 #    reflection_type     = 'sp_mid'
 
 #    # 2014 Nov Sweepstakes
-    sTime   = datetime.datetime(2014,11,1)
-    eTime   = datetime.datetime(2014,11,4)
-#    sTime   = datetime.datetime(2014,11,1,23)
-#    eTime   = datetime.datetime(2014,11,2)
+#    sTime   = datetime.datetime(2014,11,1)
+#    eTime   = datetime.datetime(2014,11,4)
+    sTime   = datetime.datetime(2014,11,1,23)
+    eTime   = datetime.datetime(2014,11,2)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)

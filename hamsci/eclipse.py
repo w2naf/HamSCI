@@ -63,21 +63,22 @@ class Eclipse2017(object):
         return label
 
     def overlay_umbra(self,m,label='Eclipse Centerline',
-            ec_color='blue',bound_style='--'):
+            color='blue',bound_style='--',zorder=100):
 
         #Eclipse Centerline
         fl_inx, pm_inx = 1,1
-        lats,lons      = self.get_latlon(fl_inx,pm_inx)
-        m.plot(lons,lats,color=ec_color,label=label)
+        lats,lons       = self.get_latlon(fl_inx,pm_inx)
+        line,           = m.plot(lons,lats,color=color,label=label,zorder=zorder)
 
         fl_inx, pm_inx = 1,0
         lats,lons      = self.get_latlon(fl_inx,pm_inx)
-        m.plot(lons,lats,color=ec_color,ls=bound_style)
+        m.plot(lons,lats,color=color,ls=bound_style,zorder=zorder)
 
         fl_inx, pm_inx = 1,2
         lats,lons      = self.get_latlon(fl_inx,pm_inx)
-        m.plot(lons,lats,color=ec_color,ls=bound_style)
+        m.plot(lons,lats,color=color,ls=bound_style,zorder=zorder)
 
+        return (line, label)
 
 if __name__ == '__main__':
     ecl = Eclipse2017()
