@@ -208,7 +208,9 @@ def rbn_map(sTime,eTime,
     fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
     ax0        = fig.add_subplot(1,1,1)
 
-    rbn_map_obj= rbn_lib.RbnMap(rbn_obj,ax=ax0,default_plot=False)
+    rbn_map_obj= rbn_lib.RbnMap(rbn_obj,ax=ax0,
+            coastline_color='0.25',coastline_zorder=100,
+            default_plot=False)
     if plot_de:
         rbn_map_obj.plot_de()
     if plot_midpoints:

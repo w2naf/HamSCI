@@ -940,6 +940,7 @@ class RbnMap(object):
     def __init__(self,rbn_obj,data_set='active',data_set_all='DS001_dropna',ax=None,
             sTime=None,eTime=None,
             llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None,
+            coastline_color='0.65',coastline_zorder=10,
             nightshade=False,solar_zenith=True,solar_zenith_dict={},
             band_data=None,default_plot=True):
 
@@ -977,7 +978,9 @@ class RbnMap(object):
 
         self.band_data = band_data
 
-        self.__setup_map__(ax=ax,**self.latlon_bnds)
+        self.__setup_map__(ax=ax,
+                coastline_color=coastline_color,coastline_zorder=coastline_zorder,
+                **self.latlon_bnds)
         if nightshade:
             self.plot_nightshade()
 
@@ -1008,7 +1011,8 @@ class RbnMap(object):
         if plot_legend:
             self.plot_band_legend(band_data=self.band_data)
 
-    def __setup_map__(self,ax=None,llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
+    def __setup_map__(self,ax=None,llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,
+            coastline_color='0.65',coastline_zorder=10):
         sTime       = self.metadata['sTime']
         eTime       = self.metadata['eTime']
 
@@ -1038,7 +1042,7 @@ class RbnMap(object):
         # This is now done in the gridsquare overlay section...
 #        m.drawparallels(np.arange( -90., 91.,45.),color='k',labels=[False,True,True,False])
 #        m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True])
-        m.drawcoastlines(color='0.65')
+        m.drawcoastlines(color=coastline_color,zorder=coastline_zorder)
         m.drawmapboundary(fill_color='w')
 
         # Expose select object
