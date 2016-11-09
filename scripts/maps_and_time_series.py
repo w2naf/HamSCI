@@ -410,7 +410,7 @@ def plot_grid_timeseries(run_list,
     plt.close(fig)
 
 if __name__ == '__main__':
-    multiproc           = False
+    multiproc           = True
     create_rbn_objs     = False
     plot_maps           = True
     plot_foF2           = True
@@ -420,10 +420,10 @@ if __name__ == '__main__':
 #    reflection_type     = 'sp_mid'
 
 #    # 2014 Nov Sweepstakes
-#    sTime   = datetime.datetime(2014,11,1)
-#    eTime   = datetime.datetime(2014,11,4)
-    sTime   = datetime.datetime(2014,11,1,23)
-    eTime   = datetime.datetime(2014,11,2)
+    sTime   = datetime.datetime(2014,11,1)
+    eTime   = datetime.datetime(2014,11,4)
+#    sTime   = datetime.datetime(2014,11,2,12)
+#    eTime   = datetime.datetime(2014,11,2,13)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
