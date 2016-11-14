@@ -847,7 +847,7 @@ class RbnDataSet(object):
                 tl.set_ha('left')
 
 def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
-        title=None,bbox_to_anchor=None,ncdxf=False,ncol=None,band_data=None):
+        title=None,bbox_to_anchor=None,rbn_rx=True,ncdxf=False,ncol=None,band_data=None):
 
     if fig is None: fig = plt.gcf() 
 
@@ -869,9 +869,10 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
     fig_tmp = plt.figure()
     ax_tmp = fig_tmp.add_subplot(111)
     ax_tmp.set_visible(False)
-    scat = ax_tmp.scatter(0,0,s=50,**de_prop)
-    labels.append('RBN Receiver')
-    handles.append(scat)
+    if rbn_rx:
+        scat = ax_tmp.scatter(0,0,s=50,**de_prop)
+        labels.append('RBN Receiver')
+        handles.append(scat)
     if ncdxf:
         scat = ax_tmp.scatter(0,0,s=dxf_leg_size,**dxf_prop)
         labels.append('NCDXF Beacon')

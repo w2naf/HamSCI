@@ -223,11 +223,7 @@ def rbn_map(sTime,eTime,
     if plot_stats:
         rbn_map_obj.plot_link_stats()
     if plot_legend is True:
-        rbn_map_obj.plot_band_legend(band_data=rbn_map_obj.band_data)
-    if plot_legend == 'rx_only':
-        band_data = rbn_lib.BandData()
-        band_data.band_dict = {}
-        rbn_map_obj.plot_band_legend(band_data=band_data)
+        rbn_map_obj.plot_band_legend(band_data=rbn_map_obj.band_data,rbn_rx=False)
 
     if overlay_gridsquares:
         rbn_map_obj.overlay_gridsquares()
