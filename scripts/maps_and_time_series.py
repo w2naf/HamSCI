@@ -95,6 +95,7 @@ def rbn_map_multiview(run_dct):
     for param in params:
         run_dct['plot_midpoints']           = False
         run_dct['overlay_gridsquare_data']  = True
+        run_dct['plot_legend']              = False
         run_dct['gridsquare_data_param']    = param
         run_dct['fname_tag']                = '{:03d}-{}'.format(serial,param)
         rbn_map(**run_dct)
@@ -221,8 +222,13 @@ def rbn_map(sTime,eTime,
         rbn_map_obj.plot_ncdxf()
     if plot_stats:
         rbn_map_obj.plot_link_stats()
-    if plot_legend:
+    if plot_legend is True:
         rbn_map_obj.plot_band_legend(band_data=rbn_map_obj.band_data)
+    if plot_legend == 'rx_only':
+        band_data = rbn_lib.BandData()
+        band_data.band_dict = {}
+        rbn_map_obj.plot_band_legend(band_data=band_data)
+
     if overlay_gridsquares:
         rbn_map_obj.overlay_gridsquares()
     if overlay_gridsquare_data:
@@ -230,8 +236,17 @@ def rbn_map(sTime,eTime,
 
     ecl         = hamsci.eclipse.Eclipse2017()
     line, lbl   = ecl.overlay_umbra(rbn_map_obj.m,color='k')
+    handles     = [line]
+    labels      = [lbl]
 
-    leg = ax0.legend([line],[lbl],loc='upper left',fontsize='small')
+    fig_tmp     = plt.figure()
+    ax_tmp      = fig_tmp.add_subplot(111)
+    ax_tmp.set_visible(False)
+    scat        = ax_tmp.scatter(0,0,s=50,**rbn_lib.de_prop)
+    labels.append('RBN Receiver')
+    handles.append(scat)
+    
+    leg = ax0.legend(handles,labels,loc='upper left',fontsize='small',scatterpoints=1)
     leg.set_zorder(100)
 
     fig.savefig(filepath,bbox_inches='tight')
