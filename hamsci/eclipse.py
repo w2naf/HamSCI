@@ -62,7 +62,7 @@ class Eclipse2017(object):
 
         return label
 
-    def overlay_umbra(self,m,label='Eclipse Centerline',
+    def overlay_umbra(self,m,label='2017 Eclipse Path of Totality',
             color='blue',bound_style='--',zorder=100):
 
         #Eclipse Centerline
