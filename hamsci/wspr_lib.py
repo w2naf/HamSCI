@@ -16,7 +16,7 @@ def __add_months(sourcedate,months=1):
     day = min(sourcedate.day,calendar.monthrange(year,month)[1])
     return datetime.date(year,month,day)
 
-def read_wspr(sTime,eTime=None,data_dir=None):
+def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
     import os               # Provides utilities that help us do os-level operations like create directories
     import datetime         # Really awesome module for working with dates and times.
     import gzip             # Allows us to read from gzipped files directly!
@@ -39,6 +39,7 @@ def read_wspr(sTime,eTime=None,data_dir=None):
     df = None
     for year_month in ym_list:
         data_file   = 'wsprspots-%s.csv.gz' % year_month.strftime('%Y-%m')
+        import ipdb; ipdb.set_trace()
         data_path   = os.path.join(data_dir,data_file)  
 
         time_0      = datetime.datetime.now()
@@ -54,7 +55,6 @@ def read_wspr(sTime,eTime=None,data_dir=None):
              # File downloading code from: http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
              url = 'http://wsprnet.org/archive/'+data_file
              u = urllib2.urlopen(url)
-             import ipdb; ipdb.set_trace()
              f = open(data_path, 'wb')
              meta = u.info()
              file_size = int(meta.getheaders("Content-Length")[0])
@@ -89,6 +89,73 @@ def read_wspr(sTime,eTime=None,data_dir=None):
 
     df = df[np.logical_and(df['timestamp'] >= sTime, df['timestamp'] < eTime)]
     return df
+
+def save_wspr(sTime,eTime=None,data_dir='data/wspr'):
+
+    return None
+
+def grsq_latlon(df,geoloc='gridsquare'):
+        """Select nodes based on reporter or transmitter geographic location.
+
+        Parameters
+        ----------
+        new_data_set : str
+            Name for the new data_set object.
+        comment : str
+            Comment describing the new data_set object.
+
+        Returns
+        -------
+        new_data_set_obj : data_set 
+            Copy of the original data_set with new name and history entry.
+
+        Written by Magdalina L. Moses, Fall 2016
+        """
+        return df
+
+
+def select_geo(df,node_type='reporter', grsq=None):
+        """Select nodes based on reporter or transmitter geographic location.
+
+        Parameters
+        ----------
+        new_data_set : str
+            Name for the new data_set object.
+        comment : str
+            Comment describing the new data_set object.
+
+        Returns
+        -------
+        new_data_set_obj : data_set 
+            Copy of the original data_set with new name and history entry.
+
+        Written by Magdalina L. Moses, Fall 2016
+        """
+
+    return df
+
+def select_pair(df, stations):
+
+    df0=df[np.logical_and(df['call_sign']==station[0], df['reporter']==station[1])]
+    df=pd.concat[df0,df[np.logical_and(df['call_sign']==station[1], df['reporter']==station[0])])
+    del df0
+
+    return df
+
+#def station_counts():
+#    tx  =   df['call_sign'].unique()
+#    rx  =   df['reciever'].unique()
+#
+#    rx_count=0
+#    tx_count=0
+#    for this_tx in tx:
+#        for this_rx in rx:
+#            tx
+#    return counts
+
+
+
+
 
 def plot_wspr_histograms(df):
     import matplotlib       # Plotting toolkit
