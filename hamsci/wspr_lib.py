@@ -131,6 +131,8 @@ def select_geo(df,node_type='reporter', grsq=None):
 
         Written by Magdalina L. Moses, Fall 2016
         """
+#    if grdsq ==
+#    rbn_lib.latlon_filt(df, )
 
     return df
 

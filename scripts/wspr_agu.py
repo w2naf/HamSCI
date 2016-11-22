@@ -38,6 +38,7 @@ def plot_wspr_snr(df, by_pwr=True):
 
 
 
+
     return fig
 
 
@@ -57,9 +58,18 @@ if __name__ == '__main__':
     df = wspr_lib.read_wspr(sTime,eTime,data_dir)
 
     #Select only stations within two lat/lon areas (near VT and NJIT)
+    #   K2MFF 'FN20vr' (40.7429,-74.1770)
+    #   KM4EGE 'EM97tf' 
+
+    #For simplicity in this proof-of-concept application, only chose stations in the following gridsquares:
+    #   FN20 and FN21 (or FN30 and FN31)
+    #   Need to select from wider area for southern station 
+    #   
+
 
     #Find the pairs of stations with most links between them
 
+    #Filter to only include links between two specified stations
     df  =   wspr_lib.select_pair(df, stations)
     
     fig=plot_wspr_snr(df)
