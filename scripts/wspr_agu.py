@@ -50,9 +50,11 @@ if __name__ == '__main__':
 
     sTime       = datetime.datetime(2016,8,27)
     eTime       = datetime.datetime(2016,8,28)
-
     sTime       = datetime.datetime(2016,11,11)
     eTime       = datetime.datetime(2016,11,18)
+
+    sTime       = datetime.datetime(2016,11,1,0)
+    eTime       = datetime.datetime(2016,11,1,2)
     data_dir    = 'data/wspr' 
 
     df = wspr_lib.read_wspr(sTime,eTime,data_dir)
