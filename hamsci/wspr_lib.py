@@ -36,7 +36,7 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
     while ym_list[-1] < eMonth:
         ym_list.append(__add_months(ym_list[-1]))
 
-    df = None
+#    df = None
     for year_month in ym_list:
         data_file   = 'wsprspots-%s.csv.gz' % year_month.strftime('%Y-%m')
         import ipdb; ipdb.set_trace()
@@ -73,7 +73,6 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
                  status = status + chr(8)*(len(status)+1)
                  print status,
              f.close()
-
 
         # Load data into dataframe here. ###############################################
         # Here I define the column names of the data file, and also specify which ones to load into memory.  By only loading in some, I save time and memory.
