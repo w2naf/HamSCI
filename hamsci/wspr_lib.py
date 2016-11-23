@@ -98,7 +98,7 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
         hour_flag=0
         print 'Initial interval: '+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M')
         print 'End: '+hourly_eTime.strftime('%Y%m%d%H%M')
-        ref_month=std_eTime.month()
+        ref_month=std_eTime.month
         while std_eTime<=hourly_eTime:
             p_filename = 'wspr_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
             p_filepath = os.path.join(data_dir,p_filename)
