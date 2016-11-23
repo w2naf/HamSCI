@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 #Including the above line as the first line of the script allows this script to be run
 #directly from the command line without first calling python/ipython.
+de_prop         = {'marker':'^','edgecolor':'k','facecolor':'white'}
+dxf_prop        = {'marker':'*','color':'blue'}
+dxf_leg_size    = 150
+dxf_plot_size   = 50
+Re              = 6371  # Radius of the Earth
+import os               # Provides utilities that help us do os-level operations like create directories
+import datetime         # Really awesome module for working with dates and times.
+import gzip             # Allows us to read from gzipped files directly!
+import urllib2          # Used to automatically download data files from the web.
+import pickle
+import sys
+import copy 
+
+import numpy as np      #Numerical python - provides array types and operations
+import pandas as pd     #This is a nice utility for working with time-series type data.
 
 #Now we import libraries that are not "built-in" to python.
 def __add_months(sourcedate,months=1):
@@ -17,14 +32,6 @@ def __add_months(sourcedate,months=1):
     return datetime.date(year,month,day)
 
 def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
-    import os               # Provides utilities that help us do os-level operations like create directories
-    import datetime         # Really awesome module for working with dates and times.
-    import gzip             # Allows us to read from gzipped files directly!
-    import urllib2          # Used to automatically download data files from the web.
-    import sys
-
-    import numpy as np      #Numerical python - provides array types and operations
-    import pandas as pd     #This is a nice utility for working with time-series type data.
 
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
@@ -74,6 +81,8 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
                  print status,
              f.close()
 
+        print 'Loading Dataframe'
+
         # Load data into dataframe here. ###############################################
         # Here I define the column names of the data file, and also specify which ones to load into memory.  By only loading in some, I save time and memory.
         names       = ['spot_id', 'timestamp', 'reporter', 'rep_grid', 'snr', 'freq', 'call_sign', 'grid', 'power', 'drift', 'dist', 'azm', 'band', 'version', 'code']
@@ -91,28 +100,28 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
         print 'Initial interval: '+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M')
         print 'End: '+hourly_eTime.strftime('%Y%m%d%H%M')
         while std_eTime<=hourly_eTime:
-                p_filename = 'wspr_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
-                p_filepath = os.path.join(data_dir,p_filename)
-                if not os.path.exists(p_filepath):
-                    # Load data into dataframe here. ###############################################
-                    with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
+            p_filename = 'wspr_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
+            p_filepath = os.path.join(data_dir,p_filename)
+            if not os.path.exists(p_filepath):
+                # Load data into dataframe here. ###############################################
+                with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
 #                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
-                        print 'Loading '+str(data_path)+' into Pandas Dataframe'
-                        df      = pd.read_csv(fl,names=names,index_col='spot_id')
+                    print 'Loading '+str(data_path)+' into Pandas Dataframe'
+                    df      = pd.read_csv(fl,names=names,index_col='spot_id')
 
 #                    if df is None:
 #                        df = df_tmp
 #                    else:
 #                        df = df.append(df_tmp)
-                    df['timestamp'] = pd.to_datetime(df['timestamp'],unit='s')
+                df['timestamp'] = pd.to_datetime(df['timestamp'],unit='s')
 
-                    # Trim dataframe to just the entries in a 1 hour time period.
-                    df = df[np.logical_and(df['timestamp'] >= std_sTime,df['timestamp'] < std_eTime)]
+                # Trim dataframe to just the entries in a 1 hour time period.
+                df = df[np.logical_and(df['timestamp'] >= std_sTime,df['timestamp'] < std_eTime)]
 
 #        df = df[np.logical_and(df['timestamp'] >= sTime, df['timestamp'] < eTime)]
 
-                    print 'WSPR Data: '+std_sTime.strftime('%Y%m%d%H%M - ')+std_eTime.strftime('%Y%m%d%H%M') 
-                    print '# Entries: '+str(len(df['call_sign']))+'\n'
+                print 'WSPR Data: '+std_sTime.strftime('%Y%m%d%H%M - ')+std_eTime.strftime('%Y%m%d%H%M') 
+                print '# Entries: '+str(len(df['call_sign']))+'\n'
 #                    print '# Entries: '+str(len(df['call_sign'].unique())
 
 #                    if total == 0:
@@ -121,25 +130,25 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
 #                        pct     = success / float(total) * 100.
 #                        print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
 
-                    df.to_pickle(p_filepath)
-                else:
-                    with open(p_filepath,'rb') as fl:
-                        df = pickle.load(fl)
+                df.to_pickle(p_filepath)
+            else:
+                with open(p_filepath,'rb') as fl:
+                    df = pickle.load(fl)
 
-                if hour_flag==0:
-                    df_comp=df
-                    hour_flag=hour_flag+1
-                #When specified start/end times cross over the hour mark
-                else:
-                    df_comp=pd.concat([df_comp, df])
+            if hour_flag==0:
+                df_comp=df
+                hour_flag=hour_flag+1
+            #When specified start/end times cross over the hour mark
+            else:
+                df_comp=pd.concat([df_comp, df])
 
-                std_sTime=std_eTime
-                std_eTime=std_sTime+datetime.timedelta(hours=1)
-        
+            std_sTime=std_eTime
+            std_eTime=std_sTime+datetime.timedelta(hours=1)
+    
         # Trim dataframe to just the entries we need.
         df = df_comp[np.logical_and(df_comp['date'] >= sTime,df_comp['date'] < eTime)]
 
-    return df
+        return df
 
 #def save_wspr(sTime,eTime=None,data_dir='data/wspr'):
 #
