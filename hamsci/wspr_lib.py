@@ -74,20 +74,36 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
                  print status,
              f.close()
 
+
         # Load data into dataframe here. ###############################################
         # Here I define the column names of the data file, and also specify which ones to load into memory.  By only loading in some, I save time and memory.
         names       = ['spot_id', 'timestamp', 'reporter', 'rep_grid', 'snr', 'freq', 'call_sign', 'grid', 'power', 'drift', 'dist', 'azm', 'band', 'version', 'code']
 
-        with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
-            df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
-
-        if df is None:
-            df = df_tmp
+        std_sTime=datetime.datetime(sTime.year,sTime.month,sTime.day, sTime.hour)
+        if eTime.minute == 0 and eTime.second == 0:
+            hourly_eTime=datetime.datetime(eTime.year,eTime.month,eTime.day, eTime.hour)
         else:
-            df = df.append(df_tmp)
-    df['timestamp'] = pd.to_datetime(df['timestamp'],unit='s')
+            hourly_eTime=eTime+datetime.timedelta(hours=1)
+            hourly_eTime=datetime.datetime(hourly_eTime.year,hourly_eTime.month,hourly_eTime.day, hourly_eTime.hour)
 
-    df = df[np.logical_and(df['timestamp'] >= sTime, df['timestamp'] < eTime)]
+        std_eTime=std_sTime+datetime.timedelta(hours=1)
+
+        hour_flag=0
+        while std_eTime<=hourly_eTime:
+                p_filename = 'wspr_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
+                p_filepath = os.path.join(data_dir,p_filename)
+                if not os.path.exists(p_filepath):
+                    # Load data into dataframe here. ###############################################
+                    with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
+                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
+
+                    if df is None:
+                        df = df_tmp
+                    else:
+                        df = df.append(df_tmp)
+                df['timestamp'] = pd.to_datetime(df['timestamp'],unit='s')
+
+        df = df[np.logical_and(df['timestamp'] >= sTime, df['timestamp'] < eTime)]
     return df
 
 def save_wspr(sTime,eTime=None,data_dir='data/wspr'):
