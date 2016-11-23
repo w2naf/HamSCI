@@ -104,7 +104,7 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
             p_filepath = os.path.join(data_dir,p_filename)
             if not os.path.exists(p_filepath):
                 # Load data into dataframe here. ###############################################
-                if std_eTime.month() != ref_month or hour_flag == 0:
+                if std_eTime.month != ref_month or hour_flag == 0:
                     with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
     #                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
                         print 'Loading '+str(data_path)+' into Pandas Dataframe'
