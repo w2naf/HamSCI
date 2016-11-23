@@ -190,7 +190,7 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
 def select_pair(df, stations):
 
     df0=df[np.logical_and(df['call_sign']==station[0], df['reporter']==station[1])]
-    df=pd.concat[df0,df[np.logical_and(df['call_sign']==station[1], df['reporter']==station[0])])
+    df=pd.concat([df0,df[np.logical_and(df['call_sign']==station[1], df['reporter']==station[0])]])
     del df0
 
     return df
