@@ -71,9 +71,9 @@ if __name__ == '__main__':
 
     #Find the pairs of stations with most links between them
 
-    #Filter to only include links between two specified stations
-    df  =   wspr_lib.select_pair(df, stations)
-    
-    fig=plot_wspr_snr(df)
+#    #Filter to only include links between two specified stations
+#    df  =   wspr_lib.select_pair(df, stations)
+#    
+#    fig=plot_wspr_snr(df)
     import ipdb; ipdb.set_trace()
 
