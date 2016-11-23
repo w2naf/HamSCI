@@ -93,17 +93,51 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
                 p_filename = 'wspr_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
                 p_filepath = os.path.join(data_dir,p_filename)
                 if not os.path.exists(p_filepath):
+                    if 
                     # Load data into dataframe here. ###############################################
                     with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
-                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
+#                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
+                        df      = pd.read_csv(fl,names=names,index_col='spot_id')
 
-                    if df is None:
-                        df = df_tmp
-                    else:
-                        df = df.append(df_tmp)
-                df['timestamp'] = pd.to_datetime(df['timestamp'],unit='s')
+#                    if df is None:
+#                        df = df_tmp
+#                    else:
+#                        df = df.append(df_tmp)
+                    df['timestamp'] = pd.to_datetime(df['timestamp'],unit='s')
 
-        df = df[np.logical_and(df['timestamp'] >= sTime, df['timestamp'] < eTime)]
+                    # Trim dataframe to just the entries in a 1 hour time period.
+                    df = df[np.logical_and(df['timestamp'] >= std_sTime,df['timestamp'] < std_eTime)]
+
+#        df = df[np.logical_and(df['timestamp'] >= sTime, df['timestamp'] < eTime)]
+
+                    print 'WSPR Data: '+std_sTime.strftime('%Y%m%d%H%M - ')+std_eTime.strftime('%Y%m%d%H%M') 
+                    print '# Entries: '+str(len(df['call_sign']))+'\n'
+#                    print '# Entries: '+str(len(df['call_sign'].unique())
+
+#                    if total == 0:
+#                        print "No call signs geolocated."
+#                    else:
+#                        pct     = success / float(total) * 100.
+#                        print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
+
+                    df.to_pickle(p_filepath)
+                else:
+                    with open(p_filepath,'rb') as fl:
+                        df = pickle.load(fl)
+
+                if hour_flag==0:
+                    df_comp=df
+                    hour_flag=hour_flag+1
+                #When specified start/end times cross over the hour mark
+                else:
+                    df_comp=pd.concat([df_comp, df])
+
+                std_sTime=std_eTime
+                std_eTime=std_sTime+datetime.timedelta(hours=1)
+        
+        # Trim dataframe to just the entries we need.
+        df = df_comp[np.logical_and(df_comp['date'] >= sTime,df_comp['date'] < eTime)]
+
     return df
 
 def save_wspr(sTime,eTime=None,data_dir='data/wspr'):
