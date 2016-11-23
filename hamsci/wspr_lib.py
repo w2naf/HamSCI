@@ -141,51 +141,51 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
 
     return df
 
-def save_wspr(sTime,eTime=None,data_dir='data/wspr'):
-
-    return None
-
-def grsq_latlon(df,geoloc='gridsquare'):
-        """Select nodes based on reporter or transmitter geographic location.
-
-        Parameters
-        ----------
-        new_data_set : str
-            Name for the new data_set object.
-        comment : str
-            Comment describing the new data_set object.
-
-        Returns
-        -------
-        new_data_set_obj : data_set 
-            Copy of the original data_set with new name and history entry.
-
-        Written by Magdalina L. Moses, Fall 2016
-        """
-        return df
-
-
-def select_geo(df,node_type='reporter', grsq=None):
-        """Select nodes based on reporter or transmitter geographic location.
-
-        Parameters
-        ----------
-        new_data_set : str
-            Name for the new data_set object.
-        comment : str
-            Comment describing the new data_set object.
-
-        Returns
-        -------
-        new_data_set_obj : data_set 
-            Copy of the original data_set with new name and history entry.
-
-        Written by Magdalina L. Moses, Fall 2016
-        """
-#    if grdsq ==
-#    rbn_lib.latlon_filt(df, )
-
-    return df
+#def save_wspr(sTime,eTime=None,data_dir='data/wspr'):
+#
+#    return None
+#
+#def grsq_latlon(df,geoloc='gridsquare'):
+#        """Select nodes based on reporter or transmitter geographic location.
+#
+#        Parameters
+#        ----------
+#        new_data_set : str
+#            Name for the new data_set object.
+#        comment : str
+#            Comment describing the new data_set object.
+#
+#        Returns
+#        -------
+#        new_data_set_obj : data_set 
+#            Copy of the original data_set with new name and history entry.
+#
+#        Written by Magdalina L. Moses, Fall 2016
+#        """
+#        return df
+#
+#
+#def select_geo(df,node_type='reporter', grsq=None):
+#        """Select nodes based on reporter or transmitter geographic location.
+#
+#        Parameters
+#        ----------
+#        new_data_set : str
+#            Name for the new data_set object.
+#        comment : str
+#            Comment describing the new data_set object.
+#
+#        Returns
+#        -------
+#        new_data_set_obj : data_set 
+#            Copy of the original data_set with new name and history entry.
+#
+#        Written by Magdalina L. Moses, Fall 2016
+#        """
+##    if grdsq ==
+##    rbn_lib.latlon_filt(df, )
+#
+#    return df
 
 def select_pair(df, stations):
 

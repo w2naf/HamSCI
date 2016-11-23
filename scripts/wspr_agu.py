@@ -5,41 +5,41 @@ from hamsci import wspr_lib
 from hamsci import gridsquare
 from hamsci import rbn_lib
 
-def find_pair(df):
-
-    tx  =   df['call_sign'].unique()
-    rx  =   df['reciever'].unique()
-
-    rx_count=0
-    tx_count=0
-    for this_tx in tx:
-        for this_rx in rx:
-            tx
-
-def plot_wspr_snr(df, by_pwr=True):
-        """Scatter Plot WSPR SNR reports
-
-        Parameters
-        ----------
-        new_data_set : str
-            Name for the new data_set object.
-        comment : str
-            Comment describing the new data_set object.
-
-        Returns
-        -------
-        new_data_set_obj : data_set 
-            Copy of the original data_set with new name and history entry.
-
-        Written by Magdalina L. Moses, Fall 2016
-        """
-        #Will likely need to bin powers, but need to check how far appart the different powers are
-        if by_pwr:
-
-
-
-
-    return fig
+#def find_pair(df):
+#
+#    tx  =   df['call_sign'].unique()
+#    rx  =   df['reciever'].unique()
+#
+#    rx_count=0
+#    tx_count=0
+##    for this_tx in tx:
+##        for this_rx in rx:
+##            tx
+#
+#def plot_wspr_snr(df, by_pwr=True):
+#        """Scatter Plot WSPR SNR reports
+#
+#        Parameters
+#        ----------
+#        new_data_set : str
+#            Name for the new data_set object.
+#        comment : str
+#            Comment describing the new data_set object.
+#
+#        Returns
+#        -------
+#        new_data_set_obj : data_set 
+#            Copy of the original data_set with new name and history entry.
+#
+#        Written by Magdalina L. Moses, Fall 2016
+#        """
+#        #Will likely need to bin powers, but need to check how far appart the different powers are
+#        if by_pwr:
+#
+#
+#
+#
+#    return fig
 
 
 if __name__ == '__main__':
