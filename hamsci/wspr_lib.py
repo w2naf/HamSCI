@@ -46,7 +46,6 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
 #    df = None
     for year_month in ym_list:
         data_file   = 'wsprspots-%s.csv.gz' % year_month.strftime('%Y-%m')
-        import ipdb; ipdb.set_trace()
         data_path   = os.path.join(data_dir,data_file)  
 
         time_0      = datetime.datetime.now()
@@ -146,7 +145,7 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
             std_eTime=std_sTime+datetime.timedelta(hours=1)
     
         # Trim dataframe to just the entries we need.
-        df = df_comp[np.logical_and(df_comp['date'] >= sTime,df_comp['date'] < eTime)]
+        df = df_comp[np.logical_and(df_comp['timestamp'] >= sTime,df_comp['timestamp'] < eTime)]
 
         return df
 
