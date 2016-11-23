@@ -98,15 +98,18 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
         hour_flag=0
         print 'Initial interval: '+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M')
         print 'End: '+hourly_eTime.strftime('%Y%m%d%H%M')
+        ref_month=std_eTime.month()
         while std_eTime<=hourly_eTime:
             p_filename = 'wspr_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
             p_filepath = os.path.join(data_dir,p_filename)
             if not os.path.exists(p_filepath):
                 # Load data into dataframe here. ###############################################
-                with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
-#                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
-                    print 'Loading '+str(data_path)+' into Pandas Dataframe'
-                    df      = pd.read_csv(fl,names=names,index_col='spot_id')
+                if std_eTime.month() != ref_month or hour_flag == 0:
+                    with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
+    #                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
+                        print 'Loading '+str(data_path)+' into Pandas Dataframe'
+                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
+                df=df_tmp
 
 #                    if df is None:
 #                        df = df_tmp
