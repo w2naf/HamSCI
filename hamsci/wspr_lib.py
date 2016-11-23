@@ -94,7 +94,6 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
                 p_filename = 'wspr_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
                 p_filepath = os.path.join(data_dir,p_filename)
                 if not os.path.exists(p_filepath):
-                    if 
                     # Load data into dataframe here. ###############################################
                     with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
 #                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
