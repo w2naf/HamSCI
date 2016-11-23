@@ -2,7 +2,7 @@
 #Codes to make graphs for AGU. Also to test wspr_lib prior to AGU 2016
 
 from hamsci import wspr_lib
-from hamsci import gridsquare
+#from hamsci import gridsquare
 from hamsci import rbn_lib
 
 #def find_pair(df):
