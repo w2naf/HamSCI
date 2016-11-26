@@ -134,6 +134,7 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
 
                 df.to_pickle(p_filepath)
             else:
+                print 'Found Pickle File for '+std_sTime.strftime('%Y%m%d%H%M - ')+std_eTime.strftime('%Y%m%d%H%M') 
                 with open(p_filepath,'rb') as fl:
                     df = pickle.load(fl)
 
@@ -151,6 +152,102 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
         df = df_comp[np.logical_and(df_comp['timestamp'] >= sTime,df_comp['timestamp'] < eTime)]
 
         return df
+
+def find_hour(df):
+    hours=[]
+    for inx in range(0,len(df)):
+        hours.append(df['timestamp'].iloc[inx].hour)
+
+    df['hour']=hours
+    return df
+
+def redefine_grid(df,precision=4):
+    """Define the number of characters used in the grid square reporting
+
+    Parameters
+    ----------
+    df  :   dataframe
+        Dataframe to redefine gridsquares over
+    precision   :   int
+        Number of characters in grid square
+
+    new_data_set : str
+        Name for the new data_set object.
+    comment : str
+        Comment describing the new data_set object.
+
+    Returns
+    -------
+    new_data_set_obj : data_set 
+        Copy of the original data_set with new name and history entry.
+
+    Written by Magdalina L. Moses, Fall 2016
+    """
+    print 'Redefining Grid Square Precision to '+str(precision)
+    print 'Converting '+str(len(df.grid.unique()))+' grids'
+    for grid in df.grid.unique():
+        new_grid=grid[0:precision]
+        if new_grid != grid:
+            df=df.replace(to_replace={'grid': {grid:new_grid}})
+
+    print 'Converting '+str(len(df.rep_grid.unique()))+' reporter grids'
+    for rep_grid in df.rep_grid.unique():
+        new_repgrid=rep_grid[0:precision]
+        if new_repgrid != rep_grid:
+            df=df.replace(to_replace={'rep_grid': {rep_grid:new_repgrid}})
+#    for inx in range(0,len(df)):
+#            grid=df['grid'].iloc[inx][0:precision]
+#            rep_grid=df['rep_grid'].iloc[inx][0:precision]  
+#            df['rep_grid'].iloc[inx]=df['rep_grid'].iloc[inx][0:precision]
+#            df['grid'].iloc[inx]=df['grid'].iloc[inx][0:precision]
+    print 'Grid Square Precision Task Complete'  
+    return df
+
+def filter_grid_pair(df, gridsq, redef=False, precision=4):
+    """Filter to spots with stations only in specified two grid squares
+
+    Parameters
+    ----------
+    df  :   dataframe
+        Dataframe of wspr data
+    gridsq  :   list or numpy.array of str
+        Pair of grid squares to limit stations to 
+    redef   :   boolean
+        Flag to indicate if user would like to redefine grid before filtering
+    precision   :   int
+        Number of characters in grid square
+
+    new_data_set : str
+        Name for the new data_set object.
+    comment : str
+        Comment describing the new data_set object.
+
+    Returns
+    -------
+    new_data_set_obj : data_set 
+        Copy of the original data_set with new name and history entry.
+
+    Written by Magdalina L. Moses, Fall 2016
+    """
+    import wspr_lib
+    if redef:
+        df=wspr_lib.redefine_grid(df, precision=precision)
+   
+    df0=df[np.logical_and(df['grid']==gridsq[0], df['rep_grid']==gridsq[1])]
+    df0=pd.concat([df0,df[np.logical_and(df['grid']==gridsq[1], df['rep_grid']==gridsq[0])]])
+    return df0
+
+def calls_by_grid(df, prefix='', col='grid', col_call='call_sign'):
+    calls=[]
+    precision = len(prefix)
+    for inx in range(0,len(df)):
+        if df[col].iloc[inx][0:precision]==prefix:
+            calls.append(df[col_call].iloc[inx])
+##        call=df[col][df[col].iloc[inx][precision]==prefix]
+#        if call.any():
+#            calls.append(call[:])
+
+    return calls
 
 #def save_wspr(sTime,eTime=None,data_dir='data/wspr'):
 #
@@ -198,7 +295,7 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
 #
 #    return df
 
-def select_pair(df, stations):
+def select_pair(df, station):
 
     df0=df[np.logical_and(df['call_sign']==station[0], df['reporter']==station[1])]
     df=pd.concat([df0,df[np.logical_and(df['call_sign']==station[1], df['reporter']==station[0])]])
