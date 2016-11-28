@@ -31,7 +31,7 @@ def __add_months(sourcedate,months=1):
     day = min(sourcedate.day,calendar.monthrange(year,month)[1])
     return datetime.date(year,month,day)
 
-def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
+def read_wspr(sTime,eTime=None,data_dir='data/wspr', overwrite=False):
 
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
@@ -53,7 +53,7 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
 
         ################################################################################
         # Make sure the data file exists.  If not, download it and open it.
-        if not os.path.exists(data_path):
+        if not os.path.exists(data_path) or overwrite:
              try:    # Create the output directory, but fail silently if it already exists
                  os.makedirs(data_dir) 
              except:
@@ -96,29 +96,35 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr'):
         std_eTime=std_sTime+datetime.timedelta(hours=1)
 
         hour_flag=0
+        extract=True
         print 'Initial interval: '+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M')
         print 'End: '+hourly_eTime.strftime('%Y%m%d%H%M')
         ref_month=std_eTime.month
         while std_eTime<=hourly_eTime:
             p_filename = 'wspr_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
             p_filepath = os.path.join(data_dir,p_filename)
-            if not os.path.exists(p_filepath):
+            if not os.path.exists(p_filepath) or overwrite:
                 # Load data into dataframe here. ###############################################
-                if std_eTime.month != ref_month or hour_flag == 0:
+#                if std_eTime.month != ref_month or hour_flag == 0:
+                # Reset flag to extract file to dataframe when looking at a new month
+                if std_eTime.month != ref_month:
+                    extract = True
+                if extract: 
                     with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
     #                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
                         print 'Loading '+str(data_path)+' into Pandas Dataframe'
                         df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
-                df=df_tmp
+#                    df=df_tmp
 
 #                    if df is None:
 #                        df = df_tmp
 #                    else:
 #                        df = df.append(df_tmp)
-                df['timestamp'] = pd.to_datetime(df['timestamp'],unit='s')
+                    df_tmp['timestamp'] = pd.to_datetime(df_tmp['timestamp'],unit='s')
+                    extract = False
 
                 # Trim dataframe to just the entries in a 1 hour time period.
-                df = df[np.logical_and(df['timestamp'] >= std_sTime,df['timestamp'] < std_eTime)]
+                df = df_tmp[np.logical_and(df_tmp['timestamp'] >= std_sTime,df_tmp['timestamp'] < std_eTime)]
 
 #        df = df[np.logical_and(df['timestamp'] >= sTime, df['timestamp'] < eTime)]
 

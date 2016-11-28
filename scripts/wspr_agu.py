@@ -321,10 +321,12 @@ if __name__ == '__main__':
 #    eTime       = datetime.datetime(2016,10,31,23,59, 59)
 
     sTime       = datetime.datetime(2016,11,1,0)
-    eTime       = datetime.datetime(2016,11,3,0)
+    eTime       = datetime.datetime(2016,11,17,0)
     data_dir    = 'data/wspr' 
 
+#    df = wspr_lib.read_wspr(sTime,eTime,data_dir, overwrite=True)
     df = wspr_lib.read_wspr(sTime,eTime,data_dir)
+    import ipdb; ipdb.set_trace()
 
     #Select only stations within two lat/lon areas (near VT and NJIT)
     #   K2MFF 'FN20vr' (40.7429,-74.1770)
@@ -335,7 +337,7 @@ if __name__ == '__main__':
     #   Need to select from wider area for southern station 
        
     #Redefine grid and filter by gridsquare
-    df=wspr_lib.redefine_grid(df, precision=4)
+#    df=wspr_lib.redefine_grid(df, precision=4)
 #    df=wspr_lib.filter_grid_pair(df, ['FN20', 'EM95'], redef=True, precision=4)
 
 #    #Find the pairs of stations with most links between them
@@ -348,14 +350,14 @@ if __name__ == '__main__':
 #    df_filt  =   wspr_lib.select_pair(df, stations)
     
     #Filter to only include links between stations in specific grid sqares
-    df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM98']) 
+    df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM98'], redef=True, precision=4) 
     gridsq=['FN20', 'EM98']
 #    fig=plot_wspr_snr(df[df.power==30])
 
     #Plot figure 
     fig=plot_wspr_snr(df_filt)
     output_dir=os.path.join('output', 'wspr')
-    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'.png')
+    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')+'.png')
     if not os.path.exists(output_path):
          try:    # Create the output directory, but fail silently if it already exists
              os.makedirs(output_dir) 
