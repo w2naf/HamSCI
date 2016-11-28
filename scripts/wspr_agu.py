@@ -110,109 +110,119 @@ def find_links(df,prefix='', prefix2=''):
 #            tx
 
 def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'):
-        """Scatter Plot WSPR SNR reports
+    """Scatter Plot WSPR SNR reports
 
-        Parameters
-        ----------
-        new_data_set : str
-            Name for the new data_set object.
-        comment : str
-            Comment describing the new data_set object.
+    Parameters
+    ----------
+    new_data_set : str
+        Name for the new data_set object.
+    comment : str
+        Comment describing the new data_set object.
 
-        Returns
-        -------
-        new_data_set_obj : data_set 
-            Copy of the original data_set with new name and history entry.
+    Returns
+    -------
+    new_data_set_obj : data_set 
+        Copy of the original data_set with new name and history entry.
 
-        Written by Magdalina L. Moses, Fall 2016
-        """
-        from matplotlib import pyplot as plt
+    Written by Magdalina L. Moses, Fall 2016
+    """
+    from matplotlib import pyplot as plt
 
-        location=df[loc_col].unique()
+    #Get locations and create string for title
+    location=df[loc_col].unique()
+    str_location = ''
+    for locality in location: 
+        str_location    =  str_location + str(locality) + '_'
+    str_location=str_location[0:len(str_location)-1]
 
-        #Convert to local time if desired
-        if x_unit == 'est':
-          #really should have eastern time
-            for time in df.timestamp.unique():
-                dt=datetime.timedelta(hours=4)
-                df=df.replace({'timestamp':{time: time-dt}})
+    #Convert to local time if desired
+    if x_unit == 'est':
+      #really should have eastern time
+#            for time in df.timestamp.unique():
+#                dt=datetime.timedelta(hours=4)
+#                df=df.replace({'timestamp':{time: time-dt}})
+
 #                if np.datetime64(2016, 11,6) < time:
 #                    dt=datetime.timedelta(hours=5)
 #                else:             
 #                    dt=datetime.timedelta(hours=4)
 #                df=df.replace({'timestamp':{time: time-dt}})
-#          for hour in df.hour.unique():
-#              df=df.replace({'hour':{hour: (hour-4)}})
-
         #Get hours
         df=wspr_lib.find_hour(df)
+        for hour in df.hour.unique():
+            df=df.replace({'hour':{hour: (hour-4)}})
 
-        #Will likely need to bin powers, but need to check how far appart the different powers are
-        #Plot
-        if by_pwr:
-            grouped     = df.groupby('power')
-            lstyle=('solid', 'dashed')
-    #        if fig == None:
-    #            fig = plt.figure()
-    #        if ax == None:
-    #            ax=fig.add_subplot(111)
-            df = df.sort(columns='hour')
-    #        if fig == None:
-    #            fig=plt.figure()
-            pwr_grouped     = df.groupby('power')
-            lstyle=('solid', 'dashed')
-            xsize=8
-            ysize=4
-            nx_plots=1
-            ny_plots=len(pwr_grouped) 
-            if fig==None: 
-                fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
-
-            #Get Band Data
-            band_data = rbn_lib.BandData()
-            band_list = band_data.band_dict.keys()
-            band_list.sort()
-
-            inx=1
-            for pwr in df.power.unique():
-                pwr_group=grouped.get_group(pwr)
+        df=df.replace({'hour':{-4: (24-4)}})
 
 
-                grouped=pwr_group.groupby('band')
-                for band in band_list:
-                    try:
-                        this_group = grouped.get_group(band)
-                    except:
-                        continue
+    #Will likely need to bin powers, but need to check how far appart the different powers are
+    #Plot
+    if by_pwr:
+#        grouped     = df.groupby('power')
+        lstyle=('solid', 'dashed')
+#        if fig == None:
+#            fig = plt.figure()
+#        if ax == None:
+#            ax=fig.add_subplot(111)
+        df = df.sort(columns='power', ascending=False)
+        df = df.sort(columns='hour')
+        pwr_grouped     = df.groupby('power')
+        import ipdb; ipdb.set_trace()
+        lstyle=('solid', 'dashed')
+        xsize=8
+        ysize=4
+        nx_plots=1
+        ny_plots=len(pwr_grouped) 
+        if fig==None: 
+            fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+
+        #Get Band Data
+        band_data = rbn_lib.BandData()
+        band_list = band_data.band_dict.keys()
+        band_list.sort()
+
+        inx=1
+        for pwr in df.power.unique():
+            pwr_group=pwr_grouped.get_group(pwr)
+
+
+            grouped=pwr_group.groupby('band')
+            print 'Index is: '+str(inx)
+            ax         = fig.add_subplot(ny_plots, nx_plots,inx)
+            for band in band_list:
+                try:
+                    this_group = grouped.get_group(band)
+                except:
+                    continue
 
 #                    ax=fig.add_subplot(len(),1,inx)
-                    ax         = fig.add_subplot(ny_plots, nx_plots,inx)
-                    import ipdb; ipdb.set_trace()
 
-                    inx=inx+1
-                    color       = band_data.band_dict[band]['color']
-                    label       = band_data.band_dict[band]['freq_name']
+                color       = band_data.band_dict[band]['color']
+                label       = band_data.band_dict[band]['freq_name']
 
-                    label1=label+ ' NJ to VA'
-                    label2=label+ ' VA to NJ'
+                label1=label+ ' NJ to VA'
+                label2=label+ ' VA to NJ'
 
-                    tx=df[df[loc_col]==location[0]]
-                    tx2=df[df[loc_col]==location[1]]
-                    if location[0]=='FN20':
-                        marker1='*'
-                        marker2='o'
-                        lstyle1,lstyle2=lstyle
-                    else:
-                        marker1='o'
-                        marker2='*'
-                        lstyle2,lstyle1=lstyle
-                    line1=ax.plot(tx.hour, tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
-                    line2=ax.plot(tx2.hour, tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
-                    ax.legend()
-                    ax.set_ylabel('SNR')
-        
-        ax.set_xlabel('Time (EST')
-        return fig
+                tx=this_group[this_group[loc_col]==location[0]]
+                tx2=this_group[this_group[loc_col]==location[1]]
+
+                if location[0]=='FN20':
+                    marker1='*'
+                    marker2='o'
+                    lstyle1,lstyle2=lstyle
+                else:
+                    marker1='o'
+                    marker2='*'
+                    lstyle2,lstyle1=lstyle
+                line1=ax.plot(tx.hour, tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
+                line2=ax.plot(tx2.hour, tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
+                ax.legend()
+                plt.title(str(pwr)+  ' W (between '+ str_location +')')
+                ax.set_ylabel('SNR')
+            inx=inx+1
+    
+    ax.set_xlabel('Time (EST)')
+    return fig
 
 #def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'):
 #        """Scatter Plot WSPR SNR reports
@@ -345,20 +355,21 @@ if __name__ == '__main__':
     #Plot figure 
     fig=plot_wspr_snr(df_filt)
     output_dir=os.path.join('output', 'wspr')
-    output_path=os.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'.png')
+    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'.png')
     if not os.path.exists(output_path):
          try:    # Create the output directory, but fail silently if it already exists
              os.makedirs(output_dir) 
          except:
              pass
 
-    fig.save_fig(output_path)
+    fig.savefig(output_path)
 
-   #Plot second 
-    df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM96']) 
-    gridsq=['FN20', 'EM96']
-    output_dir=os.path.join('output', 'wspr')
-    output_path=os.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'.png')
-    fig.save_fig(output_path)
+#   #Plot second 
+#    df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM96']) 
+#    gridsq=['FN20', 'EM96']
+#    fig=plot_wspr_snr(df_filt)
+#    output_dir=os.path.join('output', 'wspr')
+#    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'.png')
+#    fig.savefig(output_path)
     import ipdb; ipdb.set_trace()
 
