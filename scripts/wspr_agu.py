@@ -7,6 +7,7 @@ from hamsci import rbn_lib
 
 import numpy as np
 import pandas as pd 
+from matplotlib import pyplot as plt
 
 def find_pair(df,prefix='', prefix2=''):
     import pandas as pd
@@ -152,7 +153,11 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
         for hour in df.hour.unique():
             df=df.replace({'hour':{hour: (hour-4)}})
 
+        df=df.replace({'hour':{-5: (24-5)}})
         df=df.replace({'hour':{-4: (24-4)}})
+        df=df.replace({'hour':{-3: (24-3)}})
+        df=df.replace({'hour':{-2: (24-2)}})
+        df=df.replace({'hour':{-1: (24-1)}})
 
 
     #Will likely need to bin powers, but need to check how far appart the different powers are
@@ -165,9 +170,8 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
 #        if ax == None:
 #            ax=fig.add_subplot(111)
         df = df.sort(columns='power', ascending=False)
-        df = df.sort(columns='hour')
+#        df = df.sort(columns='hour')
         pwr_grouped     = df.groupby('power')
-        import ipdb; ipdb.set_trace()
         lstyle=('solid', 'dashed')
         xsize=8
         ysize=4
@@ -184,6 +188,8 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
         inx=1
         for pwr in df.power.unique():
             pwr_group=pwr_grouped.get_group(pwr)
+#            df = df.sort(columns='hour')
+            pwr_group = pwr_group.sort(columns='hour')
 
 
             grouped=pwr_group.groupby('band')
@@ -303,6 +309,22 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
 #        
 #        ax.set_xlabel('Time (EST')
 #        return fig
+def run_plot(df_filt, gridsq, sTime, eTime):
+    import datetime
+    import os
+    #Plot figure 
+    fig=plot_wspr_snr(df_filt)
+    output_dir=os.path.join('output', 'wspr')
+    output_file= 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d_')+'.png'
+    output_path=os.path.join(output_dir,output_file)
+    if not os.path.exists(output_path):
+         try:    # Create the output directory, but fail silently if it already exists
+             os.makedirs(output_dir) 
+         except:
+             pass
+
+    fig.savefig(output_path)
+    return fig
 
 
 if __name__ == '__main__':
@@ -357,7 +379,7 @@ if __name__ == '__main__':
     #Plot figure 
     fig=plot_wspr_snr(df_filt)
     output_dir=os.path.join('output', 'wspr')
-    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')+'.png')
+    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%d%b%Y%H%MUT-')+eTime.strftime('%d%b%Y%H%MUT')+'.png')
     if not os.path.exists(output_path):
          try:    # Create the output directory, but fail silently if it already exists
              os.makedirs(output_dir) 

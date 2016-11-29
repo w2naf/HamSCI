@@ -195,12 +195,15 @@ def redefine_grid(df,precision=4):
         new_grid=grid[0:precision]
         if new_grid != grid:
             df=df.replace(to_replace={'grid': {grid:new_grid}})
-
+    i=9
     print 'Converting '+str(len(df.rep_grid.unique()))+' reporter grids'
     for rep_grid in df.rep_grid.unique():
         new_repgrid=rep_grid[0:precision]
         if new_repgrid != rep_grid:
             df=df.replace(to_replace={'rep_grid': {rep_grid:new_repgrid}})
+            i=i+1
+            if i==len(df.rep_grid.unique()):
+                print str(i)+' records remaining\n'
 #    for inx in range(0,len(df)):
 #            grid=df['grid'].iloc[inx][0:precision]
 #            rep_grid=df['rep_grid'].iloc[inx][0:precision]  
@@ -307,6 +310,15 @@ def select_pair(df, station):
     df=pd.concat([df0,df[np.logical_and(df['call_sign']==station[1], df['reporter']==station[0])]])
     del df0
 
+    return df
+
+def average_dB(df, col='snr'):
+
+    sn=np.power(10,df[col]/10)
+    avg=sn.mean()
+    df=df.drop(col, axis=1)
+    df[col] = 10*np.log10(avg)
+    
     return df
 
 #def station_counts():
