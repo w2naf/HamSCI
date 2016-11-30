@@ -190,6 +190,8 @@ def redefine_grid(df,precision=4):
 
     Written by Magdalina L. Moses, Fall 2016
     """
+    import sys
+
     print 'Redefining Grid Square Precision to '+str(precision)
     print 'Converting '+str(len(df.grid.unique()))+' grids'
     i=1
@@ -197,7 +199,9 @@ def redefine_grid(df,precision=4):
         new_grid=grid[0:precision]
         if new_grid != grid:
             df=df.replace(to_replace={'grid': {grid:new_grid}})
-        print '{0}\r'.format(str(i)+' grid squares converted'),
+#        print '{0}\r'.format(str(i)+' grid squares converted'),
+        sys.stdout.write('\r'+str(i)+' grid squares converted')
+        sys.stdout.flush()
         i=i+1
 
     print 'Converting '+str(len(df.rep_grid.unique()))+' reporter grids'
@@ -206,7 +210,9 @@ def redefine_grid(df,precision=4):
         new_repgrid=rep_grid[0:precision]
         if new_repgrid != rep_grid:
             df=df.replace(to_replace={'rep_grid': {rep_grid:new_repgrid}})
-        print '{0}\r'.format(str(i)+' grid squares converted'),
+#        print '{0}\r'.format(str(i)+' grid squares converted'),
+        sys.stdout.write('\r'+str(i)+' reporter grid squares converted')
+        sys.stdout.flush()
         i=i+1
 #            if len(df.rep_grid.unique()) % 100 == 0:
 #                print str(i)+' records remaining\n'

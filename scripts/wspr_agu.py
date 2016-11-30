@@ -235,6 +235,7 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
                 plt.title(str(pwr)+  ' W (between '+ str_location +')')
                 ax.set_ylabel('SNR')
             inx=inx+1
+            plt.close()
     
     ax.set_xlabel('Time (EST)')
     return fig
