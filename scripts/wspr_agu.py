@@ -175,8 +175,17 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
         lstyle=('solid', 'dashed')
         xsize=8
         ysize=4
-        nx_plots=1
-        ny_plots=len(pwr_grouped) 
+        import ipdb; ipdb.set_trace()
+        if 4 <= len(pwr_grouped):
+            ny_plots=4
+            nx_plots=len(pwr_grouped)/4
+            if len(pwr_grouped) % 4 != 0:
+                nx_plots =nx_plots+1
+
+        else:
+            nx_plots=1
+            ny_plots=len(pwr_grouped) 
+
         if fig==None: 
             fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
 

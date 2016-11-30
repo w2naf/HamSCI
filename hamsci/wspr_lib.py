@@ -14,6 +14,7 @@ import pickle
 import sys
 import copy 
 
+
 import numpy as np      #Numerical python - provides array types and operations
 import pandas as pd     #This is a nice utility for working with time-series type data.
 
@@ -191,19 +192,24 @@ def redefine_grid(df,precision=4):
     """
     print 'Redefining Grid Square Precision to '+str(precision)
     print 'Converting '+str(len(df.grid.unique()))+' grids'
+    i=1
     for grid in df.grid.unique():
         new_grid=grid[0:precision]
         if new_grid != grid:
             df=df.replace(to_replace={'grid': {grid:new_grid}})
-    i=9
+        print '{0}\r'.format(str(i)+' grid squares converted'),
+        i=i+1
+
     print 'Converting '+str(len(df.rep_grid.unique()))+' reporter grids'
+    i=1
     for rep_grid in df.rep_grid.unique():
         new_repgrid=rep_grid[0:precision]
         if new_repgrid != rep_grid:
             df=df.replace(to_replace={'rep_grid': {rep_grid:new_repgrid}})
-            i=i+1
-            if i==len(df.rep_grid.unique()):
-                print str(i)+' records remaining\n'
+        print '{0}\r'.format(str(i)+' grid squares converted'),
+        i=i+1
+#            if len(df.rep_grid.unique()) % 100 == 0:
+#                print str(i)+' records remaining\n'
 #    for inx in range(0,len(df)):
 #            grid=df['grid'].iloc[inx][0:precision]
 #            rep_grid=df['rep_grid'].iloc[inx][0:precision]  
@@ -318,6 +324,7 @@ def average_dB(df, col='snr'):
     avg=sn.mean()
     df=df.drop(col, axis=1)
     df[col] = 10*np.log10(avg)
+    #Could make this function just return the value and not put it in the dataframe yet!
     
     return df
 
