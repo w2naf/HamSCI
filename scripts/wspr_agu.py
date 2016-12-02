@@ -202,7 +202,7 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
 
 
             grouped=pwr_group.groupby('band')
-            print 'Index is: '+str(inx)
+            print 'Index is: '+str(inx+3)
             ax         = fig.add_subplot(ny_plots, nx_plots,inx)
             for band in band_list:
                 try:
@@ -239,6 +239,224 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
     
     ax.set_xlabel('Time (EST)')
     return fig
+
+
+def average_dB(df, col='snr'):
+
+    sn=np.power(10,df[col]/10)
+    avg=sn.mean()
+#    df=df.drop(col, axis=1)
+#    df[col] = 10*np.log10(avg)
+    #Could make this function just return the value and not put it in the dataframe yet!
+    avg_dB = 10*np.log10(avg)
+    
+    return avg_dB
+
+def wspr_avg(df, t_div='hour', param='snr', groups=['band', 'tx_pwr'], bining=None):
+    """Average Values over a given period of time  
+
+    Parameters
+    ----------
+    df : Pandas Dataframe
+        Dataframe containing test data.
+
+    Returns
+    -------
+    new_data_set_obj : data_set 
+        Copy of the original data_set with new name and history entry.
+
+    Written by Magda Moses, Fall 2016
+    """
+
+#    #Group and Sort by time
+#    srt = df.sort([t_div])
+#    grouped = srt.groupby(t_div)
+
+    mybands=[]
+    mypwr=[]
+    mytime=[]
+    myavg=[]
+    mygrid=[]
+
+    for gridsq in df['grid'].unique():
+        df_temp=df[df['grid']==gridsq]
+
+        #Group and Sort by time
+        srt = df_temp.sort([t_div])
+        grouped = srt.groupby(t_div)
+
+        for time in df_temp[t_div].unique():
+            time_group=grouped.get_group(time)
+            
+            pwr_grouped=time_group.groupby('power')
+
+            for pwr in time_group['power'].unique():
+#                try:
+                pwr_group=pwr_grouped.get_group(pwr)
+                band_grouped=pwr_group.groupby('band')
+#                except:
+#                    continue
+#                try:
+                for band in pwr_group['band'].unique():
+                    band_group=band_grouped.get_group(band)
+#                    avg_param = wspr_lib.average_dB(band_group, col=param)
+                    avg_param = average_dB(band_group, col=param)
+
+                    mybands.append(band)
+                    mypwr.append(pwr)
+                    mytime.append(time)
+                    myavg.append(avg_param)
+                    mygrid.append(gridsq)
+#                except: 
+#                    continue
+        import ipdb; ipdb.set_trace()
+
+    #Save Values in new dataframe
+    df_avg=pd.DataFrame({'hour':mytime, 'band':mybands, 'power':mypwr, param:myavg, 'grid':mygrid})
+    import ipdb; ipdb.set_trace()
+    return df_avg
+
+def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'):
+    """Scatter Plot WSPR SNR reports
+
+    Parameters
+    ----------
+    new_data_set : str
+        Name for the new data_set object.
+    comment : str
+        Comment describing the new data_set object.
+
+    Returns
+    -------
+    new_data_set_obj : data_set 
+        Copy of the original data_set with new name and history entry.
+
+    Written by Magdalina L. Moses, Fall 2016
+    """
+    from matplotlib import pyplot as plt
+
+    #Get locations and create string for title
+    location=df[loc_col].unique()
+    str_location = ''
+    for locality in location: 
+        str_location    =  str_location + str(locality) + '_'
+    str_location=str_location[0:len(str_location)-1]
+
+    #Convert to local time if desired
+    if x_unit == 'est':
+      #really should have eastern time
+#            for time in df.timestamp.unique():
+#                dt=datetime.timedelta(hours=4)
+#                df=df.replace({'timestamp':{time: time-dt}})
+
+#                if np.datetime64(2016, 11,6) < time:
+#                    dt=datetime.timedelta(hours=5)
+#                else:             
+#                    dt=datetime.timedelta(hours=4)
+#                df=df.replace({'timestamp':{time: time-dt}})
+#        #Get hours
+#        df=wspr_lib.find_hour(df)
+        for hour in df.hour.unique():
+            df=df.replace({'hour':{hour: (hour-4)}})
+
+        df=df.replace({'hour':{-5: (24-5)}})
+        df=df.replace({'hour':{-4: (24-4)}})
+        df=df.replace({'hour':{-3: (24-3)}})
+        df=df.replace({'hour':{-2: (24-2)}})
+        df=df.replace({'hour':{-1: (24-1)}})
+
+
+    #Will likely need to bin powers, but need to check how far appart the different powers are
+    #Plot
+    if by_pwr:
+#        grouped     = df.groupby('power')
+        lstyle=('solid', 'dashed')
+#        if fig == None:
+#            fig = plt.figure()
+#        if ax == None:
+#            ax=fig.add_subplot(111)
+        df = df.sort(columns='power', ascending=False)
+#        df = df.sort(columns='hour')
+        pwr_grouped     = df.groupby('power')
+        lstyle=('solid', 'dashed')
+        xsize=8
+        ysize=4
+        if 4 <= len(pwr_grouped):
+            ny_plots=4
+            nx_plots=len(pwr_grouped)/4
+            if len(pwr_grouped) % 4 != 0:
+                nx_plots =nx_plots+1
+
+        else:
+            nx_plots=1
+            ny_plots=len(pwr_grouped) 
+
+        if fig==None: 
+            fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+
+        #Get Band Data
+        band_data = rbn_lib.BandData()
+        band_list = band_data.band_dict.keys()
+        band_list.sort()
+
+        row=1
+        col=0
+        for pwr in df.power.unique():
+#            if row % ny_plots ==0 :
+            if row % 3 ==0 :
+                import ipdb; ipdb.set_trace()
+                col=col+1
+                row = 1
+            if row =1:
+                inx=row+1
+            else:
+                inx=row+col+3
+#            inx=row+col
+            pwr_group=pwr_grouped.get_group(pwr)
+#            df = df.sort(columns='hour')
+            pwr_group = pwr_group.sort(columns='hour')
+
+
+            grouped=pwr_group.groupby('band')
+            print 'Index is: '+str(inx)
+                
+            ax         = fig.add_subplot(ny_plots, nx_plots,inx)
+            for band in band_list:
+                try:
+                    this_group = grouped.get_group(band)
+                except:
+                    continue
+
+#                    ax=fig.add_subplot(len(),1,inx)
+
+                color       = band_data.band_dict[band]['color']
+                label       = band_data.band_dict[band]['freq_name']
+
+                label1=label+ ' NJ to VA'
+                label2=label+ ' VA to NJ'
+
+                tx=this_group[this_group[loc_col]==location[0]]
+                tx2=this_group[this_group[loc_col]==location[1]]
+
+                if location[0]=='FN20':
+                    marker1='*'
+                    marker2='o'
+                    lstyle1,lstyle2=lstyle
+                else:
+                    marker1='o'
+                    marker2='*'
+                    lstyle2,lstyle1=lstyle
+                line1=ax.plot(tx.hour, tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
+                line2=ax.plot(tx2.hour, tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
+#                ax.legend()
+                plt.title(str(pwr)+  ' W (between '+ str_location +')')
+                ax.set_ylabel('Average SNR (dB)')
+            row=row+1
+    
+    ax.set_xlabel('Time (EST)')
+    plt.close()
+    return fig
+
 
 #def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'):
 #        """Scatter Plot WSPR SNR reports
@@ -319,13 +537,19 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
 #        
 #        ax.set_xlabel('Time (EST')
 #        return fig
-def run_plot(df_filt, gridsq, sTime, eTime):
+
+def run_plot(df_filt, gridsq, sTime, eTime, note=None):
     import datetime
     import os
     #Plot figure 
-    fig=plot_wspr_snr(df_filt)
+#    fig=plot_wspr_snr(df_filt)
+    fig=plot_avg_snr(df_filt)
+
     output_dir=os.path.join('output', 'wspr')
-    output_file= 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d_')+'.png'
+    if note:
+        output_file= 'wspr_test'+'_'+note+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
+    else:
+        output_file= 'wspr_test'+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
     output_path=os.path.join(output_dir,output_file)
     if not os.path.exists(output_path):
          try:    # Create the output directory, but fail silently if it already exists
