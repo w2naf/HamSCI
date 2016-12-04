@@ -149,7 +149,11 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
 #                    dt=datetime.timedelta(hours=4)
 #                df=df.replace({'timestamp':{time: time-dt}})
         #Get hours
-        df=wspr_lib.find_hour(df)
+        try:
+            test = df['hour']
+            del test
+        except:
+            df=wspr_lib.find_hour(df)
         for hour in df.hour.unique():
             df=df.replace({'hour':{hour: (hour-4)}})
 
@@ -159,12 +163,20 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
         df=df.replace({'hour':{-2: (24-2)}})
         df=df.replace({'hour':{-1: (24-1)}})
 
+    lstyle=('solid', 'dashed')
+    xsize=8
+    ysize=4
+
+    #Get Band Data
+    band_data = rbn_lib.BandData()
+    band_list = band_data.band_dict.keys()
+    band_list.sort()
+
 
     #Will likely need to bin powers, but need to check how far appart the different powers are
     #Plot
     if by_pwr:
 #        grouped     = df.groupby('power')
-        lstyle=('solid', 'dashed')
 #        if fig == None:
 #            fig = plt.figure()
 #        if ax == None:
@@ -172,9 +184,6 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
         df = df.sort(columns='power', ascending=False)
 #        df = df.sort(columns='hour')
         pwr_grouped     = df.groupby('power')
-        lstyle=('solid', 'dashed')
-        xsize=8
-        ysize=4
         import ipdb; ipdb.set_trace()
         if 4 <= len(pwr_grouped):
             ny_plots=4
@@ -188,11 +197,6 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
 
         if fig==None: 
             fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
-
-        #Get Band Data
-        band_data = rbn_lib.BandData()
-        band_list = band_data.band_dict.keys()
-        band_list.sort()
 
         inx=1
         for pwr in df.power.unique():
@@ -236,7 +240,47 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
                 ax.set_ylabel('SNR')
             inx=inx+1
             plt.close()
-    
+    else:
+        nx_plots=1
+        ny_plots=1
+        if fig==None: 
+            fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+
+        ax         = fig.add_subplot(ny_plots, nx_plots,1)
+
+        df=df.sort(columns='hour')
+        grouped=df.groupby('band')
+        for band in band_list:
+            try:
+                this_group = grouped.get_group(band)
+            except:
+                continue
+
+#                    ax=fig.add_subplot(len(),1,inx)
+
+            color       = band_data.band_dict[band]['color']
+            label       = band_data.band_dict[band]['freq_name']
+
+            label1=label+ ' NJ to VA'
+            label2=label+ ' VA to NJ'
+
+            tx=this_group[this_group[loc_col]==location[0]]
+            tx2=this_group[this_group[loc_col]==location[1]]
+
+            if location[0]=='FN20':
+                marker1='*'
+                marker2='o'
+                lstyle1,lstyle2=lstyle
+            else:
+                marker1='o'
+                marker2='*'
+                lstyle2,lstyle1=lstyle
+            line1=ax.plot(tx.hour, tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
+            line2=ax.plot(tx2.hour, tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
+            ax.legend()
+            plt.title('Between '+ str_location)
+            ax.set_ylabel('SNR')
+        plt.close()
     ax.set_xlabel('Time (EST)')
     return fig
 
@@ -251,6 +295,42 @@ def average_dB(df, col='snr'):
     avg_dB = 10*np.log10(avg)
     
     return avg_dB
+
+def snr_avg(df):
+    mybands=[]
+    mytime=[]
+    myavg=[]
+    mygrid=[]
+
+    #Get Band Data
+    band_data = rbn_lib.BandData()
+    band_list = band_data.band_dict.keys()
+    band_list.sort()
+
+    for gridsq in df['grid'].unique():
+        df_temp=df[df['grid']==gridsq]
+        grouped=df_temp.groupby('band')
+        
+        for band in band_list:
+            try:
+                this_group = grouped.get_group(band)
+            except:
+                continue
+
+            hour_grouped = this_group.groupby('hour')
+            for hr in this_group.hour.unique():
+                this_hour= hour_grouped.get_group(hr)
+                avg_param = this_hour.snr.mean()
+
+                mybands.append(band)
+                mytime.append(hr)
+                myavg.append(avg_param)
+                mygrid.append(gridsq)
+
+    #Save Values in new dataframe
+    df_avg=pd.DataFrame({'hour':mytime, 'band':mybands, 'snr':myavg, 'grid':mygrid})
+    import ipdb; ipdb.set_trace()
+    return df_avg
 
 def wspr_avg(df, t_div='hour', param='snr', groups=['band', 'tx_pwr'], bining=None):
     """Average Values over a given period of time  
@@ -365,12 +445,13 @@ def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'
         df=df.replace({'hour':{-2: (24-2)}})
         df=df.replace({'hour':{-1: (24-1)}})
 
-
+    lstyle=('solid', 'dashed')
+    xsize=8
+    ysize=4
     #Will likely need to bin powers, but need to check how far appart the different powers are
     #Plot
     if by_pwr:
 #        grouped     = df.groupby('power')
-        lstyle=('solid', 'dashed')
 #        if fig == None:
 #            fig = plt.figure()
 #        if ax == None:
@@ -378,9 +459,6 @@ def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'
         df = df.sort(columns='power', ascending=False)
 #        df = df.sort(columns='hour')
         pwr_grouped     = df.groupby('power')
-        lstyle=('solid', 'dashed')
-        xsize=8
-        ysize=4
         if 4 <= len(pwr_grouped):
             ny_plots=4
             nx_plots=len(pwr_grouped)/4
@@ -452,9 +530,51 @@ def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'
                 plt.title(str(pwr)+  ' W (between '+ str_location +')')
                 ax.set_ylabel('Average SNR (dB)')
             row=row+1
+    else:
+        nx_plots=1
+        ny_plots=1
+        if fig==None: 
+            fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+
+        #Get Band Data
+        band_data = rbn_lib.BandData()
+        band_list = band_data.band_dict.keys()
+        band_list.sort()
+
+        df=df.sort(columns='hour')
+        grouped=df.groupby('band')
+            
+        ax         = fig.add_subplot(ny_plots, nx_plots,1)
+        for band in band_list:
+            try:
+                this_group = grouped.get_group(band)
+            except:
+                continue
+
+            color       = band_data.band_dict[band]['color']
+            label       = band_data.band_dict[band]['freq_name']
+
+            label1=label+ ' NJ to VA'
+            label2=label+ ' VA to NJ'
+
+            tx=this_group[this_group[loc_col]==location[0]]
+            tx2=this_group[this_group[loc_col]==location[1]]
+
+            if location[0]=='FN20':
+                marker1='*'
+                marker2='o'
+                lstyle1,lstyle2=lstyle
+            else:
+                marker1='o'
+                marker2='*'
+                lstyle2,lstyle1=lstyle
+            line1=ax.plot(tx.hour, tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
+            line2=ax.plot(tx2.hour, tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
+#            ax.legend()
+            plt.title('Between '+ str_location)
+            ax.set_ylabel('Average SNR (W)')
     
     ax.set_xlabel('Time (EST)')
-    plt.close()
     return fig
 
 
@@ -543,7 +663,7 @@ def run_plot(df_filt, gridsq, sTime, eTime, note=None):
     import os
     #Plot figure 
 #    fig=plot_wspr_snr(df_filt)
-    fig=plot_avg_snr(df_filt)
+    fig=plot_avg_snr(df_filt, by_pwr=False)
 
     output_dir=os.path.join('output', 'wspr')
     if note:
@@ -611,7 +731,7 @@ if __name__ == '__main__':
         print p_filepath
         df_filt=pd.read_csv(p_filepath)
         import ipdb; ipdb.set_trace()
-
+        df_filt['timestamp']=df_filt.timestamp.astype(datetime.datetime)
 
     #Original Code
     elif str(sys.argv[1]) == None:
@@ -637,8 +757,16 @@ if __name__ == '__main__':
         #Filter to only include links between stations in specific grid sqares
         df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM98'], redef=True, precision=4) 
     #    fig=plot_wspr_snr(df[df.power==30])
-        #Plot figure 
-        fig=plot_wspr_snr(df_filt)
+    df_filt = wspr_lib.dB_to_Watt(df_filt)
+    #Plot figure 
+#    fig = plot_snr()
+#    fig=plot_wspr_snr(df_filt, by_pwr=False)
+
+    df_avg = snr_avg(df_filt)
+    fig=plot_avg_snr(df_avg, by_pwr=False)
+
+#  Need to write code to plot raw times 
+
 
     output_dir=os.path.join('output', 'wspr')
     output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%d%b%Y%H%MUT-')+eTime.strftime('%d%b%Y%H%MUT')+'.png')
@@ -658,4 +786,3 @@ if __name__ == '__main__':
 #    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'.png')
 #    fig.savefig(output_path)
     import ipdb; ipdb.set_trace()
-

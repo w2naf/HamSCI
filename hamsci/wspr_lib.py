@@ -158,6 +158,8 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr', overwrite=False):
         # Trim dataframe to just the entries we need.
         df = df_comp[np.logical_and(df_comp['timestamp'] >= sTime,df_comp['timestamp'] < eTime)]
 
+        df['timestamp']=df['timestamp'].astype(datetime.datetime)
+
         return df
 
 def find_hour(df):
