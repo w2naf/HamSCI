@@ -334,6 +334,32 @@ def average_dB(df, col='snr'):
     
     return df
 
+def dB_to_Watt(df, col='snr'):
+    """Convert dB values in dataframe column to watts
+
+    Parameters
+    ----------
+    df  :   dataframe
+        Dataframe of wspr data
+    col :   str 
+        Dataframe column to convert
+
+    new_data_set : str
+        Name for the new data_set object.
+    comment : str
+        Comment describing the new data_set object.
+
+    Returns
+    -------
+    new_data_set_obj : data_set 
+        Copy of the original data_set with new name and history entry.
+
+    Written by Magdalina L. Moses, Fall 2016
+    """
+    df[col]=np.power(10,df[col]/10)
+
+    return df
+
 #def station_counts():
 #    tx  =   df['call_sign'].unique()
 #    rx  =   df['reciever'].unique()
