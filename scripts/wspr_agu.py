@@ -407,7 +407,7 @@ def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'
                 import ipdb; ipdb.set_trace()
                 col=col+1
                 row = 1
-            if row =1:
+            if row ==1:
                 inx=row+1
             else:
                 inx=row+col+3
@@ -564,6 +564,9 @@ def run_plot(df_filt, gridsq, sTime, eTime, note=None):
 if __name__ == '__main__':
     import datetime
     import os
+    import sys
+    import pickle
+    import copy 
 
     sTime       = datetime.datetime(2014,2,1)
     eTime       = datetime.datetime(2014,2,28)
@@ -580,10 +583,6 @@ if __name__ == '__main__':
     eTime       = datetime.datetime(2016,11,17,0)
     data_dir    = 'data/wspr' 
 
-#    df = wspr_lib.read_wspr(sTime,eTime,data_dir, overwrite=True)
-    df = wspr_lib.read_wspr(sTime,eTime,data_dir)
-    import ipdb; ipdb.set_trace()
-
     #Select only stations within two lat/lon areas (near VT and NJIT)
     #   K2MFF 'FN20vr' (40.7429,-74.1770)
     #   KM4EGE 'EM97tf' 
@@ -591,27 +590,56 @@ if __name__ == '__main__':
     #For simplicity in this proof-of-concept application, only chose stations in the following gridsquares:
     #   FN20 and FN21 (or FN30 and FN31)
     #   Need to select from wider area for southern station 
-       
-    #Redefine grid and filter by gridsquare
-#    df=wspr_lib.redefine_grid(df, precision=4)
-#    df=wspr_lib.filter_grid_pair(df, ['FN20', 'EM95'], redef=True, precision=4)
-
-#    #Find the pairs of stations with most links between them
-#    tx, num_tx, rx= find_pair(df, prefix='FN20', prefix2='EM95')
-
-#    #Found stations were KK4WJF and K3EA
-#    stations = ['KK4WJF', 'K3EA']
-#    stations = [tx[0], rx[0][0]]
-#    #Filter to only include links between two specified stations
-#    df_filt  =   wspr_lib.select_pair(df, stations)
-    
-    #Filter to only include links between stations in specific grid sqares
-    df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM98'], redef=True, precision=4) 
     gridsq=['FN20', 'EM98']
-#    fig=plot_wspr_snr(df[df.power==30])
 
-    #Plot figure 
-    fig=plot_wspr_snr(df_filt)
+    #Test Code for VM
+    print str(sys.argv[1])
+    if str(sys.argv[1]) == 'usePickle': 
+        import ipdb; ipdb.set_trace()
+        p_dir='data/wspr/filtered_wspr'
+        p_filename = 'wspr_'+gridsq[0]+'-'+gridsq[1]+'_'+sTime.strftime('%Y%m%d-')+eTime.strftime('%Y%m%d.p')
+        p_filepath = os.path.join(p_dir,p_filename)
+        print p_filepath
+        with open(p_filepath,'rb') as fl:
+            df_filt = pickle.load(fl)
+        import ipdb; ipdb.set_trace()
+
+    if str(sys.argv[1]) == 'useFile': 
+        p_dir='data/wspr/filtered_wspr'
+        p_filename = 'wspr_'+gridsq[0]+'-'+gridsq[1]+'_'+sTime.strftime('%Y%m%d-')+eTime.strftime('%Y%m%d.csv')
+        p_filepath = os.path.join(p_dir,p_filename)
+        print p_filepath
+        df_filt=pd.read_csv(p_filepath)
+        import ipdb; ipdb.set_trace()
+
+
+    #Original Code
+    elif str(sys.argv[1]) == None:
+        import ipdb; ipdb.set_trace()
+        #    df = wspr_lib.read_wspr(sTime,eTime,data_dir, overwrite=True)
+        df = wspr_lib.read_wspr(sTime,eTime,data_dir)
+        import ipdb; ipdb.set_trace()
+
+       
+        #Redefine grid and filter by gridsquare
+    #    df=wspr_lib.redefine_grid(df, precision=4)
+    #    df=wspr_lib.filter_grid_pair(df, ['FN20', 'EM95'], redef=True, precision=4)
+
+    #    #Find the pairs of stations with most links between them
+    #    tx, num_tx, rx= find_pair(df, prefix='FN20', prefix2='EM95')
+
+    #    #Found stations were KK4WJF and K3EA
+    #    stations = ['KK4WJF', 'K3EA']
+    #    stations = [tx[0], rx[0][0]]
+    #    #Filter to only include links between two specified stations
+    #    df_filt  =   wspr_lib.select_pair(df, stations)
+        
+        #Filter to only include links between stations in specific grid sqares
+        df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM98'], redef=True, precision=4) 
+    #    fig=plot_wspr_snr(df[df.power==30])
+        #Plot figure 
+        fig=plot_wspr_snr(df_filt)
+
     output_dir=os.path.join('output', 'wspr')
     output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%d%b%Y%H%MUT-')+eTime.strftime('%d%b%Y%H%MUT')+'.png')
     if not os.path.exists(output_path):
