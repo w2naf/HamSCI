@@ -110,7 +110,7 @@ def find_links(df,prefix='', prefix2=''):
 #        for this_rx in rx:
 #            tx
 
-def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est', legend=True):
+def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est', legend=True, raw_time=False):
     """Scatter Plot WSPR SNR reports
 
     Parameters
@@ -266,6 +266,12 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
 
             tx=this_group[this_group[loc_col]==location[0]]
             tx2=this_group[this_group[loc_col]==location[1]]
+            if raw_time:
+                time='timestamp'
+            else:
+                time = 'hour'
+            tx=tx.sort(time)
+            tx2=tx2.sort(time)
 
             if location[0]=='FN20':
                 marker1='*'
@@ -275,11 +281,14 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
                 marker1='o'
                 marker2='*'
                 lstyle2,lstyle1=lstyle
-            line1=ax.plot(tx.hour, tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
-            line2=ax.plot(tx2.hour, tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
+#            line1=ax.plot(tx.hour, tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
+#            line2=ax.plot(tx2.hour, tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
+        
+            line1=ax.plot(tx[time], tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
+            line2=ax.plot(tx2[time], tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
             if legend: ax.legend()
             plt.title('Between '+ str_location)
-            ax.set_ylabel('SNR')
+            ax.set_ylabel('SNR (W)')
         plt.close()
     ax.set_xlabel('Time (EST)')
     return fig
@@ -762,6 +771,8 @@ if __name__ == '__main__':
     #Plot figure 
 #    fig = plot_snr()
     fig=plot_wspr_snr(df_filt, by_pwr=False, legend=False)
+#    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=True)
+#    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=False, raw_time=True)
 
     df_avg = snr_avg(df_filt)
 #    fig=plot_avg_snr(df_avg, by_pwr=False, legend=False)

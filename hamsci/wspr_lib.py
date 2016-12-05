@@ -170,6 +170,48 @@ def find_hour(df):
     df['hour']=hours
     return df
 
+def find_hour(df, timebin=datetime.timedelta(minutes=30)):
+    hours=[]
+    for inx in range(0,len(df)):
+        hours.append(df['timestamp'].iloc[inx].hour)
+
+    df['hour']=hours
+    return df
+
+#def bin_time(df, timebin=datetime.timedelta(minutes=30)):
+#    binned=[]
+#
+#    df=df.sort('timestamp')
+#    grouped=df.groupby('hour')
+##    for hour in df.hour.unique():
+#    sTime=df['timestamp'].min()
+#    sTime=df['timestamp'].max()
+#    bin1=sTime
+#    bin2=sTime+timebin
+#    
+#    df['time']=df.timestamp.copy()
+#
+#    while bin1 < eTime:
+#        df_temp=df[np.logical_and(bin1<=df['timestamp'], df['timestamp']<bin2)]
+#        for inx in range(0,len(df)):
+#            hour=df['timestamp'].iloc[inx].hour
+#            minute=min
+#        hours.append(r)
+#        df['time']
+#
+#
+#
+#
+#        df[bin1<df.timestamp<
+#
+#        for
+#
+#    for inx in range(0,len(df)):
+#        hours.append(df['timestamp'].iloc[inx].hour)
+#
+#    df['hour']=hours
+#    return df
+
 def redefine_grid(df,precision=4):
     """Define the number of characters used in the grid square reporting
 
