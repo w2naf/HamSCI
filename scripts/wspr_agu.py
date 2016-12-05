@@ -110,7 +110,7 @@ def find_links(df,prefix='', prefix2=''):
 #        for this_rx in rx:
 #            tx
 
-def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'):
+def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est', legend=True):
     """Scatter Plot WSPR SNR reports
 
     Parameters
@@ -136,32 +136,32 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
         str_location    =  str_location + str(locality) + '_'
     str_location=str_location[0:len(str_location)-1]
 
-    #Convert to local time if desired
-    if x_unit == 'est':
-      #really should have eastern time
+#    #Convert to local time if desired
+#    if x_unit == 'est':
+#      #really should have eastern time
 #            for time in df.timestamp.unique():
-#                dt=datetime.timedelta(hours=4)
-#                df=df.replace({'timestamp':{time: time-dt}})
-
+##                dt=datetime.timedelta(hours=4)
+##                df=df.replace({'timestamp':{time: time-dt}})
 #                if np.datetime64(2016, 11,6) < time:
 #                    dt=datetime.timedelta(hours=5)
 #                else:             
 #                    dt=datetime.timedelta(hours=4)
 #                df=df.replace({'timestamp':{time: time-dt}})
-        #Get hours
-        try:
-            test = df['hour']
-            del test
-        except:
-            df=wspr_lib.find_hour(df)
-        for hour in df.hour.unique():
-            df=df.replace({'hour':{hour: (hour-4)}})
 
-        df=df.replace({'hour':{-5: (24-5)}})
-        df=df.replace({'hour':{-4: (24-4)}})
-        df=df.replace({'hour':{-3: (24-3)}})
-        df=df.replace({'hour':{-2: (24-2)}})
-        df=df.replace({'hour':{-1: (24-1)}})
+    #Get hours
+    try:
+        test = df['hour']
+        del test
+    except:
+        df=wspr_lib.find_hour(df)
+    for hour in df.hour.unique():
+        df=df.replace({'hour':{hour: (hour-4)}})
+
+    df=df.replace({'hour':{-5: (24-5)}})
+    df=df.replace({'hour':{-4: (24-4)}})
+    df=df.replace({'hour':{-3: (24-3)}})
+    df=df.replace({'hour':{-2: (24-2)}})
+    df=df.replace({'hour':{-1: (24-1)}})
 
     lstyle=('solid', 'dashed')
     xsize=8
@@ -235,7 +235,7 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
                     lstyle2,lstyle1=lstyle
                 line1=ax.plot(tx.hour, tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
                 line2=ax.plot(tx2.hour, tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
-                ax.legend()
+                if legend: ax.legend()
                 plt.title(str(pwr)+  ' W (between '+ str_location +')')
                 ax.set_ylabel('SNR')
             inx=inx+1
@@ -277,7 +277,7 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
                 lstyle2,lstyle1=lstyle
             line1=ax.plot(tx.hour, tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
             line2=ax.plot(tx2.hour, tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
-            ax.legend()
+            if legend: ax.legend()
             plt.title('Between '+ str_location)
             ax.set_ylabel('SNR')
         plt.close()
@@ -396,7 +396,7 @@ def wspr_avg(df, t_div='hour', param='snr', groups=['band', 'tx_pwr'], bining=No
     import ipdb; ipdb.set_trace()
     return df_avg
 
-def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'):
+def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est', legend=True):
     """Scatter Plot WSPR SNR reports
 
     Parameters
@@ -570,7 +570,7 @@ def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'
                 lstyle2,lstyle1=lstyle
             line1=ax.plot(tx.hour, tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
             line2=ax.plot(tx2.hour, tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
-#            ax.legend()
+            if legend: ax.legend()
             plt.title('Between '+ str_location)
             ax.set_ylabel('Average SNR (W)')
     
@@ -756,20 +756,26 @@ if __name__ == '__main__':
         
         #Filter to only include links between stations in specific grid sqares
         df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM98'], redef=True, precision=4) 
+
     #    fig=plot_wspr_snr(df[df.power==30])
     df_filt = wspr_lib.dB_to_Watt(df_filt)
     #Plot figure 
 #    fig = plot_snr()
-#    fig=plot_wspr_snr(df_filt, by_pwr=False)
+    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=False)
 
     df_avg = snr_avg(df_filt)
-    fig=plot_avg_snr(df_avg, by_pwr=False)
+#    fig=plot_avg_snr(df_avg, by_pwr=False, legend=False)
 
 #  Need to write code to plot raw times 
 
-
+    note = str(sys.argv[2])
+    if note:
+        output_file= 'wspr_test'+'_'+note+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
+    else:
+        output_file= 'wspr_test'+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
     output_dir=os.path.join('output', 'wspr')
-    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%d%b%Y%H%MUT-')+eTime.strftime('%d%b%Y%H%MUT')+'.png')
+    output_path=os.path.join(output_dir, output_file)
+#    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%d%b%Y%H%MUT-')+eTime.strftime('%d%b%Y%H%MUT')+'.png')
     if not os.path.exists(output_path):
          try:    # Create the output directory, but fail silently if it already exists
              os.makedirs(output_dir) 
