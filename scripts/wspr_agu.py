@@ -672,7 +672,8 @@ def run_plot(df_filt, gridsq, sTime, eTime, note=None):
     import os
     #Plot figure 
 #    fig=plot_wspr_snr(df_filt)
-    fig=plot_avg_snr(df_filt, by_pwr=False)
+#    fig=plot_avg_snr(df_filt, by_pwr=False)
+    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=False)
 
     output_dir=os.path.join('output', 'wspr')
     if note:
@@ -710,6 +711,10 @@ if __name__ == '__main__':
 
     sTime       = datetime.datetime(2016,11,1,0)
     eTime       = datetime.datetime(2016,11,17,0)
+
+    sTime       = datetime.datetime(2016,12,1,0)
+#    eTime       = datetime.datetime(2016,12,5,0)
+    eTime       = datetime.datetime(2016,12,6,0)
     data_dir    = 'data/wspr' 
 
     #Select only stations within two lat/lon areas (near VT and NJIT)
@@ -719,7 +724,7 @@ if __name__ == '__main__':
     #For simplicity in this proof-of-concept application, only chose stations in the following gridsquares:
     #   FN20 and FN21 (or FN30 and FN31)
     #   Need to select from wider area for southern station 
-    gridsq=['FN20', 'EM98']
+    gridsq=['FN20', 'EM97']
 
     #Test Code for VM
     print str(sys.argv[1])
@@ -743,11 +748,11 @@ if __name__ == '__main__':
         df_filt['timestamp']=df_filt.timestamp.astype(datetime.datetime)
 
     #Original Code
-    elif str(sys.argv[1]) == None:
-        import ipdb; ipdb.set_trace()
+    elif str(sys.argv[1]) == 'original':
+#        import ipdb; ipdb.set_trace()
         #    df = wspr_lib.read_wspr(sTime,eTime,data_dir, overwrite=True)
         df = wspr_lib.read_wspr(sTime,eTime,data_dir)
-        import ipdb; ipdb.set_trace()
+#        import ipdb; ipdb.set_trace()
 
        
         #Redefine grid and filter by gridsquare
@@ -764,28 +769,31 @@ if __name__ == '__main__':
     #    df_filt  =   wspr_lib.select_pair(df, stations)
         
         #Filter to only include links between stations in specific grid sqares
-        df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM98'], redef=True, precision=4) 
+        df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM97'], redef=True, precision=4) 
 
     #    fig=plot_wspr_snr(df[df.power==30])
     df_filt = wspr_lib.dB_to_Watt(df_filt)
     #Plot figure 
-#    fig = plot_snr()
-    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=False)
-#    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=True)
+#    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=False)
+    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=True)
 #    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=False, raw_time=True)
 
     df_avg = snr_avg(df_filt)
-#    fig=plot_avg_snr(df_avg, by_pwr=False, legend=False)
+    fig2=plot_avg_snr(df_avg, by_pwr=False, legend=False)
 
 #  Need to write code to plot raw times 
 
-    note = str(sys.argv[2])
-    if note:
-        output_file= 'wspr_test'+'_'+note+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
-    else:
-        output_file= 'wspr_test'+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
+    output_file= 'wspr_test'+'_'+'plot'+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
+    output_file2= 'wspr_test'+'_'+'avg'+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
+
+##    note = str(sys.argv[2])
+#    if note:
+#        output_file= 'wspr_test'+'_'+note+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
+#    else:
+#        output_file= 'wspr_test'+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
     output_dir=os.path.join('output', 'wspr')
     output_path=os.path.join(output_dir, output_file)
+    output_path2=os.path.join(output_dir, output_file2)
 #    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%d%b%Y%H%MUT-')+eTime.strftime('%d%b%Y%H%MUT')+'.png')
     if not os.path.exists(output_path):
          try:    # Create the output directory, but fail silently if it already exists
@@ -794,6 +802,8 @@ if __name__ == '__main__':
              pass
 
     fig.savefig(output_path)
+    fig2.savefig(output_path2)
+    import ipdb; ipdb.set_trace()
 
 #   #Plot second 
 #    df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM96']) 

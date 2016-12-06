@@ -129,6 +129,10 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr', overwrite=False):
 
 #        df = df[np.logical_and(df['timestamp'] >= sTime, df['timestamp'] < eTime)]
 
+
+#                sys.stdout.write('\r'+'\r'+'WSPR Data: '+std_sTime.strftime('%Y%m%d%H%M - ')+std_eTime.strftime('%Y%m%d%H%M')) 
+#                sys.stdout.write('# Entries: '+str(len(df['call_sign'])))
+#                sys.stdout.flush()
                 print 'WSPR Data: '+std_sTime.strftime('%Y%m%d%H%M - ')+std_eTime.strftime('%Y%m%d%H%M') 
                 print '# Entries: '+str(len(df['call_sign']))+'\n'
 #                    print '# Entries: '+str(len(df['call_sign'].unique())
