@@ -219,8 +219,8 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
                 color       = band_data.band_dict[band]['color']
                 label       = band_data.band_dict[band]['freq_name']
 
-                label1=label+ ' NJ to VA'
-                label2=label+ ' VA to NJ'
+                label1=label+ location[0] + ' to ' + location[1] #' NJ to VA'
+                label2=label+ location [1] + ' to ' + location[0] #' VA to NJ'
 
                 tx=this_group[this_group[loc_col]==location[0]]
                 tx2=this_group[this_group[loc_col]==location[1]]
@@ -261,8 +261,10 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
             color       = band_data.band_dict[band]['color']
             label       = band_data.band_dict[band]['freq_name']
 
-            label1=label+ ' NJ to VA'
-            label2=label+ ' VA to NJ'
+            label1=label+ location[0] + ' to ' + location[1] #' NJ to VA'
+            label2=label+ location [1] + ' to ' + location[0] #' VA to NJ'
+#            label1=label+ ' NJ to VA'
+#            label2=label+ ' VA to NJ'
 
             tx=this_group[this_group[loc_col]==location[0]]
             tx2=this_group[this_group[loc_col]==location[1]]
@@ -519,8 +521,10 @@ def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'
                 color       = band_data.band_dict[band]['color']
                 label       = band_data.band_dict[band]['freq_name']
 
-                label1=label+ ' NJ to VA'
-                label2=label+ ' VA to NJ'
+                label1=label+ location[0] + ' to ' + location[1] #' NJ to VA'
+                label2=label+ location [1] + ' to ' + location[0] #' VA to NJ'
+#                label1=label+ ' NJ to VA'
+#                label2=label+ ' VA to NJ'
 
                 tx=this_group[this_group[loc_col]==location[0]]
                 tx2=this_group[this_group[loc_col]==location[1]]
@@ -563,8 +567,10 @@ def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'
             color       = band_data.band_dict[band]['color']
             label       = band_data.band_dict[band]['freq_name']
 
-            label1=label+ ' NJ to VA'
-            label2=label+ ' VA to NJ'
+#            label1=label+ ' NJ to VA'
+#            label2=label+ ' VA to NJ'
+            label1=label+ location[0] + ' to ' + location[1] #' NJ to VA'
+            label2=label+ location [1] + ' to ' + location[0] #' VA to NJ'
 
             tx=this_group[this_group[loc_col]==location[0]]
             tx2=this_group[this_group[loc_col]==location[1]]
@@ -711,10 +717,12 @@ if __name__ == '__main__':
 
     sTime       = datetime.datetime(2016,11,1,0)
     eTime       = datetime.datetime(2016,11,17,0)
+    eTime       = datetime.datetime(2016,11,30,0)
+    eTime       = datetime.datetime(2016,12,1,0)
 
-    sTime       = datetime.datetime(2016,12,1,0)
-#    eTime       = datetime.datetime(2016,12,5,0)
-    eTime       = datetime.datetime(2016,12,6,0)
+#    sTime       = datetime.datetime(2016,12,1,0)
+##    eTime       = datetime.datetime(2016,12,5,0)
+#    eTime       = datetime.datetime(2016,12,6,0)
     data_dir    = 'data/wspr' 
 
     #Select only stations within two lat/lon areas (near VT and NJIT)
@@ -725,6 +733,7 @@ if __name__ == '__main__':
     #   FN20 and FN21 (or FN30 and FN31)
     #   Need to select from wider area for southern station 
     gridsq=['FN20', 'EM97']
+    gridsq=['FN20', 'EM98']
 
     #Test Code for VM
     print str(sys.argv[1])
@@ -753,12 +762,7 @@ if __name__ == '__main__':
         #    df = wspr_lib.read_wspr(sTime,eTime,data_dir, overwrite=True)
         df = wspr_lib.read_wspr(sTime,eTime,data_dir)
 #        import ipdb; ipdb.set_trace()
-
        
-        #Redefine grid and filter by gridsquare
-    #    df=wspr_lib.redefine_grid(df, precision=4)
-    #    df=wspr_lib.filter_grid_pair(df, ['FN20', 'EM95'], redef=True, precision=4)
-
     #    #Find the pairs of stations with most links between them
     #    tx, num_tx, rx= find_pair(df, prefix='FN20', prefix2='EM95')
 
@@ -768,8 +772,12 @@ if __name__ == '__main__':
     #    #Filter to only include links between two specified stations
     #    df_filt  =   wspr_lib.select_pair(df, stations)
         
-        #Filter to only include links between stations in specific grid sqares
-        df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM97'], redef=True, precision=4) 
+#        #Filter to only include links between stations in specific grid sqares
+#        df_filt=wspr_lib.filter_grid_pair(df, gridsq, redef=True, precision=4) 
+        #Redefine grid and filter by gridsquare
+        df=wspr_lib.redefine_grid(df, precision=4)
+        df_filt=wspr_lib.filter_grid_pair(df, gridsq, redef=False, precision=4)
+
 
     #    fig=plot_wspr_snr(df[df.power==30])
     df_filt = wspr_lib.dB_to_Watt(df_filt)
