@@ -241,6 +241,12 @@ def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est
             inx=inx+1
             plt.close()
     else:
+#        if by_grid == True:
+#            nx_plots=1
+#            ny_plots=2
+#        else:
+#            nx_plots=1
+#            ny_plots=1
         nx_plots=1
         ny_plots=1
         if fig==None: 
@@ -716,6 +722,7 @@ if __name__ == '__main__':
 #    eTime       = datetime.datetime(2016,10,31,23,59, 59)
 
     sTime       = datetime.datetime(2016,11,1,0)
+    sTime       = datetime.datetime(2016,10,1,0)
     eTime       = datetime.datetime(2016,11,2,0)
 #    eTime       = datetime.datetime(2016,11,17,0)
 #    eTime       = datetime.datetime(2016,11,30,0)
