@@ -32,7 +32,11 @@ def __add_months(sourcedate,months=1):
     day = min(sourcedate.day,calendar.monthrange(year,month)[1])
     return datetime.date(year,month,day)
 
-def read_wspr(sTime,eTime=None,data_dir='data/wspr', overwrite=False):
+def read_wspr(sTime,eTime=None,data_dir='data/wspr', overwrite=False, refresh=False):
+     #refresh is keyword to tell function to download data from wspr website even if already have it on computer (if downloaded data from current month once before and now it is updated)
+        #Will NOT overwrite pickle files!!!!
+
+     #overwrite is keyword to tell function to act as if no data files exist all ready
 
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
@@ -54,7 +58,7 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr', overwrite=False):
 
         ################################################################################
         # Make sure the data file exists.  If not, download it and open it.
-        if not os.path.exists(data_path) or overwrite:
+        if not os.path.exists(data_path) or overwrite or refresh:
              try:    # Create the output directory, but fail silently if it already exists
                  os.makedirs(data_dir) 
              except:
@@ -107,9 +111,14 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr', overwrite=False):
             if not os.path.exists(p_filepath) or overwrite:
                 # Load data into dataframe here. ###############################################
 #                if std_eTime.month != ref_month or hour_flag == 0:
-                # Reset flag to extract file to dataframe when looking at a new month
-                if std_eTime.month != ref_month:
+                # Reset flag to extract file to dataframe if looking at a new month 
+                if std_sTime.month != ref_month:
                     extract = True
+                    ref_month = std_sTime.month
+#                # Reset flag to extract file to dataframe if looking at a new month 
+#                if std_eTime.month != ref_month:
+#                    extract = True
+#                    ref_month = std_eTime.month
                 if extract: 
                     with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
     #                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
@@ -252,7 +261,7 @@ def redefine_grid(df,precision=4):
         sys.stdout.flush()
         i=i+1
 
-    print 'Converting '+str(len(df.rep_grid.unique()))+' reporter grids'
+    print '\nConverting '+str(len(df.rep_grid.unique()))+' reporter grids'
     i=1
     for rep_grid in df.rep_grid.unique():
         new_repgrid=rep_grid[0:precision]
@@ -269,20 +278,54 @@ def redefine_grid(df,precision=4):
 #            rep_grid=df['rep_grid'].iloc[inx][0:precision]  
 #            df['rep_grid'].iloc[inx]=df['rep_grid'].iloc[inx][0:precision]
 #            df['grid'].iloc[inx]=df['grid'].iloc[inx][0:precision]
-    print 'Grid Square Precision Task Complete'  
+    print '\nGrid Square Precision Task Complete'  
     return df
 
-def filter_grid_pair(df, gridsq, redef=False, precision=4):
-    """Filter to spots with stations only in specified two grid squares
+#def filter_grid_pair(df, gridsq, redef=False, precision=4):
+#    """Filter to spots with stations only in specified two grid squares
+#
+#    Parameters
+#    ----------
+#    df  :   dataframe
+#        Dataframe of wspr data
+#    gridsq  :   list or numpy.array of str
+#        Pair of grid squares to limit stations to 
+#    redef   :   boolean
+#        Flag to indicate if user would like to redefine grid before filtering
+#    precision   :   int
+#        Number of characters in grid square
+#
+#    new_data_set : str
+#        Name for the new data_set object.
+#    comment : str
+#        Comment describing the new data_set object.
+#
+#    Returns
+#    -------
+#    new_data_set_obj : data_set 
+#        Copy of the original data_set with new name and history entry.
+#
+#    Written by Magdalina L. Moses, Fall 2016
+#    """
+#    import wspr_lib
+#    if redef:
+#        df=wspr_lib.redefine_grid(df, precision=precision)
+#   
+#    df0=df[np.logical_and(df['grid']==gridsq[0], df['rep_grid']==gridsq[1])]
+#    df0=pd.concat([df0,df[np.logical_and(df['grid']==gridsq[1], df['rep_grid']==gridsq[0])]])
+#    return df0
+
+#Write new filter code that checks uniques callsigns and copies/concatenates ones matiching the filter into new dataframe
+#Combining the two current redefining and filtering functions
+def filter_grid_pair(df, gridsq, precision=4):
+    """Filter links to those between specified gridsquares
 
     Parameters
     ----------
     df  :   dataframe
-        Dataframe of wspr data
+        Dataframe to redefine gridsquares over
     gridsq  :   list or numpy.array of str
         Pair of grid squares to limit stations to 
-    redef   :   boolean
-        Flag to indicate if user would like to redefine grid before filtering
     precision   :   int
         Number of characters in grid square
 
@@ -298,16 +341,21 @@ def filter_grid_pair(df, gridsq, redef=False, precision=4):
 
     Written by Magdalina L. Moses, Fall 2016
     """
-    import wspr_lib
-    if redef:
-        df=wspr_lib.redefine_grid(df, precision=precision)
-   
-    df0=df[np.logical_and(df['grid']==gridsq[0], df['rep_grid']==gridsq[1])]
-    df0=pd.concat([df0,df[np.logical_and(df['grid']==gridsq[1], df['rep_grid']==gridsq[0])]])
-    return df0
+    import sys
 
-#Write new filter code that checks uniques callsigns and copies/concatenates ones matiching the filter into new dataframe
-#Combining the two current redefining and filtering functions
+    cond1=np.logical_and(df['grid'].str.startswith(gridsq[0]), df['rep_grid'].str.startswith(gridsq[1]))
+    cond2=np.logical_and(df['grid'].str.startswith(gridsq[1]), df['rep_grid'].str.startswith(gridsq[0]))
+
+    print 'Fetching Requested Entries...'
+
+#    cond = []
+#    for grid in gridsq:
+
+    df=df[np.logical_or(cond1, cond2)]
+
+    print 'Success!'
+
+    return df
 
 def calls_by_grid(df, prefix='', col='grid', col_call='call_sign'):
     calls=[]

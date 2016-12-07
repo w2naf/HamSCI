@@ -716,8 +716,9 @@ if __name__ == '__main__':
 #    eTime       = datetime.datetime(2016,10,31,23,59, 59)
 
     sTime       = datetime.datetime(2016,11,1,0)
-    eTime       = datetime.datetime(2016,11,17,0)
-    eTime       = datetime.datetime(2016,11,30,0)
+    eTime       = datetime.datetime(2016,11,2,0)
+#    eTime       = datetime.datetime(2016,11,17,0)
+#    eTime       = datetime.datetime(2016,11,30,0)
     eTime       = datetime.datetime(2016,12,1,0)
 
 #    sTime       = datetime.datetime(2016,12,1,0)
@@ -772,11 +773,13 @@ if __name__ == '__main__':
     #    #Filter to only include links between two specified stations
     #    df_filt  =   wspr_lib.select_pair(df, stations)
         
-#        #Filter to only include links between stations in specific grid sqares
+        #Filter to only include links between stations in specific grid sqares
 #        df_filt=wspr_lib.filter_grid_pair(df, gridsq, redef=True, precision=4) 
-        #Redefine grid and filter by gridsquare
-        df=wspr_lib.redefine_grid(df, precision=4)
-        df_filt=wspr_lib.filter_grid_pair(df, gridsq, redef=False, precision=4)
+        df_filt=wspr_lib.filter_grid_pair(df, gridsq)
+        df_filt=wspr_lib.redefine_grid(df_filt, precision=4)
+#        #Redefine grid and filter by gridsquare
+#        df=wspr_lib.redefine_grid(df, precision=4)
+#        df_filt=wspr_lib.filter_grid_pair(df, gridsq, redef=False, precision=4)
 
 
     #    fig=plot_wspr_snr(df[df.power==30])
