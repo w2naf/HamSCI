@@ -306,6 +306,9 @@ def filter_grid_pair(df, gridsq, redef=False, precision=4):
     df0=pd.concat([df0,df[np.logical_and(df['grid']==gridsq[1], df['rep_grid']==gridsq[0])]])
     return df0
 
+#Write new filter code that checks uniques callsigns and copies/concatenates ones matiching the filter into new dataframe
+#Combining the two current redefining and filtering functions
+
 def calls_by_grid(df, prefix='', col='grid', col_call='call_sign'):
     calls=[]
     precision = len(prefix)
