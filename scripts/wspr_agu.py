@@ -109,6 +109,24 @@ def find_links(df,prefix='', prefix2=''):
 #    for this_tx in tx:
 #        for this_rx in rx:
 #            tx
+def utc_to_est(df):
+    #Get hours
+    try:
+        test = df['hour']
+        del test
+    except:
+        df=wspr_lib.find_hour(df)
+
+    for hour in df.hour.unique():
+        df=df.replace({'hour':{hour: (hour-4)}})
+
+    df=df.replace({'hour':{-5: (24-5)}})
+    df=df.replace({'hour':{-4: (24-4)}})
+    df=df.replace({'hour':{-3: (24-3)}})
+    df=df.replace({'hour':{-2: (24-2)}})
+    df=df.replace({'hour':{-1: (24-1)}})
+
+    return df
 
 def plot_wspr_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est', legend=True, raw_time=False):
     """Scatter Plot WSPR SNR reports
@@ -312,6 +330,40 @@ def average_dB(df, col='snr'):
     avg_dB = 10*np.log10(avg)
     
     return avg_dB
+
+def bin_time(df, t_bin='hour', mybin=4):
+    """Bin times.
+
+    Parameters
+    ----------
+    t_bin : String
+        String that defines how to bin time. 
+        Allowed input:
+            'hour': bin by hour
+    my_bin : int
+
+    Returns
+    -------
+    new_data_set_obj : data_set 
+        Copy of the original data_set with new name and history entry.
+
+    Written by Magda Moses, Fall 2016
+    """
+
+    if t_bin=='hour':
+        try: 
+            x=df['hour']
+            del x
+        except:
+            df=time_div(df,t_div='hour')
+
+        #Create bins
+        bins=np.arange(0, 25, mybin)
+        #Copy dataframe
+        for inx in range(0,len(bins)-1):
+            for val in range(bins[inx]+1, bins[inx+1]): 
+                df=df.replace(to_replace={'hour': {val:bins[inx]}})
+    return df
 
 def snr_avg(df):
     mybands=[]
@@ -562,8 +614,18 @@ def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'
 
         df=df.sort(columns='hour')
         grouped=df.groupby('band')
+
+        if location[0]=='FN20':
+            marker1='*'
+            marker2='o'
+            lstyle1,lstyle2=lstyle
+        else:
+            marker1='o'
+            marker2='*'
+            lstyle2,lstyle1=lstyle
             
         ax         = fig.add_subplot(ny_plots, nx_plots,1)
+
         for band in band_list:
             try:
                 this_group = grouped.get_group(band)
@@ -581,16 +643,8 @@ def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'
             tx=this_group[this_group[loc_col]==location[0]]
             tx2=this_group[this_group[loc_col]==location[1]]
 
-            if location[0]=='FN20':
-                marker1='*'
-                marker2='o'
-                lstyle1,lstyle2=lstyle
-            else:
-                marker1='o'
-                marker2='*'
-                lstyle2,lstyle1=lstyle
-            line1=ax.plot(tx.hour, tx.snr,color=color, marker=marker1, label=label1, linestyle=lstyle1)
-            line2=ax.plot(tx2.hour, tx2.snr,color=color, marker=marker2, label=label2, linestyle=lstyle2)
+            line1=ax.plot(tx.hour, tx.snr, color=color, marker=marker1, label=label1, linestyle=lstyle1)
+            line2=ax.plot(tx2.hour, tx2.snr, color=color, marker=marker2, label=label2, linestyle=lstyle2)
             if legend: ax.legend()
             plt.title('Between '+ str_location)
             ax.set_ylabel('Average SNR (W)')
@@ -684,8 +738,8 @@ def run_plot(df_filt, gridsq, sTime, eTime, note=None):
     import os
     #Plot figure 
 #    fig=plot_wspr_snr(df_filt)
-#    fig=plot_avg_snr(df_filt, by_pwr=False)
-    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=False)
+    fig=plot_avg_snr(df_filt, by_pwr=False, legend=False)
+#    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=False)
 
     output_dir=os.path.join('output', 'wspr')
     if note:
@@ -701,6 +755,22 @@ def run_plot(df_filt, gridsq, sTime, eTime, note=None):
 
     fig.savefig(output_path)
     return fig
+
+def store_data(sTime, eTime, gridsq, df=None, data_dir='data/wspr'):
+    import pickle
+    import os 
+
+    if df == None:
+        df=wspr_lib.read_wspr(sTime, eTime, data_dir)
+    df_filt = wspr_lib.filter_grid_pair(df, gridsq)
+#    df_filt = wspr_lib.find_hour(df)
+
+    p_dir='output/wspr/'
+    p_filename = 'filtered_wspr_data_'+sTime.strftime('%Y%m')+'_'+gridsq[1]+'.csv'
+    p_filepath = os.path.join(p_dir,p_filename)
+    df_filt.to_pickle(p_filepath)
+
+    return df
 
 
 if __name__ == '__main__':
@@ -742,6 +812,14 @@ if __name__ == '__main__':
     #   Need to select from wider area for southern station 
     gridsq=['FN20', 'EM97']
     gridsq=['FN20', 'EM98']
+    
+
+    if str(sys.argv[1]) == 'archive': 
+        df=store_data(sTime, eTime, gridsq)
+        gridsq=['FN20', 'EM97']
+        df=store_data(sTime, eTime, gridsq, df=df)
+        import ipdb; ipdb.set_trace()
+
 
     #Test Code for VM
     print str(sys.argv[1])
@@ -755,13 +833,30 @@ if __name__ == '__main__':
             df_filt = pickle.load(fl)
         import ipdb; ipdb.set_trace()
 
-    if str(sys.argv[1]) == 'useFile': 
+    elif str(sys.argv[1]) == 'useFile': 
         p_dir='data/wspr/filtered_wspr'
         p_filename = 'wspr_'+gridsq[0]+'-'+gridsq[1]+'_'+sTime.strftime('%Y%m%d-')+eTime.strftime('%Y%m%d.csv')
         p_filepath = os.path.join(p_dir,p_filename)
         print p_filepath
         df_filt=pd.read_csv(p_filepath)
         import ipdb; ipdb.set_trace()
+        df_filt['timestamp']=df_filt.timestamp.astype(datetime.datetime)
+
+    #For two month long data runs
+    elif str(sys.argv[1]) == 'useCSV': 
+        p_dir='output/wspr/'
+        p_filename = 'filtered_wspr_data_'+sTime.strftime('%Y%m')+'_'+gridsq[1]+'.csv'
+        midTime=datetime.datetime(sTime.year, sTime.month+1, sTime.day)
+        p_filename2 = 'filtered_wspr_data_'+midTime.strftime('%Y%m')+'_'+gridsq[1]+'.csv'
+        p_filepath = os.path.join(p_dir,p_filename)
+        p_filepath2 = os.path.join(p_dir,p_filename2)
+        print p_filepath
+        print p_filepath2
+        df_filt=pd.read_csv(p_filepath)
+        df_filt = pd.concat([df_filt,pd.read_csv(p_filepath2)])
+        import ipdb; ipdb.set_trace()
+        df_filt=wspr_lib.redefine_grid(df_filt, precision=4)
+        df_filt=wspr_lib.find_hour(df_filt)
         df_filt['timestamp']=df_filt.timestamp.astype(datetime.datetime)
 
     #Original Code
@@ -791,6 +886,7 @@ if __name__ == '__main__':
 
     #    fig=plot_wspr_snr(df[df.power==30])
     df_filt = wspr_lib.dB_to_Watt(df_filt)
+
     #Plot figure 
 #    fig=plot_wspr_snr(df_filt, by_pwr=False, legend=False)
     fig=plot_wspr_snr(df_filt, by_pwr=False, legend=True)
