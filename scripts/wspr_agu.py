@@ -733,6 +733,148 @@ def plot_avg_snr(df, fig=None, ax=None, by_pwr=True, loc_col='grid',x_unit='est'
 #        ax.set_xlabel('Time (EST')
 #        return fig
 
+#def time_barplot(df,plt_band=3,fig=None,ax=None, x_param='time', y_param='avg', x_unit='utc', lw=1,xsize=8, ysize=4,legend='all', by_band=False, by_pwr=False, by_op=True, subset=None):
+#    """Plot parameters over time. 
+#
+#    Parameters
+#    ----------
+#    df : Pandas Dataframe
+#        Data_set object to plot.
+#    fig : matplotlib.plt.figure()
+#        Figure to plot on.
+#    ax : Axis 
+#        Axis for plotting. 
+#    x_param : str
+#        String specifying how to bin times for plotting. 
+#        Options: 
+#            'hour' : (Default) Plots tims by recorded hour or most recent hour recorded for that day in the dataframe.
+#            'time' : (NOT working properly!!!!) Interpolates missing times in dataframe and plots time contionously. 
+#    y_param : str
+#        String specifying y parameter to plot.  
+#
+#    comment : str
+#        Comment describing the new data_set object.
+#
+#    Returns
+#    -------
+#    new_data_set_obj : data_set 
+#        Copy of the original data_set with new name and history entry.
+#
+#    Written by Magda Moses, Fall 2016
+#    """
+#
+#    from matplotlib import pyplot as plt
+#    import pandas as pd
+#    
+#
+##    #Get column names for parameters
+##    x_param1, y_param1, x_param2, y_param2=sounder_lib.param_names(x_param,y_param)
+##    
+##    if y_param == 'snr':
+##        try: 
+##            df.snr1_avg.head(1)
+##        except:
+##            df=snr_calc(df)
+##
+##    #Get axis labels and plot title
+##    if x_unit == 'utc':
+##        ylabel=param_prop[y_param]['name']
+##        xlabel=param_prop['time_'+x_unit]['name']
+##        fig_title=ylabel+' vs. '+xlabel
+##        ylabel=ylabel+' ('+param_prop[y_param]['units']+')'
+##        xlabel=xlabel+' ('+param_prop['time_'+x_unit]['units']+')'
+##    else:
+##        ylabel=param_prop[y_param]['name']
+##        xlabel=param_prop['time_lt']['name']
+##        fig_title=ylabel+' vs. '+xlabel
+##        ylabel=ylabel+' ('+param_prop[y_param]['units']+')'
+##        xlabel=xlabel+' ('+param_prop['time_lt']['units']+')'
+##
+##    if x_unit == 'est':
+##        df1=sounder_lib.manip_time(df[df.date<datetime.date(2016, 11,6)],t_delta=4)
+##        df2=sounder_lib.manip_time(df[df.date>datetime.date(2016, 11,6)],t_delta=5)
+##        del df
+##        df=pd.concat([df1,df2])
+##
+##    #divide times for plotting
+##    if x_param == 'time': df=time_div(df, t_div='interp')
+##    if x_param == 'hour': df=time_div(df,t_div='hour')
+##
+##    #select subset (if applicable)
+##    if subset != None:
+##        val, col = subset
+##        df = sounder_lib.select_subset(df,col, val)
+##
+##    #Get data from band plotting   
+##    df=sounder_lib.get_band(df)
+##    df=df[df.band==plt_band]
+##
+##    xlim,ylim=sounder_lib.get_extrema(df,x_param,y_param)
+#
+#    if by_op == True:
+#        nx_plots = 2
+#    else:
+#        nx_plots=1
+#
+##    df2=df.copy()
+###    df=sounder_lib.tavg_param(df,bining=('hour',4))
+#
+#    if by_pwr == True:
+#        df = df.dropna(subset=['tx_pwr'])
+#
+#        srt         = df.sort(['tx_pwr'])
+##        srt         = df.sort(['tx1_pwr'])
+#    #    grouped     = srt.groupby('band1')
+#        grouped     = df.groupby('tx_pwr')
+#
+#        ny_plots=len(grouped)
+##        ny_plots=len(grouped)+1
+#
+##        if fig == None: fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+#        fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+#        inx=1
+#        
+#        for pwr in df.tx_pwr.unique(): 
+#            this_group=grouped.get_group(pwr)
+#
+#            lstyle=('solid', 'dashed')
+#
+#            ax         = fig.add_subplot(ny_plots, nx_plots,inx)
+#            ax=ax.bar(df.hour, df.snr[df['grid']=location[1], width=.9*4)
+##            #Set standard x and y limits on axes
+##            if ylim[0] != 0:
+##                plt.ylim((ylim[0]-5,ylim[1]+5))
+##            else:
+##                plt.ylim((ylim[0],ylim[1]+5))
+###            plt.xlim((xlim[0],xlim[1]))
+##            xlim=[8,24]
+##            plt.xlim((xlim[0],xlim[1]))
+#            #Set Title and Axis labels
+##            plt.title(str(pwr)+' W')
+#            plt.title(location[1]+' to '+ location [0] + ' on ' + band_dict[plt_band]['name'])
+#            plt.ylabel(ylabel)
+#            if inx==ny_plots*nx_plots-1: plt.xlabel(xlabel)
+#            ax2         = fig.add_subplot(ny_plots, nx_plots,inx+1)
+#            ax2=ax2.bar(df.hour, df.snr[df['grid']=location[0], width=.9*4)
+#
+##            #Set standard x and y limits on axes
+##            if ylim[0] != 0:
+##                plt.ylim((ylim[0]-5,ylim[1]+5))
+##            else:
+##                plt.ylim((ylim[0],ylim[1]+5))
+##            plt.xlim((xlim[0],xlim[1]))
+#            #Set Title and Axis labels
+#            plt.title(location[0]+' to '+ location [1] + ' on ' + band_dict[plt_band]['name'])
+#            plt.ylabel(ylabel)
+#
+#            inx=inx+2
+#            
+#        plt.xlabel(xlabel)
+##        ax.set_xlabel(xlabel)
+##        ax2.set_xlabel(xlabel)
+#    
+#    return fig, ax, ax2
+
 def run_plot(df_filt, gridsq, sTime, eTime, note=None):
     import datetime
     import os
@@ -766,11 +908,44 @@ def store_data(sTime, eTime, gridsq, df=None, data_dir='data/wspr'):
 #    df_filt = wspr_lib.find_hour(df)
 
     p_dir='output/wspr/'
-    p_filename = 'filtered_wspr_data_'+sTime.strftime('%Y%m')+'_'+gridsq[1]+'.csv'
+    p_filename = 'filtered_wspr_data_'+sTime.strftime('%Y%m')+'_'+gridsq[1]+'.p'
     p_filepath = os.path.join(p_dir,p_filename)
     df_filt.to_pickle(p_filepath)
 
     return df
+
+def wspr_barplot(df,gridsq,plt_band=7):
+
+    df=utc_to_est(df)
+    df=bin_time(df)
+    df=snr_avg(df)
+    import ipdb; ipdb.set_trace()
+    
+    xsize=8
+    ysize=5
+    nx_plots=2
+    ny_plots=1
+    fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+    cond=np.logical_and(df.band==plt_band, df.grid==gridsq[0])
+    cond2=np.logical_and(df.band==plt_band, df.grid==gridsq[1])
+    
+    ax=fig.add_subplot(1,2,1)
+    ax=ax.bar(df.hour[cond], df.snr[cond], width=.9*4)
+    import ipdb; ipdb.set_trace()
+    plt.title(gridsq[0]+' to '+gridsq[1])
+    plt.xlim((0,24))
+    plt.ylim((0,df.snr.max()))
+    plt.xlabel('Local Time (EST)')
+    plt.ylabel('Average SNR (Watts)')
+
+    ax2=fig.add_subplot(1,2,2)
+    ax2=ax2.bar(df.hour[cond2], df.snr[cond2], width=.9*4)
+    plt.title(gridsq[1]+' to '+gridsq[0])
+    plt.ylim((0,df.snr.max()))
+    plt.xlim((0,24))
+    plt.xlabel('Local Time (EST)')
+    plt.ylabel('Average SNR (Watts)')
+    return fig
 
 
 if __name__ == '__main__':
@@ -824,13 +999,17 @@ if __name__ == '__main__':
     #Test Code for VM
     print str(sys.argv[1])
     if str(sys.argv[1]) == 'usePickle': 
-        import ipdb; ipdb.set_trace()
-        p_dir='data/wspr/filtered_wspr'
-        p_filename = 'wspr_'+gridsq[0]+'-'+gridsq[1]+'_'+sTime.strftime('%Y%m%d-')+eTime.strftime('%Y%m%d.p')
+        p_dir='output/wspr/'
+        p_filename = 'filtered_wspr_data_'+sTime.strftime('%Y%m')+'_'+gridsq[1]+'.p'
         p_filepath = os.path.join(p_dir,p_filename)
-        print p_filepath
-        with open(p_filepath,'rb') as fl:
-            df_filt = pickle.load(fl)
+        df_filt=pd.read_pickle(p_filepath)
+#        import ipdb; ipdb.set_trace()
+#        p_dir='data/wspr/filtered_wspr'
+#        p_filename = 'wspr_'+gridsq[0]+'-'+gridsq[1]+'_'+sTime.strftime('%Y%m%d-')+eTime.strftime('%Y%m%d.p')
+#        p_filepath = os.path.join(p_dir,p_filename)
+#        print p_filepath
+#        with open(p_filepath,'rb') as fl:
+#            df_filt = pickle.load(fl)
         import ipdb; ipdb.set_trace()
 
     elif str(sys.argv[1]) == 'useFile': 
@@ -895,10 +1074,16 @@ if __name__ == '__main__':
     df_avg = snr_avg(df_filt)
     fig2=plot_avg_snr(df_avg, by_pwr=False, legend=False)
 
+    df_bavg = bin_time(df_filt) 
+    df_bavg = snr_avg(df_bavg)
+    df_bavg = df_bavg[df_bavg.band !=10]
+    fig3=plot_avg_snr(df_bavg, by_pwr=False, legend=False)
+
 #  Need to write code to plot raw times 
 
     output_file= 'wspr_test'+'_'+'plot'+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
     output_file2= 'wspr_test'+'_'+'avg'+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
+    output_file3= 'wspr_test'+'_'+'bin_avg'+'_'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%Y%m%d_')+eTime.strftime('%Y%m%d')+'.png'
 
 ##    note = str(sys.argv[2])
 #    if note:
@@ -908,6 +1093,7 @@ if __name__ == '__main__':
     output_dir=os.path.join('output', 'wspr')
     output_path=os.path.join(output_dir, output_file)
     output_path2=os.path.join(output_dir, output_file2)
+    output_path3=os.path.join(output_dir, output_file3)
 #    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'_'+sTime.strftime('%d%b%Y%H%MUT-')+eTime.strftime('%d%b%Y%H%MUT')+'.png')
     if not os.path.exists(output_path):
          try:    # Create the output directory, but fail silently if it already exists
@@ -917,13 +1103,5 @@ if __name__ == '__main__':
 
     fig.savefig(output_path)
     fig2.savefig(output_path2)
-    import ipdb; ipdb.set_trace()
-
-#   #Plot second 
-#    df_filt=wspr_lib.filter_grid_pair(df, ['FN20', 'EM96']) 
-#    gridsq=['FN20', 'EM96']
-#    fig=plot_wspr_snr(df_filt)
-#    output_dir=os.path.join('output', 'wspr')
-#    output_path=os.path.join(output_dir, 'wspr_test'+gridsq[0]+'_'+gridsq[1]+'.png')
-#    fig.savefig(output_path)
+    fig3.savefig(output_path3)
     import ipdb; ipdb.set_trace()
