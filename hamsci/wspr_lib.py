@@ -297,7 +297,7 @@ class WsprDataSet(object):
 #
 #        return self
 
-    def dxde_gs_latlon_data(self,pos='center'):
+    def dxde_gs_latlon(self,pos='center'):
         """
         Determine latitde and longitude data for dx and de stations from the reported gridsquares for the data.
 
