@@ -296,6 +296,22 @@ class WsprDataSet(object):
 #        precs       = np.array([len(x) for x in gss.ravel()])
 #
 #        return self
+
+    def dxde_gs_latlon_data(self,pos='center'):
+        """
+        Determine latitde and longitude data for dx and de stations from the reported gridsquares for the data.
+
+        The method appends de and dx lat and lons to current dataframe and does
+        NOT create a new dataset.
+        """
+        print 'Finding dx lat/lon....'
+        self.latlon_data(position=pos,grid_key='grid',loc_key=['dx_lat','dx_lon'])
+        print 'Finding de lat/lon....'
+        self.latlon_data(position=pos,
+            grid_key='rep_grid',loc_key=['de_lat','de_lon'])
+
+        return self
+        
     def latlon_data(self,position='center',
             grid_key='grid',loc_key=['dx_lat','dx_lon']):
         """
@@ -311,8 +327,8 @@ class WsprDataSet(object):
         df.loc[:,loc_key[0]]           = lat 
         df.loc[:,loc_key[1]]           = lon 
 
-        df.loc[:,grid_key]          = gridsquare.latlon2gridsquare(lats,lons,
-                                        precision=gridsquare_precision)
+#        df.loc[:,grid_key]          = gridsquare.latlon2gridsquare(lats,lons,
+#                                        precision=gridsquare_precision)
         md['position']  = position
 
         return self
