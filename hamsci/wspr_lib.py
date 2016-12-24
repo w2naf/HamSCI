@@ -197,6 +197,9 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr', overwrite=False, refresh=Fa
 
         df['timestamp']=df['timestamp'].astype(datetime.datetime)
 
+#        # Calculate Band
+#        df.loc[:,'band']        = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
+
         return df
 
 class WsprObject(object):
@@ -296,6 +299,129 @@ class WsprDataSet(object):
 #        precs       = np.array([len(x) for x in gss.ravel()])
 #
 #        return self
+    def calc_reflection_points(self,reflection_type='sp_mid',**kwargs):
+        """
+        Determine ionospheric reflection points of RBN data.
+
+        reflection_type: Method used to determine reflection points. Choice of:
+            'sp_mid':
+                Determine the path reflection point using a simple great circle
+                midpoint method.
+
+            'miller2015':
+                Determine the path reflection points using the multipoint scheme described
+                by Miller et al. [2015].
+
+        **kwargs:
+            'new_data_set':
+                Name of new RbnObj data set. Defaults to reflection_type.
+            'comment':
+                Comment for new data set. Default varies based on reflection type.
+            'hgt':
+                Assumed height [km] used in the 'miller2015' model. Defaults to 300 km.
+        """
+        if reflection_type == 'sp_mid':
+            new_data_set            = kwargs.get('new_data_set',reflection_type)
+            comment                 = kwargs.get('comment','Great Circle Midpoints')
+            new_ds                  = self.copy(new_data_set,comment)
+            df                      = new_ds.df
+            md                      = new_ds.metadata
+            lat1, lon1              = df['de_lat'],df['de_lon']
+            lat2, lon2              = df['dx_lat'],df['dx_lon']
+            refl_lat, refl_lon      = geopack.midpoint(lat1,lon1,lat2,lon2)
+            df.loc[:,'refl_lat']    = refl_lat
+            df.loc[:,'refl_lon']    = refl_lon
+
+            md['reflection_type']   = 'sp_mid'
+            new_ds.set_active()
+            return new_ds
+
+        if reflection_type == 'miller2015':
+            try:
+                df['R_gc'] 
+            except:
+                self.calc_greatCircle_dist()
+            new_data_set            = kwargs.get('new_data_set',reflection_type)
+            comment                 = kwargs.get('comment','Miller et al 2015 Reflection Points')
+            hgt                     = kwargs.get('hgt',300.)
+
+            new_ds                  = self.copy(new_data_set,comment)
+            df                      = new_ds.df
+            md                      = new_ds.metadata
+
+            R_gc                    = df['R_gc']
+        
+            azm                     = geopack.greatCircleAzm(df.de_lat,df.de_lon,df.dx_lat,df.dx_lon)
+
+            lbd_gc_max              = 2*np.arccos( Re/(Re+hgt) )
+            R_F_gc_max              = Re*lbd_gc_max
+            N_hops                  = np.array(np.ceil(R_gc/R_F_gc_max),dtype=np.int)
+            R_gc_mean               = R_gc/N_hops
+
+            df['azm']               = azm
+            df['N_hops']            = N_hops
+            df['R_gc_mean']         = R_gc_mean
+
+            new_df_list = []
+            for inx,row in df.iterrows():
+#                print ''
+#                print '<<<<<---------->>>>>'
+#                print 'DE: {!s} DX: {!s}'.format(row.callsign,row.dx)
+#                print '        Old DE: {:f}, {:f}; DX: {:f},{:f}'.format(row.de_lat,row.de_lon,row.dx_lat,row.dx_lon)
+                for hop in range(row.N_hops):
+                    new_row = row.copy()
+
+                    new_de  = geopack.greatCircleMove(row.de_lat,row.de_lon,(hop+0)*row.R_gc_mean,row.azm)
+                    new_dx  = geopack.greatCircleMove(row.de_lat,row.de_lon,(hop+1)*row.R_gc_mean,row.azm)
+                    
+                    new_row['de_lat']   = float(new_de[0])
+                    new_row['de_lon']   = float(new_de[1])
+                    new_row['dx_lat']   = float(new_dx[0])
+                    new_row['dx_lon']   = float(new_dx[1])
+                    new_row['hop_nr']   = hop
+
+                    new_df_list.append(new_row)
+
+#                    print '({:02d}/{:02d}) New DE: {:f}, {:f}; DX: {:f},{:f}'.format(
+#                            row.N_hops,hop,new_row.de_lat,new_row.de_lon,new_row.dx_lat,new_row.dx_lon)
+
+            new_df                      = pd.DataFrame(new_df_list)
+            new_ds.df                   = new_df
+
+            lat1, lon1                  = new_df['de_lat'],new_df['de_lon']
+            lat2, lon2                  = new_df['dx_lat'],new_df['dx_lon']
+            refl_lat, refl_lon          = geopack.midpoint(lat1,lon1,lat2,lon2)
+            new_df.loc[:,'refl_lat']    = refl_lat
+            new_df.loc[:,'refl_lon']    = refl_lon
+
+            md['reflection_type']       = 'miller2015'
+            new_ds.set_active()
+            return new_ds
+        else:
+            raise Exception('Error: Invalid reflection_type Input!')
+
+    def calc_greatCircle_dist(self):
+        """
+        Determine great circle distance from lat and lons
+
+        The method appends de and dx lat and lons to current dataframe and does
+        NOT create a new dataset.
+        """
+#        try self.metadata['position']:
+        try: 
+            self.df['dx_lat'].head()
+        except:
+            self.dxde_gs_latlon()
+#
+#        except:
+#            self.dxde_gs_latlon()
+
+        df                          = self.df
+        # Calculate Total Great Circle Path Distance
+        lat1, lon1          = df['de_lat'],df['de_lon']
+        lat2, lon2          = df['dx_lat'],df['dx_lon']
+        R_gc                = Re*geopack.greatCircleDist(lat1,lon1,lat2,lon2)
+        df.loc[:,'R_gc']    = R_gc
 
     def dxde_gs_latlon(self,pos='center'):
         """
@@ -309,6 +435,7 @@ class WsprDataSet(object):
         print 'Finding de lat/lon....'
         self.latlon_data(position=pos,
             grid_key='rep_grid',loc_key=['de_lat','de_lon'])
+        print 'Found all lat/lon!'
 
         return self
         
