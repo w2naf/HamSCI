@@ -208,7 +208,8 @@ class WsprObject(object):
     reflection_type:        Model used to determine reflection point in ionopshere.
                             'sp_mid': spherical midpoint
 
-        Written by Magdalina Moses and Nathaniel A. Frissell, Summer 2016 and Winter 2016/17
+        Written by Magdalina Moses, Fall 2016 
+        (Based on code written by Nathaniel A. Frissell, Summer 2016)
     """
     def __init__(self,sTime=None,eTime=None,data_dir='data/wspr',
             overwrite=False,refresh=False,qrz_call=None,qrz_passwd=None,comment='Raw Data',df=None,
@@ -429,6 +430,7 @@ class WsprDataSet(object):
 
         The method appends de and dx lat and lons to current dataframe and does
         NOT create a new dataset.
+        Written by Magdalina Moses, Fall 2016
         """
         print 'Finding dx lat/lon....'
         self.latlon_data(position=pos,grid_key='grid',loc_key=['dx_lat','dx_lon'])
