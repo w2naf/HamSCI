@@ -99,7 +99,11 @@ if __name__ == '__main__':
     sTime = datetime.datetime(2016,11,1)
     wspr_obj = wspr_lib.WsprObject(sTime) 
     wspr_obj.active.dxde_gs_latlon()
-    wspr_map = wspr_lib.WsprMap(wspr_obj)
+#    wspr_obj.active.
+
+    map_sTime = sTime
+    map_eTime = map_sTime + datetime.timedelta(minutes = 15)
+    wspr_map = wspr_lib.WsprMap(wspr_obj, sTime = map_sTime, eTime = map_eTime)
 
 #    sTime = datetime.datetime(2016,11,1)
 #    wspr_obj = wspr_lib.WsprObject(sTime) 

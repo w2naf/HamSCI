@@ -336,8 +336,14 @@ class WsprObject(object):
                 data_sets.append(item)
         data_sets.sort()
         return data_sets
-    
 
+def make_list(item):
+    """ Force something to be iterable. """
+    item = np.array(item)
+    if item.shape == ():
+        item.shape = (1,)
+
+    return item.tolist()
 
 #    def geo_loc_stats(self,verbose=True):
 #        # Figure out how many records properly geolocated.
@@ -398,6 +404,49 @@ class WsprDataSet(object):
 #        new_ds.df   = new_ds.df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
 #        new_ds.set_active()
 #        return new_ds
+
+#    def select_interval(self, sTime, eTime=None, dt = 5, replace = False): 
+#        """
+#        Parameters
+#        ----------
+#        sTime : datetime
+#            
+#        eTime : datetime
+#
+#        dt : int
+#            Interval in minutes.
+#        replace : boolean
+#            Replace current  create new data set object
+#
+#        Returns
+#        -------
+#        new_data_set_obj : data_set
+#            New data set object  
+#
+#        Written by Magdalina Moses, January 2017
+#        """
+#
+#        if sTime is None:
+#            sTime = ds.df['timestamp'].min()
+#        if eTime is None:
+#            eTime = ds.df['timestamp'].max()
+#
+#        if replace == True:
+#            new_data_set=sTime.strftime('%Y%b%d_%H%M- ')+eTime=
+#            new_ds  = self.copy(new_data_set, comment)
+#            new_ds.df   = new_ds.df.rename(columns = {'timestamp' : 'date', 'reporter' : 'callsign', 'call_sign' : 'dx'})
+#            new_ds.df['freq'] = new_ds.df['freq']*1000.
+#            new_ds.set_active()
+##        elif replace == False:
+#
+#
+#        new_data_set=sTime.strftime(
+#        new_ds  = self.copy(new_data_set, comment)
+#        new_ds.df   = new_ds.df.rename(columns = {'timestamp' : 'date', 'reporter' : 'callsign', 'call_sign' : 'dx'})
+#        new_ds.df['freq'] = new_ds.df['freq']*1000.
+#        new_ds.set_active()
+
+
 
     def rbn_compatible(self,new_data_set='rbncomp',comment='RBN code compatible WSPR data'):
         """
@@ -728,6 +777,8 @@ class WsprMap(object):
             sTime = ds.df['timestamp'].min()
         if eTime is None:
             eTime = ds.df['timestamp'].max()
+        print sTime.strftime('%Y%h%d %H%M')
+        print eTime.strftime('%Y%h%d %H%M')
 
         self.metadata['sTime'] = sTime
         self.metadata['eTime'] = eTime
