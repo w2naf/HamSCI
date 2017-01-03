@@ -41,6 +41,92 @@ from matplotlib.collections import PolyCollection
 
 import gridsquare
 
+def cc255(color):
+    cc = matplotlib.colors.ColorConverter().to_rgb
+    trip = np.array(cc(color))*255
+    trip = [int(x) for x in trip]
+    return tuple(trip)
+
+class BandData(object):
+    def __init__(self,cmap='HFRadio',vmin=0.,vmax=30.):
+        if cmap == 'HFRadio':
+            self.cmap   = self.hf_cmap(vmin=vmin,vmax=vmax)
+        else:
+            self.cmap   = matplotlib.cm.get_cmap(cmap)
+
+        self.norm   = matplotlib.colors.Normalize(vmin=vmin,vmax=vmax)
+
+        # Set up a dictionary which identifies which bands we want and some plotting attributes for each band
+        bands   = []
+        bands.append((28.0,  '10 m'))
+        bands.append((21.0,  '15 m'))
+        bands.append((18.0,  '17 m'))
+        bands.append((14.0,  '20 m'))
+        bands.append((10.0,  '30 m'))
+        bands.append(( 7.0,  '40 m'))
+        bands.append(( 3.5,  '80 m'))
+        bands.append(( 1.8, '160 m'))
+
+        self.__gen_band_dict__(bands)
+
+    def __gen_band_dict__(self,bands):
+        dct = {}
+        for freq,name in bands:
+            key = int(freq)
+            tmp = {}
+            tmp['name']         = name
+            tmp['freq']         = freq
+            tmp['freq_name']    = '{:g} MHz'.format(freq)
+            tmp['color']        = self.get_rgba(freq)
+            dct[key]            = tmp
+        self.band_dict          = dct
+
+    def get_rgba(self,freq):
+        nrm     = self.norm(freq)
+        rgba    = self.cmap(nrm)
+        return rgba
+
+    def hf_cmap(self,name='HFRadio',vmin=0.,vmax=30.):
+	fc = {}
+        my_cdict = fc
+	fc[ 0.0] = (  0,   0,   0)
+	fc[ 1.8] = cc255('violet')
+	fc[ 3.0] = cc255('blue')
+	fc[ 8.0] = cc255('aqua')
+	fc[10.0] = cc255('green')
+	fc[13.0] = cc255('green')
+	fc[17.0] = cc255('yellow')
+	fc[21.0] = cc255('orange')
+	fc[28.0] = cc255('red')
+	fc[30.0] = cc255('red')
+        cmap    = cdict_to_cmap(fc,name=name,vmin=vmin,vmax=vmax)
+	return cmap
+
+def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
+	norm = matplotlib.colors.Normalize(vmin=vmin,vmax=vmax)
+	
+	red   = []
+	green = []
+	blue  = []
+	
+	keys = cdict.keys()
+	keys.sort()
+	
+	for x in keys:
+	    r,g,b, = cdict[x]
+	    x = norm(x)
+	    r = r/255.
+	    g = g/255.
+	    b = b/255.
+	    red.append(   (x, r, r))
+	    green.append( (x, g, g))
+	    blue.append(  (x, b, b))
+	cdict = {'red'   : tuple(red),
+		 'green' : tuple(green),
+		 'blue'  : tuple(blue)}
+	cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
+	return cmap
+
 
 #Now we import libraries that are not "built-in" to python.
 def __add_months(sourcedate,months=1):
@@ -250,6 +336,8 @@ class WsprObject(object):
                 data_sets.append(item)
         data_sets.sort()
         return data_sets
+    
+
 
 #    def geo_loc_stats(self,verbose=True):
 #        # Figure out how many records properly geolocated.
@@ -258,6 +346,7 @@ class WsprObject(object):
 #        total_count_map = len(rbn_obj.DS000.df)
 #        good_pct_map    = float(good_count_map) / total_count_map * 100.
 #        print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
+
 class WsprDataSet(object):
     def __init__(self, df, comment=None, parent=0, **metadata):
         self.parent = parent
@@ -300,6 +389,28 @@ class WsprDataSet(object):
 #        precs       = np.array([len(x) for x in gss.ravel()])
 #
 #        return self
+
+#    def dropna(self,new_data_set='dropna',comment='Remove Non-Geolocated Spots'):
+#        """
+#        Removes spots that do not have geolocated Transmitters or Recievers.
+#        """
+#        new_ds      = self.copy(new_data_set,comment)
+#        new_ds.df   = new_ds.df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+#        new_ds.set_active()
+#        return new_ds
+
+    def rbn_compatible(self,new_data_set='rbncomp',comment='RBN code compatible WSPR data'):
+        """
+        Rename certain columns of wspr object dataframe and convert units to be compatible with a rbn object
+
+        Written by : Magdalina Moses January 2017
+        """
+        new_ds      = self.copy(new_data_set,comment)
+        new_ds.df   = new_ds.df.rename(columns = {'timestamp' : 'date', 'reporter' : 'callsign', 'call_sign' : 'dx'})
+        new_ds.df['freq'] = new_ds.df['freq']*1000.
+        new_ds.set_active()
+        return new_ds
+
     def calc_reflection_points(self,reflection_type='sp_mid',**kwargs):
         """
         Determine ionospheric reflection points of RBN data.
@@ -462,6 +573,19 @@ class WsprDataSet(object):
 
         return self
 
+    def get_band_group(self,band):
+        if not hasattr(self,'band_groups'):
+            srt                 = self.df.sort_values(by=['band','timestamp'])
+            self.band_groups    = srt.groupby('band')
+
+        try:
+            this_group  = self.band_groups.get_group(band)
+        except:
+            this_group  = None
+
+        return this_group
+
+
     def apply(self,function,arg_dct,new_data_set=None,comment=None):
         if new_data_set is None:
             new_data_set = function.func_name
@@ -548,6 +672,255 @@ class WsprDataSet(object):
         keys.sort()
         for key in keys:
             print key,self.history[key]
+
+
+class WsprMap(object):
+    """Plot WSPRNet data.
+
+    **Args**:
+        * **[sTime]**: datetime.datetime object for start of plotting.
+        * **[eTime]**: datetime.datetime object for end of plotting.
+        * **[ymin]**: Y-Axis minimum limit
+        * **[ymax]**: Y-Axis maximum limit
+        * **[legendSize]**: Character size of the legend
+
+    **Returns**:
+        * **fig**:      matplotlib figure object that was plotted to
+
+    .. note::
+        If a matplotlib figure currently exists, it will be modified by this routine.  If not, a new one will be created.
+
+    Written by Magdalina Moses Jan 2017 and Nathaniel Frissell 2014 Sept 06
+    """
+    def __init__(self,wspr_obj,data_set='active',data_set_all='DS001_dropna',ax=None,
+            sTime=None,eTime=None,
+            llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None,
+            coastline_color='0.65',coastline_zorder=10,
+            nightshade=False,solar_zenith=True,solar_zenith_dict={},
+            band_data=None,default_plot=True):
+
+#        rcp = matplotlib.rcParams
+#        rcp['axes.titlesize']     = 'large'
+#        rcp['axes.titleweight']   = 'bold'
+
+        self.wspr_obj        = wspr_obj
+        self.data_set       = getattr(wspr_obj,data_set)
+#        self.data_set_all   = getattr(wspr_obj,data_set_all)
+
+        ds                  = self.data_set
+        ds_md               = self.data_set.metadata
+
+        llb = {}
+        if llcrnrlon is None:
+           llb['llcrnrlon'] = ds_md.get('llcrnrlon',-180.) 
+        if llcrnrlat is None:
+           llb['llcrnrlat'] = ds_md.get('llcrnrlat', -90.) 
+        if urcrnrlon is None:
+           llb['urcrnrlon'] = ds_md.get('urcrnrlon', 180.) 
+        if urcrnrlat is None:
+           llb['urcrnrlat'] = ds_md.get('urcrnrlat',  90.) 
+
+        self.latlon_bnds    = llb
+
+        self.metadata       = {}
+
+        if sTime is None:
+            sTime = ds.df['timestamp'].min()
+        if eTime is None:
+            eTime = ds.df['timestamp'].max()
+
+        self.metadata['sTime'] = sTime
+        self.metadata['eTime'] = eTime
+
+        if band_data is None:
+            band_data = BandData()
+
+        self.band_data = band_data
+
+        self.__setup_map__(ax=ax,
+                coastline_color=coastline_color,coastline_zorder=coastline_zorder,
+                **self.latlon_bnds)
+        if nightshade:
+            self.plot_nightshade()
+
+        if solar_zenith:
+            self.plot_solar_zenith_angle(**solar_zenith_dict)
+
+        if default_plot:
+            self.default_plot(plot_de=True, plot_midpoints = False, plot_paths = True, plot_ncdxf = True, plot_stats=False, plot_legend=False)
+
+    def default_plot(self,
+            plot_de         = True,
+            plot_midpoints  = True,
+            plot_paths      = False,
+            plot_ncdxf      = False,
+            plot_stats      = True,
+            plot_legend     = True):
+
+        if plot_de:
+            self.plot_de()
+        if plot_midpoints:
+            self.plot_midpoints()
+        if plot_paths:
+            self.plot_paths()
+        if plot_ncdxf:
+            self.plot_ncdxf()
+#        if plot_stats:
+#            self.plot_link_stats()
+#        if plot_legend:
+#            self.plot_band_legend(band_data=self.band_data)
+
+    def __setup_map__(self,ax=None,llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,
+            coastline_color='0.65',coastline_zorder=10):
+        sTime       = self.metadata['sTime']
+        eTime       = self.metadata['eTime']
+
+        if ax is None:
+            fig     = plt.figure(figsize=(10,6))
+            ax      = fig.add_subplot(111)
+        else:
+            fig     = ax.get_figure()
+
+        m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection='cyl',ax=ax)
+
+        title = sTime.strftime('WSPR: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
+#        fontdict = {'size':matplotlib.rcParams['axes.titlesize'],'weight':matplotlib.rcParams['axes.titleweight']}
+        fontdict = {'size':matplotlib.rcParams['axes.titlesize'],'weight':'bold'}
+        ax.text(0.5,1.075,title,fontdict=fontdict,transform=ax.transAxes,ha='center')
+
+        rft         = self.data_set.metadata.get('reflection_type')
+        if rft == 'sp_mid':
+            rft = 'Great Circle Midpoints'
+        elif rft == 'miller2015':
+            rft = 'Multihop'
+
+        subtitle    = 'Reflection Type: {}'.format(rft)
+        fontdict    = {'weight':'normal'}
+        ax.text(0.5,1.025,subtitle,fontdict=fontdict,transform=ax.transAxes,ha='center')
+
+        # draw parallels and meridians.
+        # This is now done in the gridsquare overlay section...
+#        m.drawparallels(np.arange( -90., 91.,45.),color='k',labels=[False,True,True,False])
+#        m.drawmeridians(np.arange(-180.,181.,45.),color='k',labels=[True,False,False,True])
+        m.drawcoastlines(color=coastline_color,zorder=coastline_zorder)
+        m.drawmapboundary(fill_color='w')
+
+        # Expose select object
+        self.fig        = fig
+        self.ax         = ax
+        self.m          = m
+
+    def center_time(self):
+        # Overlay nighttime terminator.
+        sTime       = self.metadata['sTime']
+        eTime       = self.metadata['eTime']
+        half_time   = datetime.timedelta(seconds= ((eTime - sTime).total_seconds()/2.) )
+        return (sTime + half_time)
+        
+    def plot_nightshade(self,color='0.60'):
+        self.m.nightshade(self.center_time(),color=color)
+        
+    def plot_solar_zenith_angle(self,
+            cmap=None,vmin=0,vmax=180,plot_colorbar=False):
+
+        if cmap is None:
+            fc = {}
+            fc[vmin] = cc255('white')
+            fc[82]   = cc255('white')
+            fc[90]   = cc255('0.80')
+            fc[95]   = cc255('0.70')
+            fc[vmax] = cc255('0.30')
+            cmap = cdict_to_cmap(fc,name='term_cmap',vmin=vmin,vmax=vmax)
+
+        llcrnrlat   = self.latlon_bnds['llcrnrlat'] 
+        llcrnrlon   = self.latlon_bnds['llcrnrlon'] 
+        urcrnrlat   = self.latlon_bnds['urcrnrlat'] 
+        urcrnrlon   = self.latlon_bnds['urcrnrlon'] 
+        plot_mTime  = self.center_time()
+
+        nlons       = int((urcrnrlon-llcrnrlon)*4)
+        nlats       = int((urcrnrlat-llcrnrlat)*4)
+        lats, lons, zen, term = davitpy.utils.calcTerminator( plot_mTime,
+                [llcrnrlat,urcrnrlat], [llcrnrlon,urcrnrlon],nlats=nlats,nlons=nlons )
+
+        x,y         = self.m(lons,lats)
+        xx,yy       = np.meshgrid(x,y)
+        z           = zen[:-1,:-1]
+        Zm          = np.ma.masked_where(np.isnan(z),z)
+
+        pcoll       = self.ax.pcolor(xx,yy,Zm,cmap=cmap,vmin=vmin,vmax=vmax)
+
+        if plot_colorbar:
+            term_cbar   = plt.colorbar(pcoll,label='Solar Zenith Angle',shrink=0.8)
+
+    def plot_de(self,s=25,zorder=150):
+        m       = self.m
+        df      = self.data_set.df
+
+        # Only plot the actual receiver location.
+        if 'hop_nr' in df.keys():
+            tf  = df.hop_nr == 0
+            df  = df[tf]
+
+        rx      = m.scatter(df['de_lon'],df['de_lat'],
+                s=s,zorder=zorder,**de_prop)
+
+    def plot_midpoints(self,s=20):
+        band_data   = self.band_data
+        band_list   = band_data.band_dict.keys()
+        band_list.sort(reverse=True)
+        for band in band_list:
+            this_group = self.data_set.get_band_group(band)
+            if this_group is None: continue
+
+            color = band_data.band_dict[band]['color']
+            label = band_data.band_dict[band]['name']
+
+            mid   = self.m.scatter(this_group['refl_lon'],this_group['refl_lat'],
+                    alpha=0.50,edgecolors='none',facecolors=color,color=color,s=s,zorder=100)
+
+    def plot_paths(self,band_data=None):
+        m   = self.m
+        if band_data is None:
+            band_data = BandData()
+
+        band_list   = band_data.band_dict.keys()
+        band_list.sort(reverse=True)
+        for band in band_list:
+            this_group = self.data_set.get_band_group(band)
+            if this_group is None: continue
+
+            color = band_data.band_dict[band]['color']
+            label = band_data.band_dict[band]['name']
+
+            for index,row in this_group.iterrows():
+                #Yay stack overflow! - http://stackoverflow.com/questions/13888566/python-basemap-drawgreatcircle-function
+                de_lat  = row['de_lat']
+                de_lon  = row['de_lon']
+                dx_lat  = row['dx_lat']
+                dx_lon  = row['dx_lon']
+                line, = m.drawgreatcircle(dx_lon,dx_lat,de_lon,de_lat,color=color)
+
+                p = line.get_path()
+                # find the index which crosses the dateline (the delta is large)
+                cut_point = np.where(np.abs(np.diff(p.vertices[:, 0])) > 200)[0]
+                if cut_point:
+                    cut_point = cut_point[0]
+
+                    # create new vertices with a nan inbetween and set those as the path's vertices
+                    new_verts = np.concatenate(
+                                               [p.vertices[:cut_point, :], 
+                                                [[np.nan, np.nan]], 
+                                                p.vertices[cut_point+1:, :]]
+                                               )
+                    p.codes = None
+                    p.vertices = new_verts
+
+    def plot_ncdxf(self):
+        dxf_df = pd.DataFrame.from_csv('ncdxf.csv')
+        self.m.scatter(dxf_df['lon'],dxf_df['lat'],s=dxf_plot_size,**dxf_prop)
+
+#End of WSPR Class Code
 
 def find_hour(df):
     hours=[]

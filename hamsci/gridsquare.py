@@ -139,6 +139,8 @@ def gridsquare2latlon(gridsquare,position='center'):
         gs_center.fill('mm')
         gss[cond] = np.char.add(gss[cond], gs_center)
 #        raise Exception('All input grid squares must be of same precision.')
+#        num_fill = len(gs_center)
+#    else: num_fill=None
 
     # Seed values for field calculation.
     base               = 18.
@@ -211,7 +213,11 @@ def gridsquare2latlon(gridsquare,position='center'):
 
     ret_lat     = ret_lat.reshape(gs_0.shape)
     ret_lon     = ret_lon.reshape(gs_0.shape)
-
+    
+#    if num_fill:
+#        return ret_lat,ret_lon,num_fill
+#    else:
+#        return ret_lat,ret_lon
     return ret_lat,ret_lon
 
 
