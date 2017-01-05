@@ -96,14 +96,17 @@ from hamsci import handling
 
 if __name__ == '__main__':
     multiproc   = False 
-    sTime = datetime.datetime(2016,11,1)
-    wspr_obj = wspr_lib.WsprObject(sTime) 
+    sTime = datetime.datetime(2016,11,1,0)
+    eTime = datetime.datetime(2016,11,1,1)
+    term=[True, False]
+    dt=15
+
+    wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
     wspr_obj.active.dxde_gs_latlon()
-#    wspr_obj.active.
 
     map_sTime = sTime
-    map_eTime = map_sTime + datetime.timedelta(minutes = 15)
-    wspr_map = wspr_lib.WsprMap(wspr_obj, sTime = map_sTime, eTime = map_eTime)
+    map_eTime = map_sTime + datetime.timedelta(minutes = dt)
+    wspr_map = wspr_lib.WsprMap(wspr_obj, sTime = map_sTime, eTime = map_eTime, nightshade=term[0], solar_zenith=term[1])
 
 #    sTime = datetime.datetime(2016,11,1)
 #    wspr_obj = wspr_lib.WsprObject(sTime) 

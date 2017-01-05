@@ -414,7 +414,7 @@ class WsprDataSet(object):
         eTime : datetime
 
         dt : int
-            Interval in minutes
+            Interval in minutes
 
         replace : boolean
             Specifies when to replace current data set object
