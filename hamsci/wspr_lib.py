@@ -405,48 +405,72 @@ class WsprDataSet(object):
 #        new_ds.set_active()
 #        return new_ds
 
-#    def select_interval(self, sTime, eTime=None, dt = 5, replace = False): 
-#        """
-#        Parameters
-#        ----------
-#        sTime : datetime
-#            
-#        eTime : datetime
-#
-#        dt : int
-#            Interval in minutes.
-#        replace : boolean
-#            Replace current  create new data set object
-#
-#        Returns
-#        -------
-#        new_data_set_obj : data_set
-#            New data set object  
-#
-#        Written by Magdalina Moses, January 2017
-#        """
-#
-#        if sTime is None:
-#            sTime = ds.df['timestamp'].min()
-#        if eTime is None:
-#            eTime = ds.df['timestamp'].max()
-#
-#        if replace == True:
-#            new_data_set=sTime.strftime('%Y%b%d_%H%M- ')+eTime=
-#            new_ds  = self.copy(new_data_set, comment)
-#            new_ds.df   = new_ds.df.rename(columns = {'timestamp' : 'date', 'reporter' : 'callsign', 'call_sign' : 'dx'})
-#            new_ds.df['freq'] = new_ds.df['freq']*1000.
+    def select_interval(self, sTime, eTime=None, dt = 5, replace = False, new_data_set = None, comment = None): 
+        """
+        Parameters
+        ----------
+        sTime : datetime
+            
+        eTime : datetime
+
+        dt : int
+            Interval in minutes
+
+        replace : boolean
+            Specifies when to replace current data set object
+                True: Replace current data set object 
+                False: (Default) Create new data set object 
+        new_data_set : string
+            Name of new WsprObj data set. (Default to date with start and end times)
+        comment : 
+            Comment for new WsprObj data set. (Default to date with interval in minutes.)
+
+        Returns
+        -------
+        new_data_set_obj : data_set
+            New data set object  
+
+        Written by Magdalina Moses, January 2017
+        """
+
+        if sTime is None:
+            sTime = ds.df['timestamp'].min()
+        if eTime is None:
+            eTime = sTime + datetime.timedelta(minutes = dt) 
+
+        if not replace:
+            if new_data_set is None: new_data_set=sTime.strftime('%Y%m%d_%H%M_')+eTime.strftime('%H%M')
+            else: new_data_set = new_data_set
+            if comment is None: comment = sTime.strftime('%Y%m%d')+' WSPR data over '+str(dt)+'minutes'
+            else: comment = comment 
+            new_ds  = self.copy(new_data_set, comment)
+            df = new_ds.df
+#        else: new_ds = self
+#        else: df = self.df
+        else:
+            new_ds = self
+            df = self.df
+
+        #Replace following with code to check dataset name and decide
+        try: 
+            df['timestamp']
+            time = 'timestamp'
+        except:
+            time = 'date'
+        # Clip to times need
+        print time
+        df = df[np.logical_and(df[time]>=sTime, df[time] < eTime)]
+        new_ds.df = df
+        if not replace: new_ds.set_active()
+#        if not replace: 
+#            new_ds.df = df
 #            new_ds.set_active()
-##        elif replace == False:
+#            return new_ds
 #
-#
-#        new_data_set=sTime.strftime(
-#        new_ds  = self.copy(new_data_set, comment)
-#        new_ds.df   = new_ds.df.rename(columns = {'timestamp' : 'date', 'reporter' : 'callsign', 'call_sign' : 'dx'})
-#        new_ds.df['freq'] = new_ds.df['freq']*1000.
-#        new_ds.set_active()
-
-
+#        else: 
+#            self.df = df
+#            return self
+        return new_ds
 
     def rbn_compatible(self,new_data_set='rbncomp',comment='RBN code compatible WSPR data'):
         """
