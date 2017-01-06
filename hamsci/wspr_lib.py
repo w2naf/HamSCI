@@ -646,6 +646,16 @@ class WsprDataSet(object):
 
         return self
 
+    def latlon_filt(self,lat_col='refl_lat',lon_col='refl_lon',
+        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
+
+        arg_dct = {'lat_col':lat_col,'lon_col':lon_col,'llcrnrlon':llcrnrlon,'llcrnrlat':llcrnrlat,'urcrnrlon':urcrnrlon,'urcrnrlat':urcrnrlat}
+        new_ds  = self.apply(latlon_filt,arg_dct)
+
+        md_up   = {'llcrnrlon':llcrnrlon,'llcrnrlat':llcrnrlat,'urcrnrlon':urcrnrlon,'urcrnrlat':urcrnrlat}
+        new_ds.metadata.update(md_up)
+        return new_ds
+
     def get_band_group(self,band):
         if not hasattr(self,'band_groups'):
             srt                 = self.df.sort_values(by=['band','timestamp'])
@@ -746,6 +756,99 @@ class WsprDataSet(object):
         for key in keys:
             print key,self.history[key]
 
+def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
+        title=None,bbox_to_anchor=None,wspr_rx=True,ncdxf=False,ncol=None,band_data=None):
+
+    if fig is None: fig = plt.gcf() 
+
+    if band_data is None:
+        band_data = BandData()
+
+    handles = []
+    labels  = []
+
+    # Force freqs to go low to high regardless of plotting order.
+    band_list   = band_data.band_dict.keys()
+    band_list.sort()
+    for band in band_list:
+        color = band_data.band_dict[band]['color']
+        label = band_data.band_dict[band]['freq_name']
+        handles.append(mpatches.Patch(color=color,label=label))
+        labels.append(label)
+
+    fig_tmp = plt.figure()
+    ax_tmp = fig_tmp.add_subplot(111)
+    ax_tmp.set_visible(False)
+    if wspr_rx:
+        scat = ax_tmp.scatter(0,0,s=50,**de_prop)
+        labels.append('WSPR Receiver')
+        handles.append(scat)
+    if ncdxf:
+        scat = ax_tmp.scatter(0,0,s=dxf_leg_size,**dxf_prop)
+        labels.append('NCDXF Beacon')
+        handles.append(scat)
+
+    if ncol is None:
+        ncol = len(labels)
+    
+    legend = fig.legend(handles,labels,ncol=ncol,loc=loc,markerscale=markerscale,prop=prop,title=title,bbox_to_anchor=bbox_to_anchor,scatterpoints=1)
+    return legend
+
+def latlon_filt(df,lat_col='refl_lat',lon_col='refl_lon',
+        llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
+    """
+    Return an WSPR Dataframe with entries only within a specified lat/lon box.
+    """
+    df          = df.copy()
+    lat_tf      = np.logical_and(df[lat_col] >= llcrnrlat,df[lat_col] < urcrnrlat)
+    lon_tf      = np.logical_and(df[lon_col] >= llcrnrlon,df[lon_col] < urcrnrlon)
+    tf          = np.logical_and(lat_tf,lon_tf)
+    df          = df[tf]
+    return df
+
+def select_interval(df, sTime=None, eTime=None, dt = 5, replace = False, new_data_set = None, comment = None): 
+    """
+    Parameters
+    ----------
+    sTime : datetime
+        
+    eTime : datetime
+
+    dt : int
+        Interval in minutes
+
+    replace : boolean
+        Specifies when to replace current data set object
+            True: Replace current data set object 
+            False: (Default) Create new data set object 
+    new_data_set : string
+        Name of new WsprObj data set. (Default to date with start and end times)
+    comment : 
+        Comment for new WsprObj data set. (Default to date with interval in minutes.)
+
+    Returns
+    -------
+    new_data_set_obj : data_set
+        New data set object  
+
+    Written by Magdalina Moses, January 2017
+    """
+
+    if sTime is None:
+        sTime = df['timestamp'].min()
+    if eTime is None:
+        eTime = sTime + datetime.timedelta(minutes = dt) 
+
+    #Replace following with code to check dataset name and decide
+    try: 
+        df['timestamp']
+        time = 'timestamp'
+    except:
+        time = 'date'
+    # Clip to times need
+    print time
+    df = df[np.logical_and(df[time]>=sTime, df[time] < eTime)]
+    return df
 
 class WsprMap(object):
     """Plot WSPRNet data.
@@ -775,13 +878,29 @@ class WsprMap(object):
 #        rcp = matplotlib.rcParams
 #        rcp['axes.titlesize']     = 'large'
 #        rcp['axes.titleweight']   = 'bold'
-
         self.wspr_obj        = wspr_obj
         self.data_set       = getattr(wspr_obj,data_set)
 #        self.data_set_all   = getattr(wspr_obj,data_set_all)
 
         ds                  = self.data_set
         ds_md               = self.data_set.metadata
+
+        if sTime is None:
+            sTime = ds.df['timestamp'].min()
+        if eTime is None:
+            eTime = ds.df['timestamp'].max()
+        else:
+#            wspr_obj = wspr_obj.active.select_interval(sTime, eTime, replace = True)
+            wspr_obj.active.select_interval(sTime, eTime)
+            print sTime.strftime('%Y%h%d %H%M')
+            print eTime.strftime('%Y%h%d %H%M')
+
+            self.wspr_obj        = wspr_obj
+            self.data_set       = getattr(wspr_obj,data_set)
+    #        self.data_set_all   = getattr(wspr_obj,data_set_all)
+
+            ds                  = self.data_set
+            ds_md               = self.data_set.metadata
 
         llb = {}
         if llcrnrlon is None:
@@ -796,13 +915,6 @@ class WsprMap(object):
         self.latlon_bnds    = llb
 
         self.metadata       = {}
-
-        if sTime is None:
-            sTime = ds.df['timestamp'].min()
-        if eTime is None:
-            eTime = ds.df['timestamp'].max()
-        print sTime.strftime('%Y%h%d %H%M')
-        print eTime.strftime('%Y%h%d %H%M')
 
         self.metadata['sTime'] = sTime
         self.metadata['eTime'] = eTime
@@ -822,7 +934,7 @@ class WsprMap(object):
             self.plot_solar_zenith_angle(**solar_zenith_dict)
 
         if default_plot:
-            self.default_plot(plot_de=True, plot_midpoints = False, plot_paths = True, plot_ncdxf = True, plot_stats=False, plot_legend=False)
+            self.default_plot(plot_de=True, plot_midpoints = False, plot_paths = True, plot_ncdxf = True, plot_stats=False)
 
     def default_plot(self,
             plot_de         = True,
@@ -842,8 +954,8 @@ class WsprMap(object):
             self.plot_ncdxf()
 #        if plot_stats:
 #            self.plot_link_stats()
-#        if plot_legend:
-#            self.plot_band_legend(band_data=self.band_data)
+        if plot_legend:
+            self.plot_band_legend(band_data=self.band_data)
 
     def __setup_map__(self,ax=None,llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,
             coastline_color='0.65',coastline_zorder=10):
@@ -994,6 +1106,9 @@ class WsprMap(object):
     def plot_ncdxf(self):
         dxf_df = pd.DataFrame.from_csv('ncdxf.csv')
         self.m.scatter(dxf_df['lon'],dxf_df['lat'],s=dxf_plot_size,**dxf_prop)
+
+    def plot_band_legend(self,*args,**kw_args):
+        band_legend(*args,**kw_args)
 
 #End of WSPR Class Code
 
