@@ -136,20 +136,58 @@ def wspr_map(sTime,eTime,
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
 
+def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
+    dct_list    = []
+    this_sTime  = sTime
+    while this_sTime+integration_time < eTime:
+        this_eTime   = this_sTime + integration_time
+
+        tmp = {}
+        tmp['sTime']    = this_sTime
+        tmp['eTime']    = this_eTime
+        tmp.update(kw_args)
+        dct_list.append(tmp)
+
+        this_sTime      = this_sTime + interval_time
+
+    return dct_list
+
+def wspr_map_dct_wrapper(run_dct):
+    wspr_map(**run_dct)
+
 if __name__ == '__main__':
     multiproc   = False 
     sTime = datetime.datetime(2016,11,1,0)
     eTime = datetime.datetime(2016,11,1,1)
     term=[True, False]
     dt=15
+    integration_time    = datetime.timedelta(minutes=15)
+    interval_time       = datetime.timedelta(minutes=60)
 
-    wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
-    wspr_obj.active.dxde_gs_latlon()
+    dct = {}
+    dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
 
     map_sTime = sTime
     map_eTime = map_sTime + datetime.timedelta(minutes = dt)
-    wspr_map = wspr_lib.WsprMap(wspr_obj, sTime = map_sTime, eTime = map_eTime, nightshade=term[0], solar_zenith=term[1])
+
+    run_list            = gen_map_run_list(map_sTime,map_eTime,integration_time,interval_time,**dct)
+    if multiproc:
+        pool = multiprocessing.Pool()
+        pool.map(wspr_map_dct_wrapper,run_list)
+        pool.close()
+        pool.join()
+    else:
+        for run_dct in run_list:
+            wspr_map_dct_wrapper(run_dct)
+
     wspr_map.fig.savefig('output/wspr/WSPR_map_test.png')
+
+#    mymap = wspr_map(sTime = map_sTime, eTime = map_eTime)
+#    wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
+#    wspr_obj.active.dxde_gs_latlon()
+#
+#    wspr_map = wspr_lib.WsprMap(wspr_obj, sTime = map_sTime, eTime = map_eTime, nightshade=term[0], solar_zenith=term[1])
+#    wspr_map.fig.savefig('output/wspr/WSPR_map_test.png')
 
 #    dct = {}
 #    dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
