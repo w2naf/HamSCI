@@ -81,6 +81,24 @@ class BandData(object):
         rgba    = self.cmap(nrm)
         return rgba
 
+    def get_hex(self,freq):
+
+        freq    = np.array(freq)
+        shape   = freq.shape
+        if shape == ():
+            freq.shape = (1,)
+
+        freq    = freq.flatten()
+        rgbas   = self.get_rgba(freq)
+
+        hexes   = []
+        for rgba in rgbas:
+            hexes.append(matplotlib.colors.rgb2hex(rgba))
+
+        hexes   = np.array(hexes)
+        hexes.shape = shape
+        return hexes
+
     def hf_cmap(self,name='HFRadio',vmin=0.,vmax=30.):
 	fc = {}
         my_cdict = fc
@@ -582,7 +600,35 @@ class RbnDataSet(object):
         md['gridsquare_precision']  = gridsquare_precision
 
         return self
-        
+
+    def get_grid_data_color(self,key='foF2',encoding='rgba',vals=None):
+        """
+        Return standard color values for gridsquared data.
+
+        Currently, only foF2 is supported.
+
+        Parameters:
+            key: dataframe column key for self.grid_square
+
+            encoding: 'rgba' or 'hex'
+
+            vals: values to use instead of supplied data. Useful for getting
+                colorbar values
+
+        Returns:
+            Array of encoded colors.
+        """
+        if vals is None:
+            vals    = self.grid_data[key]
+
+        band_data   = BandData()
+        if encoding == 'rgba':
+            colors  = band_data.get_rgba(vals)
+        elif encoding == 'hex':
+            colors  = band_data.get_hex(vals)
+
+        return colors
+
     def filter_calls(self,calls,call_type='de',new_data_set='filter_calls',comment=None):
         """
         Filter data frame for specific calls.
