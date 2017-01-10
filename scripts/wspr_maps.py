@@ -98,6 +98,70 @@ def loop_info(map_sTime,map_eTime):
 #                p.codes = None
 #                p.vertices = new_verts
 
+def wspr_path_map(sTime,eTime,
+        filt_type='sp_mid',  llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
+        call_filt_de = None, call_filt_dx = None,
+        output_dir = 'output'):
+
+    latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
+
+    filename    = 'wspr_map-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(sTime,eTime)
+    filepath    = os.path.join(output_dir,filename)
+
+    li          = loop_info(sTime,eTime)
+
+    wspr_obj     = wspr_lib.WsprObject(sTime,eTime)
+    wspr_obj.active.dxde_gs_latlon()
+    if filt_type == 'sp_mid' or filt_type == 'miller2015':
+        lat_col='refl_lat'
+        lon_col='refl_lon'
+        wspr_obj.active.calc_reflection_points(reflection_type=filt_type)
+
+        latlon_bnds.update({'lat_col': lat_col, 'lon_col':lon_col})
+        import ipdb; ipdb.set_trace()
+        wspr_obj.active.latlon_filt(**latlon_bnds)
+    elif filt_type == 'dx' or filt_type == 'de' or filt_type == 'dxde':
+        if filt_type == 'dx' or filt_type == 'dxde':
+            lat_col='dx_lat'
+            lon_col='dx_lon'
+            latlon_bnds.update({'lat_col': lat_col, 'lon_col':lon_col})
+            wspr_obj.active.latlon_filt(**latlon_bnds)
+        if filt_type =='de' or filt_type == 'dxde':
+            lat_col='de_lat'
+            lon_col='de_lon'
+            latlon_bnds.update({'lat_col': lat_col, 'lon_col':lon_col})
+            wspr_obj.active.latlon_filt(**latlon_bnds)
+#        latlon_bnds.update({'lat_col': lat_col, 'lon_col':lon_col})
+#        import ipdb; ipdb.set_trace()
+#        wspr_obj.active.latlon_filt(**latlon_bnds)
+    wspr_obj.active.filter_calls(call_filt_de,call_type='de')
+    wspr_obj.active.filter_calls(call_filt_dx,call_type='dx')
+
+#    gli         = geoloc_info(wspr_obj)
+
+#    wspr_grid    = wspr_obj.active.create_geo_grid()
+
+    # Go plot!! ############################ 
+    ## Determine the aspect ratio of subplot.
+    xsize       = 15.0
+    ysize       = 6.5
+    nx_plots    = 1
+    ny_plots    = 1
+
+    rcp = mpl.rcParams
+    rcp['axes.titlesize']     = 'large'
+    rcp['axes.titleweight']   = 'bold'
+
+    fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+    ax0        = fig.add_subplot(1,1,1)
+    wspr_map_obj= wspr_lib.WsprMap(wspr_obj,ax=ax0)
+
+    wspr_map_obj.overlay_grid(wspr_grid)
+    wspr_grid.grid_stat(stat='max',label='Max Frequency [MHz]')
+    wspr_map_obj.overlay_grid_data(wspr_grid)
+
+    fig.savefig(filepath,bbox_inches='tight')
+    plt.close(fig)
 def wspr_map(sTime,eTime,
         filt_type='sp_mid',  llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None,
@@ -143,7 +207,7 @@ def wspr_map(sTime,eTime,
 #    wspr_obj.active.filter_calls(call_filt_de,call_type='de')
 #    wspr_obj.active.filter_calls(call_filt_dx,call_type='dx')
 
-    gli         = geoloc_info(wspr_obj)
+#    gli         = geoloc_info(wspr_obj)
 
     wspr_grid    = wspr_obj.active.create_geo_grid()
 

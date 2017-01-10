@@ -608,6 +608,59 @@ class WsprDataSet(object):
         R_gc                = Re*geopack.greatCircleDist(lat1,lon1,lat2,lon2)
         df.loc[:,'R_gc']    = R_gc
 
+    def grid_data(self,gridsquare_precision=4,
+            lat_key='refl_lat',lon_key='refl_lon',grid_key='refl_grid'):
+        """
+        Determine gridsquares for the data.
+
+        The method appends gridsquares to current dataframe and does
+        NOT create a new dataset.
+        """
+        df                          = self.df
+        md                          = self.metadata
+        lats                        = df[lat_key]
+        lons                        = df[lon_key]
+        df.loc[:,grid_key]          = gridsquare.latlon2gridsquare(lats,lons,
+                                        precision=gridsquare_precision)
+        md['gridsquare_precision']  = gridsquare_precision
+
+        return self
+
+    def filter_calls(self,calls,call_type='de',new_data_set='filter_calls',comment=None):
+        """
+        Filter data frame for specific calls.
+
+        Calls is not case sensitive and may be a single call
+        or a list.
+
+        call_type is 'de' or 'dx'
+        """
+
+        if calls is None:
+            return self
+
+        if call_type == 'de': key = 'reporter'
+        if call_type == 'dx': key = 'call_sign'
+
+        df          = self.df
+        df_calls    = df[key].apply(str.upper)
+
+        calls       = make_list(calls)
+        calls       = [x.upper() for x in calls]
+        tf          = np.zeros((len(df),),dtype=np.bool)
+        for call in calls:
+            tf = np.logical_or(tf,df[key] == call)
+
+        df = df[tf]
+
+        if comment is None:
+            comment = '{}: {!s}'.format(call_type.upper(),calls)
+
+        new_ds      = self.copy(new_data_set,comment)
+        new_ds.df   = df
+        new_ds.set_active()
+        return new_ds
+
     def dxde_gs_latlon(self,pos='center'):
         """
         Determine latitde and longitude data for dx and de stations from the reported gridsquares for the data.
@@ -668,6 +721,33 @@ class WsprDataSet(object):
 
         return this_group
 
+    def get_band_group(self,band):
+        if not hasattr(self,'band_groups'):
+            srt                 = self.df.sort_values(by=['band','timestamp'])
+            self.band_groups    = srt.groupby('band')
+
+        try:
+            this_group  = self.band_groups.get_group(band)
+        except:
+            this_group  = None
+
+        return this_group
+
+    def dedx_list(self):
+        """
+        Return unique, sorted lists of DE and DX stations in a dataframe.
+        """
+        de_list = self.df['reporter'].unique().tolist()
+        dx_list = self.df['call_sign'].unique().tolist()
+
+        de_list.sort()
+        dx_list.sort()
+
+        return (de_list,dx_list)
+
+    def create_geo_grid(self):
+        self.geo_grid = RbnGeoGrid(self.df)
+        return self.geo_grid
 
     def apply(self,function,arg_dct,new_data_set=None,comment=None):
         if new_data_set is None:
@@ -1110,6 +1190,165 @@ class WsprMap(object):
     def plot_band_legend(self,*args,**kw_args):
         band_legend(*args,**kw_args)
 
+    def overlay_gridsquares(self,
+            major_precision = 2,    major_style = {'color':'k',   'dashes':[1,1]}, 
+            minor_precision = None, minor_style = {'color':'0.8', 'dashes':[1,1]},
+            label_precision = 2,    label_fontdict=None, label_zorder = 100):
+        """
+        Overlays a grid square grid.
+
+        Precsion options:
+            None:       Gridded resolution of data
+            0:          No plotting/labling
+            Even int:   Plot or label to specified precision
+        """
+    
+        # Get the dataset and map object.
+        ds          = self.data_set
+        m           = self.m
+        ax          = self.ax
+
+        # Determine the major and minor precision.
+        if major_precision is None:
+            maj_prec    = ds.metadata.get('gridsquare_precision',0)
+        else:
+            maj_prec    = major_precision
+
+        if minor_precision is None:
+            min_prec    = ds.metadata.get('gridsquare_precision',0)
+        else:
+            min_prec    = minor_precision
+
+        if label_precision is None:
+            label_prec  = ds.metadata.get('gridsquare_precision',0)
+        else:
+            label_prec  = label_precision
+
+	# Draw Major Grid Squares
+        if maj_prec > 0:
+            lats,lons   = ds.grid_latlons(maj_prec,position='lower left',mesh=False)
+
+            m.drawparallels(lats,labels=[False,True,True,False],**major_style)
+            m.drawmeridians(lons,labels=[True,False,False,True],**major_style)
+
+	# Draw minor Grid Squares
+        if min_prec > 0:
+            lats,lons   = ds.grid_latlons(min_prec,position='lower left',mesh=False)
+
+            m.drawparallels(lats,labels=[False,False,False,False],**minor_style)
+            m.drawmeridians(lons,labels=[False,False,False,False],**minor_style)
+
+	# Label Grid Squares
+	lats,lons   = ds.grid_latlons(label_prec,position='center')
+        grid_grid   = ds.gridsquare_grid(label_prec)
+	xx,yy = m(lons,lats)
+	for xxx,yyy,grd in zip(xx.ravel(),yy.ravel(),grid_grid.ravel()):
+	    ax.text(xxx,yyy,grd,ha='center',va='center',clip_on=True,
+                    fontdict=label_fontdict, zorder=label_zorder)
+
+    def overlay_gridsquare_data(self, param='f_max_MHz',
+            cmap=None,vmin=None,vmax=None,label=None,
+            band_data=None):
+        """
+        Overlay gridsquare data on a map.
+        """
+
+        grid_data   = self.data_set.grid_data
+
+        param_info = {}
+        key                 = 'f_max_MHz'
+        tmp                 = {}
+        param_info[key]     = tmp
+        tmp['cbar_ticks']   = [1.8,3.5,7.,10.,14.,21.,24.,28.]
+        tmp['label']        = 'F_max [MHz]'
+
+        key                 = 'counts'
+        tmp                 = {}
+        param_info[key]     = tmp
+        tmp['label']        = 'Counts'
+        tmp['vmin']         = 0
+        tmp['vmax']         = int(grid_data.counts.mean() + 3.*grid_data.counts.std())
+        tmp['cmap']         = matplotlib.cm.jet
+        
+        key                 = 'theta'
+        tmp                 = {}
+        param_info[key]     = tmp
+        tmp['label']        = 'Zenith Angle Theta'
+        tmp['vmin']         = 0
+        tmp['vmax']         = 90.
+        tmp['cbar_ticks']   = np.arange(0,91,10)
+        tmp['cmap']         = matplotlib.cm.jet
+
+        key                 = 'foF2'
+        tmp                 = {}
+        param_info[key]     = tmp
+        tmp['vmin']         = 0
+        tmp['vmax']         = 30
+        tmp['cbar_ticks']   = np.arange(0,31,5)
+        tmp['label']        = 'RBN foF2 [MHz]'
+
+        for stat in ['min','max','mean']:
+            key                 = 'R_gc_{}'.format(stat)
+            tmp                 = {}
+            param_info[key]     = tmp
+            tmp['label']        = '{} R_gc [km]'.format(stat)
+            tmp['vmin']         = 0
+#            tmp['vmax']         = int(grid_data[key].mean() + 3.*grid_data[key].std())
+            tmp['vmax']         = 10000.
+            tmp['cbar_ticks']   = np.arange(0,10001,1000)
+            tmp['cmap']         = matplotlib.cm.jet
+
+        param_dict  = param_info.get(param,{})
+        if band_data is None:
+            band_data   = param_dict.get('band_data',BandData())
+        if cmap is None:
+            cmap        = param_dict.get('cmap',band_data.cmap)
+        if vmin is None:
+            vmin        = param_dict.get('vmin',band_data.norm.vmin)
+        param_info = {}
+        if vmax is None:
+            vmax        = param_dict.get('vmax',band_data.norm.vmax)
+        if label is None:
+            label       = param_dict.get('label',param)
+
+        cbar_ticks  = param_dict.get('cbar_ticks')
+
+        fig         = self.fig
+        ax          = self.ax
+        m           = self.m
+
+        ll                  = gridsquare.gridsquare2latlon
+        lats_ll, lons_ll    = ll(grid_data.index,'lower left')
+        lats_lr, lons_lr    = ll(grid_data.index,'lower right')
+        lats_ur, lons_ur    = ll(grid_data.index,'upper right')
+        lats_ul, lons_ul    = ll(grid_data.index,'upper left')
+
+        coords  = zip(lats_ll,lons_ll,lats_lr,lons_lr,
+                      lats_ur,lons_ur,lats_ul,lons_ul)
+
+        verts   = []
+        for lat_ll,lon_ll,lat_lr,lon_lr,lat_ur,lon_ur,lat_ul,lon_ul in coords:
+            x1,y1 = m(lon_ll,lat_ll)
+            x2,y2 = m(lon_lr,lat_lr)
+            x3,y3 = m(lon_ur,lat_ur)
+            x4,y4 = m(lon_ul,lat_ul)
+            verts.append(((x1,y1),(x2,y2),(x3,y3),(x4,y4),(x1,y1)))
+
+        vals    = grid_data[param]
+
+        if param == 'theta':
+            vals = (180./np.pi)*vals # Convert to degrees
+
+        bounds  = np.linspace(vmin,vmax,256)
+        norm    = matplotlib.colors.BoundaryNorm(bounds,cmap.N)
+
+        pcoll   = PolyCollection(np.array(verts),edgecolors='face',closed=False,cmap=cmap,norm=norm,zorder=99)
+        pcoll.set_array(np.array(vals))
+        ax.add_collection(pcoll,autolim=False)
+
+        cbar    = fig.colorbar(pcoll,label=label)
+        if cbar_ticks is not None:
+            cbar.set_ticks(cbar_ticks)
 #End of WSPR Class Code
 
 def find_hour(df):
