@@ -99,7 +99,7 @@ def loop_info(map_sTime,map_eTime):
 #                p.vertices = new_verts
 
 def wspr_map(sTime,eTime,
-        lat_col='refl_lat', lon_col='refl_lon', llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
+        filt_type='sp_mid',  llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None,
         output_dir = 'output'):
 
@@ -111,9 +111,37 @@ def wspr_map(sTime,eTime,
     li          = loop_info(sTime,eTime)
 
     wspr_obj     = wspr_lib.WsprObject(sTime,eTime)
-    wspr_obj.active.latlon_filt(**latlon_bnds)
-    wspr_obj.active.filter_calls(call_filt_de,call_type='de')
-    wspr_obj.active.filter_calls(call_filt_dx,call_type='dx')
+    wspr_obj.active.dxde_gs_latlon()
+    if filt_type == 'sp_mid' or filt_type == 'miller2015':
+        lat_col='refl_lat'
+        lon_col='refl_lon'
+        wspr_obj.active.calc_reflection_points(reflection_type=filt_type)
+
+        latlon_bnds.update({'lat_col': lat_col, 'lon_col':lon_col})
+        import ipdb; ipdb.set_trace()
+        wspr_obj.active.latlon_filt(**latlon_bnds)
+    elif filt_type == 'dx' or filt_type == 'de' or filt_type == 'dxde':
+        if filt_type == 'dx' or filt_type == 'dxde':
+            lat_col='dx_lat'
+            lon_col='dx_lon'
+            latlon_bnds.update({'lat_col': lat_col, 'lon_col':lon_col})
+            wspr_obj.active.latlon_filt(**latlon_bnds)
+        if filt_type =='de' or filt_type == 'dxde':
+            lat_col='de_lat'
+            lon_col='de_lon'
+            latlon_bnds.update({'lat_col': lat_col, 'lon_col':lon_col})
+            wspr_obj.active.latlon_filt(**latlon_bnds)
+
+
+
+
+        latlon_bnds.update({'lat_col': lat_col, 'lon_col':lon_col})
+        import ipdb; ipdb.set_trace()
+        wspr_obj.active.latlon_filt(**latlon_bnds)
+
+
+#    wspr_obj.active.filter_calls(call_filt_de,call_type='de')
+#    wspr_obj.active.filter_calls(call_filt_dx,call_type='dx')
 
     gli         = geoloc_info(wspr_obj)
 
@@ -144,7 +172,6 @@ def wspr_map(sTime,eTime,
 def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
     dct_list    = []
     this_sTime  = sTime
-    import ipdb; ipdb.set_trace()
     while this_sTime+integration_time < eTime:
         this_eTime   = this_sTime + integration_time
 
@@ -172,7 +199,7 @@ if __name__ == '__main__':
 #    interval_time       = datetime.timedelta(minutes=60)
 
     dct = {}
-    dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
+    dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65., 'filt_type':'sp_mid'})
 #    dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65., 'output_dir': 'output/wspr'})
 
     map_sTime = sTime
@@ -186,7 +213,6 @@ if __name__ == '__main__':
         pool.close()
         pool.join()
     else:
-        import ipdb; ipdb.set_trace()
         for run_dct in run_list:
             wspr_map_dct_wrapper(run_dct)
 
