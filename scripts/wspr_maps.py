@@ -16,6 +16,11 @@ import pandas as pd
 from hamsci import wspr_lib
 from hamsci import handling
 
+def loop_info(map_sTime,map_eTime):
+    print ''
+    print '################################################################################'
+    print 'Plotting WSPR Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
+
 #def __setup_map__(self,ax=None,llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,
 #        coastline_color='0.65',coastline_zorder=10):
 #    sTime       = self.metadata['sTime']
@@ -94,7 +99,7 @@ from hamsci import handling
 #                p.vertices = new_verts
 
 def wspr_map(sTime,eTime,
-        llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
+        lat_col='refl_lat', lon_col='refl_lon', llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None,
         output_dir = 'output'):
 
@@ -139,6 +144,7 @@ def wspr_map(sTime,eTime,
 def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
     dct_list    = []
     this_sTime  = sTime
+    import ipdb; ipdb.set_trace()
     while this_sTime+integration_time < eTime:
         this_eTime   = this_sTime + integration_time
 
@@ -162,13 +168,16 @@ if __name__ == '__main__':
     term=[True, False]
     dt=15
     integration_time    = datetime.timedelta(minutes=15)
-    interval_time       = datetime.timedelta(minutes=60)
+    interval_time       = datetime.timedelta(minutes=20)
+#    interval_time       = datetime.timedelta(minutes=60)
 
     dct = {}
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
+#    dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65., 'output_dir': 'output/wspr'})
 
     map_sTime = sTime
-    map_eTime = map_sTime + datetime.timedelta(minutes = dt)
+#    map_eTime = map_sTime + datetime.timedelta(minutes = dt)
+    map_eTime = map_sTime + interval_time
 
     run_list            = gen_map_run_list(map_sTime,map_eTime,integration_time,interval_time,**dct)
     if multiproc:
@@ -177,10 +186,11 @@ if __name__ == '__main__':
         pool.close()
         pool.join()
     else:
+        import ipdb; ipdb.set_trace()
         for run_dct in run_list:
             wspr_map_dct_wrapper(run_dct)
 
-    wspr_map.fig.savefig('output/wspr/WSPR_map_test.png')
+#    wspr_map.fig.savefig('output/wspr/WSPR_map_test2.png')
 
 #    mymap = wspr_map(sTime = map_sTime, eTime = map_eTime)
 #    wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
