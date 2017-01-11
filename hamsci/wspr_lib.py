@@ -1074,6 +1074,8 @@ class WsprMap(object):
 #            self.default_plot(plot_de=True, plot_midpoints = False, plot_paths = True, plot_ncdxf = True, plot_stats=False)
         if other_plot == 'plot_paths':
             self.path_plot()
+        if other_plot == 'plot_mid':
+            self.plot_mid()
 
 
     def default_plot(self,
@@ -1101,6 +1103,27 @@ class WsprMap(object):
             plot_de         = True,
             plot_midpoints  = False,
             plot_paths      = True,
+            plot_ncdxf      = True,
+            plot_stats      = False,
+            plot_legend     = True):
+
+        if plot_de:
+            self.plot_de()
+        if plot_midpoints:
+            self.plot_midpoints()
+        if plot_paths:
+            self.plot_paths()
+        if plot_ncdxf:
+            self.plot_ncdxf()
+#        if plot_stats:
+#            self.plot_link_stats()
+        if plot_legend:
+            self.plot_band_legend(band_data=self.band_data)
+
+    def path_mid(self,
+            plot_de         = True,
+            plot_midpoints  = True,
+            plot_paths      = False,
             plot_ncdxf      = True,
             plot_stats      = False,
             plot_legend     = True):
