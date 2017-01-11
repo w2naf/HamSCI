@@ -242,6 +242,7 @@ def wspr_default_map(sTime,eTime,
     wspr_obj.active.calc_reflection_points(reflection_type=filt_type)
     latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
     wspr_obj.active.latlon_filt(**latlon_bnds)
+    import ipdb; ipdb.set_trace()
 
     # Go plot!! ############################ 
     ## Determine the aspect ratio of subplot.
@@ -373,7 +374,7 @@ if __name__ == '__main__':
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
 
     filt_type='sp_mid'
-#    filt_type='miller2015'
+    filt_type='miller2015'
 
     map_sTime = sTime
 #    map_eTime = map_sTime + datetime.timedelta(minutes = dt)
@@ -384,6 +385,7 @@ if __name__ == '__main__':
     output_dir          = os.path.join('output','wspr','maps','midpoints',event_dir)
     output_dir          = os.path.join('output','wspr','maps','refl_points',event_dir)
     output_dir          = os.path.join('output','wspr','maps','defaults_test','midpoints',event_dir)
+    output_dir          = os.path.join('output','wspr','maps','defaults_test','refl_points',event_dir)
     try:    # Create the output directory, but fail silently if it already exists
         os.makedirs(output_dir) 
     except:
