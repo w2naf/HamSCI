@@ -168,7 +168,7 @@ def wspr_path_map(sTime,eTime,
         call_filt_de = None, call_filt_dx = None,
         output_dir = 'output/wspr'):
 
-    filename    = 'rbn_map-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(sTime,eTime)
+    filename    = 'wspr_map-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(sTime,eTime)
     filepath    = os.path.join(output_dir,filename)
 
     wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
@@ -192,6 +192,72 @@ def wspr_path_map(sTime,eTime,
     ax0        = fig.add_subplot(1,1,1)
 
     wspr_lib.WsprMap(wspr_obj, ax=ax0,nightshade=term[0], solar_zenith=term[1], other_plot='plot_paths', default_plot=False)
+
+    fig.savefig(filepath,bbox_inches='tight')
+    plt.close(fig)
+
+def wspr_mid_map(sTime,eTime,
+        filt_type='sp_mid',  llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
+        call_filt_de = None, call_filt_dx = None,
+        output_dir = 'output/wspr'):
+
+    filename    = 'wspr_map-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(sTime,eTime)
+    filepath    = os.path.join(output_dir,filename)
+
+    wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
+    wspr_obj.active.dxde_gs_latlon()
+    wspr_obj.active.calc_reflection_points(reflection_type=filt_type)
+    latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
+    wspr_obj.active.latlon_filt(**latlon_bnds)
+
+    # Go plot!! ############################ 
+    ## Determine the aspect ratio of subplot.
+    xsize       = 15.0
+    ysize       = 6.5
+    nx_plots    = 1
+    ny_plots    = 1
+
+    rcp = mpl.rcParams
+    rcp['axes.titlesize']     = 'large'
+#    rcp['axes.titleweight']   = 'bold'
+
+    fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+    ax0        = fig.add_subplot(1,1,1)
+
+    wspr_lib.WsprMap(wspr_obj, ax=ax0,nightshade=term[0], solar_zenith=term[1], other_plot='plot_mid', default_plot=False)
+
+    fig.savefig(filepath,bbox_inches='tight')
+    plt.close(fig)
+
+def wspr_default_map(sTime,eTime,
+        filt_type='sp_mid',  llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
+        call_filt_de = None, call_filt_dx = None,
+        output_dir = 'output/wspr'):
+
+    filename    = 'wspr_map-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(sTime,eTime)
+    filepath    = os.path.join(output_dir,filename)
+
+    wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
+    wspr_obj.active.dxde_gs_latlon()
+    wspr_obj.active.calc_reflection_points(reflection_type=filt_type)
+    latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
+    wspr_obj.active.latlon_filt(**latlon_bnds)
+
+    # Go plot!! ############################ 
+    ## Determine the aspect ratio of subplot.
+    xsize       = 15.0
+    ysize       = 6.5
+    nx_plots    = 1
+    ny_plots    = 1
+
+    rcp = mpl.rcParams
+    rcp['axes.titlesize']     = 'large'
+#    rcp['axes.titleweight']   = 'bold'
+
+    fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+    ax0        = fig.add_subplot(1,1,1)
+
+    wspr_lib.WsprMap(wspr_obj, ax=ax0,nightshade=term[0], solar_zenith=term[1], default_plot=True)
 
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
@@ -273,7 +339,7 @@ def wspr_map(sTime,eTime,
 def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
     dct_list    = []
     this_sTime  = sTime
-    while this_sTime+integration_time < eTime:
+    while this_sTime+integration_time <= eTime:
         this_eTime   = this_sTime + integration_time
 
         tmp = {}
@@ -288,7 +354,9 @@ def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
     return dct_list
 
 def wspr_map_dct_wrapper(run_dct):
-    wspr_path_map(**run_dct)
+#    wspr_path_map(**run_dct)
+#    wspr_mid_map(**run_dct)
+    wspr_default_map(**run_dct)
 #    wspr_map(**run_dct)
 
 if __name__ == '__main__':
@@ -305,6 +373,7 @@ if __name__ == '__main__':
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
 
     filt_type='sp_mid'
+#    filt_type='miller2015'
 
     map_sTime = sTime
 #    map_eTime = map_sTime + datetime.timedelta(minutes = dt)
@@ -312,6 +381,9 @@ if __name__ == '__main__':
 
     event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
     output_dir          = os.path.join('output','wspr','maps','paths',event_dir)
+    output_dir          = os.path.join('output','wspr','maps','midpoints',event_dir)
+    output_dir          = os.path.join('output','wspr','maps','refl_points',event_dir)
+    output_dir          = os.path.join('output','wspr','maps','defaults_test','midpoints',event_dir)
     try:    # Create the output directory, but fail silently if it already exists
         os.makedirs(output_dir) 
     except:

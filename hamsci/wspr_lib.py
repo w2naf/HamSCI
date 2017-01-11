@@ -1003,7 +1003,7 @@ class WsprMap(object):
 
     Written by Magdalina Moses Jan 2017 and Nathaniel Frissell 2014 Sept 06
     """
-    def __init__(self,wspr_obj,data_set='active',data_set_all='DS001_dropna',ax=None,
+    def __init__(self,wspr_obj,data_set='active',data_set_all='DS000',ax=None,
             sTime=None,eTime=None,
             llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None,
             coastline_color='0.65',coastline_zorder=10,
@@ -1015,7 +1015,7 @@ class WsprMap(object):
 #        rcp['axes.titleweight']   = 'bold'
         self.wspr_obj        = wspr_obj
         self.data_set       = getattr(wspr_obj,data_set)
-#        self.data_set_all   = getattr(wspr_obj,data_set_all)
+        self.data_set_all   = getattr(wspr_obj,data_set_all)
 
         ds                  = self.data_set
         ds_md               = self.data_set.metadata
@@ -1075,7 +1075,7 @@ class WsprMap(object):
         if other_plot == 'plot_paths':
             self.path_plot()
         if other_plot == 'plot_mid':
-            self.plot_mid()
+            self.mid_plot()
 
 
     def default_plot(self,
@@ -1094,8 +1094,8 @@ class WsprMap(object):
             self.plot_paths()
         if plot_ncdxf:
             self.plot_ncdxf()
-#        if plot_stats:
-#            self.plot_link_stats()
+        if plot_stats:
+            self.plot_link_stats()
         if plot_legend:
             self.plot_band_legend(band_data=self.band_data)
 
@@ -1120,7 +1120,7 @@ class WsprMap(object):
         if plot_legend:
             self.plot_band_legend(band_data=self.band_data)
 
-    def path_mid(self,
+    def mid_plot(self,
             plot_de         = True,
             plot_midpoints  = True,
             plot_paths      = False,
@@ -1290,6 +1290,19 @@ class WsprMap(object):
     def plot_ncdxf(self):
         dxf_df = pd.DataFrame.from_csv('ncdxf.csv')
         self.m.scatter(dxf_df['lon'],dxf_df['lat'],s=dxf_plot_size,**dxf_prop)
+
+    def plot_link_stats(self):
+        de_list_all, dx_list_all    = self.data_set_all.dedx_list()
+        de_list_map, dx_list_map    = self.data_set.dedx_list() 
+
+        text = []
+        text.append('TX All: {0:d}; TX Map: {1:d}'.format( len(dx_list_all), len(dx_list_map) ))
+        text.append('RX All: {0:d}; RX Map: {1:d}'.format( len(de_list_all), len(de_list_map) ))
+        text.append('Relfection Points: {0:d}'.format(len(self.data_set.df)))
+
+        props = dict(facecolor='white', alpha=0.25,pad=6)
+        self.ax.text(0.02,0.05,'\n'.join(text),transform=self.ax.transAxes,
+                ha='left',va='bottom',size=9,zorder=500,bbox=props)
 
     def plot_band_legend(self,*args,**kw_args):
         band_legend(*args,**kw_args)
