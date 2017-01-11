@@ -320,9 +320,9 @@ if __name__ == '__main__':
 
     fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
     ax0        = fig.add_subplot(1,1,1)
-    wspr_map = wspr_lib.WsprMap(wspr_obj, sTime = map_sTime, eTime = map_eTime, ax=ax0,nightshade=term[0], solar_zenith=term[1])
+    wspr_map = wspr_lib.WsprMap(wspr_obj, sTime = map_sTime, eTime = map_eTime, ax=ax0,nightshade=term[0], solar_zenith=term[1], other_plot='plot_paths', default_plot=False)
     event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
-    output_dir          = os.path.join('output','wspr','maps',event_dir)
+    output_dir          = os.path.join('output','wspr','maps','paths',event_dir)
     try:    # Create the output directory, but fail silently if it already exists
         os.makedirs(output_dir) 
     except:
