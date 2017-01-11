@@ -101,7 +101,7 @@ def loop_info(map_sTime,map_eTime):
 def wspr_path_map(sTime,eTime,
         filt_type='sp_mid',  llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None,
-        output_dir = 'output'):
+        output_dir = 'output/wspr'):
 
     latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
 
@@ -116,7 +116,6 @@ def wspr_path_map(sTime,eTime,
         lat_col='refl_lat'
         lon_col='refl_lon'
         wspr_obj.active.calc_reflection_points(reflection_type=filt_type)
-
         latlon_bnds.update({'lat_col': lat_col, 'lon_col':lon_col})
         import ipdb; ipdb.set_trace()
         wspr_obj.active.latlon_filt(**latlon_bnds)
@@ -150,18 +149,20 @@ def wspr_path_map(sTime,eTime,
 
     rcp = mpl.rcParams
     rcp['axes.titlesize']     = 'large'
-    rcp['axes.titleweight']   = 'bold'
+#    rcp['axes.titleweight']   = 'bold'
 
     fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
     ax0        = fig.add_subplot(1,1,1)
-    wspr_map_obj= wspr_lib.WsprMap(wspr_obj,ax=ax0)
+#    wspr_map_obj= wspr_lib.WsprMap(wspr_obj,ax=ax0)
+    wspr_map_obj= wspr_lib.WsprMap(wspr_obj, nightshade = True, solar_zenith=False)
 
-    wspr_map_obj.overlay_grid(wspr_grid)
-    wspr_grid.grid_stat(stat='max',label='Max Frequency [MHz]')
-    wspr_map_obj.overlay_grid_data(wspr_grid)
+#    wspr_map_obj.overlay_gridsquares(wspr_obj)
+##    wspr_grid.grid_stat(stat='max',label='Max Frequency [MHz]')
+#    wspr_map_obj.overlay_gridsquare_data(wspr_obj)
 
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
+
 def wspr_map(sTime,eTime,
         filt_type='sp_mid',  llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None,
@@ -226,9 +227,12 @@ def wspr_map(sTime,eTime,
     ax0        = fig.add_subplot(1,1,1)
     wspr_map_obj= wspr_lib.WsprMap(wspr_obj,ax=ax0)
 
-    wspr_map_obj.overlay_grid(wspr_grid)
-    wspr_grid.grid_stat(stat='max',label='Max Frequency [MHz]')
-    wspr_map_obj.overlay_grid_data(wspr_grid)
+#    wspr_map_obj.overlay_grid(wspr_grid)
+#    wspr_grid.grid_stat(stat='max',label='Max Frequency [MHz]')
+#    wspr_map_obj.overlay_grid_data(wspr_grid)
+    wspr_map_obj.overlay_gridsquares(wspr_obj)
+#    wspr_grid.grid_stat(stat='max',label='Max Frequency [MHz]')
+    wspr_map_obj.overlay_gridsquare_data(wspr_obj)
 
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
@@ -250,7 +254,8 @@ def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
     return dct_list
 
 def wspr_map_dct_wrapper(run_dct):
-    wspr_map(**run_dct)
+    wspr_path_map(**run_dct)
+#    wspr_map(**run_dct)
 
 if __name__ == '__main__':
     multiproc   = False 

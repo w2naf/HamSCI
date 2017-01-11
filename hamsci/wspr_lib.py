@@ -472,6 +472,61 @@ class WsprDataSet(object):
 #            return self
         return new_ds
 
+    def compute_grid_stats(self,hgt=300.):
+        """
+        Create a dataframe with statistics for each grid square.
+
+        hgt: Assumed altitude of reflection [km]
+        """
+
+        # Group the dataframe by grid square.
+        gs_grp  = self.df.groupby('refl_grid')
+
+        # Get a list of the gridsquares in use.
+        grids   = gs_grp.indices.keys()
+
+        # Pull out the desired statistics.
+        dct     = {}
+        dct['counts']       = gs_grp.freq.count()
+        dct['f_max_MHz']    = gs_grp.freq.max()/1000.
+        dct['R_gc_min']     = gs_grp.R_gc.min()
+        dct['R_gc_max']     = gs_grp.R_gc.max()
+        dct['R_gc_mean']    = gs_grp.R_gc.mean()
+        dct['R_gc_std']     = gs_grp.R_gc.std()
+
+        # Error bar info.
+        f_max               = dct['f_max_MHz']
+        lower,upper         = ham_band_errorbars(f_max)
+
+        # Compute Zenith Angle Theta and FoF2.
+        lambda_by_2         = dct['R_gc_min']/Re
+        theta               = np.arctan( np.sin(lambda_by_2)/( (Re+hgt)/Re - np.cos(lambda_by_2) ) )
+        foF2                = dct['f_max_MHz']*np.cos(theta)
+        foF2_err_low        = lower*np.cos(theta)
+        foF2_err_up         = upper*np.cos(theta)
+        dct['theta']        = theta
+        dct['foF2']         = foF2
+        dct['foF2_err_low'] = foF2_err_low
+        dct['foF2_err_up']  = foF2_err_up
+
+        # Put into a new dataframe organized by grid square.
+        grid_data       = pd.DataFrame(dct,index=grids)
+
+#        fig     = plt.figure()
+#        ax  = fig.add_subplot(111)
+#        ax.plot(foF2.tolist(),label='foF2')
+#        ax.plot(foF2_err_low.tolist(),label='foF2_err_low')
+#        ax.plot(foF2_err_up.tolist(),label='foF2_err_up')
+#        ax.set_ylabel('foF2 [MHz]')
+#        ax.set_xlabel('Grid Square')
+#        ax.legend(loc='upper right')
+#        ax.set_ylim(0,50)
+#        fig.savefig('error.png',bbox_inches='tight')
+
+        # Attach the new dataframe to the WsprDataObj and return.
+        self.grid_data  = grid_data
+        return grid_data
+
     def rbn_compatible(self,new_data_set='rbncomp',comment='RBN code compatible WSPR data'):
         """
         Rename certain columns of wspr object dataframe and convert units to be compatible with a rbn object
@@ -745,9 +800,9 @@ class WsprDataSet(object):
 
         return (de_list,dx_list)
 
-    def create_geo_grid(self):
-        self.geo_grid = RbnGeoGrid(self.df)
-        return self.geo_grid
+#    def create_geo_grid(self):
+#        self.geo_grid = RbnGeoGrid(self.df)
+#        return self.geo_grid
 
     def apply(self,function,arg_dct,new_data_set=None,comment=None):
         if new_data_set is None:
@@ -763,7 +818,7 @@ class WsprDataSet(object):
         return new_ds
 
     def copy(self,new_data_set,comment):
-        """Copy a RbnDataSet object.  This deep copies data and metadata, updates the serial
+        """Copy a WsprDataSet object.  This deep copies data and metadata, updates the serial
         number, and logs a comment in the history.  Methods such as plot are kept as a reference.
 
         Parameters
