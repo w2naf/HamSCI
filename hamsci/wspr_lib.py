@@ -1024,6 +1024,7 @@ class WsprMap(object):
             sTime = ds.df['timestamp'].min()
         if eTime is None:
             eTime = ds.df['timestamp'].max()
+        #Added this because in RBN code there did not appear to be any place where times were selected maybe it is unecessary
         else:
 #            wspr_obj = wspr_obj.active.select_interval(sTime, eTime, replace = True)
             wspr_obj.active.select_interval(sTime, eTime)
