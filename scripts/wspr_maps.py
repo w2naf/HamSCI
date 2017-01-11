@@ -275,23 +275,62 @@ if __name__ == '__main__':
 #    map_eTime = map_sTime + datetime.timedelta(minutes = dt)
     map_eTime = map_sTime + interval_time
 
-    run_list            = gen_map_run_list(map_sTime,map_eTime,integration_time,interval_time,**dct)
-    if multiproc:
-        pool = multiprocessing.Pool()
-        pool.map(wspr_map_dct_wrapper,run_list)
-        pool.close()
-        pool.join()
-    else:
-        for run_dct in run_list:
-            wspr_map_dct_wrapper(run_dct)
-
-#    wspr_map.fig.savefig('output/wspr/WSPR_map_test2.png')
-
-#    mymap = wspr_map(sTime = map_sTime, eTime = map_eTime)
-#    wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
-#    wspr_obj.active.dxde_gs_latlon()
+#    run_list            = gen_map_run_list(map_sTime,map_eTime,integration_time,interval_time,**dct)
+#    if multiproc:
+#        pool = multiprocessing.Pool()
+#        pool.map(wspr_map_dct_wrapper,run_list)
+#        pool.close()
+#        pool.join()
+#    else:
+#        for run_dct in run_list:
+#            wspr_map_dct_wrapper(run_dct)
 #
-#    wspr_map = wspr_lib.WsprMap(wspr_obj, sTime = map_sTime, eTime = map_eTime, nightshade=term[0], solar_zenith=term[1])
+##    wspr_map.fig.savefig('output/wspr/WSPR_map_test2.png')
+#
+##    mymap = wspr_map(sTime = map_sTime, eTime = map_eTime)
+
+#Initial WsprMap test code
+    sTime = datetime.datetime(2016,11,1,0)
+    eTime = datetime.datetime(2016,11,1,1)
+    term=[True, False]
+    dt=15
+    integration_time    = datetime.timedelta(minutes=15)
+    interval_time       = datetime.timedelta(minutes=20)
+
+    dct = {}
+    dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
+
+    map_sTime = sTime
+#    map_eTime = map_sTime + datetime.timedelta(minutes = dt)
+    map_eTime = map_sTime + interval_time
+
+    wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
+    wspr_obj.active.dxde_gs_latlon()
+
+    # Go plot!! ############################ 
+    ## Determine the aspect ratio of subplot.
+    xsize       = 15.0
+    ysize       = 6.5
+    nx_plots    = 1
+    ny_plots    = 1
+
+    rcp = mpl.rcParams
+    rcp['axes.titlesize']     = 'large'
+#    rcp['axes.titleweight']   = 'bold'
+
+    fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
+    ax0        = fig.add_subplot(1,1,1)
+    wspr_map = wspr_lib.WsprMap(wspr_obj, sTime = map_sTime, eTime = map_eTime, ax=ax0,nightshade=term[0], solar_zenith=term[1])
+    event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
+    output_dir          = os.path.join('output','wspr','maps',event_dir)
+    try:    # Create the output directory, but fail silently if it already exists
+        os.makedirs(output_dir) 
+    except:
+        pass
+    filename    = 'rbn_map-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(map_sTime,map_eTime)
+    filepath    = os.path.join(output_dir,filename)
+    wspr_map.fig.savefig(filepath)
+
 #    wspr_map.fig.savefig('output/wspr/WSPR_map_test.png')
 
 #    dct = {}
@@ -303,6 +342,7 @@ if __name__ == '__main__':
 #    event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
 #    output_dir          = os.path.join('output','maps',event_dir)
 
+#General Test Code
 #    sTime = datetime.datetime(2016,11,1)
 #    wspr_obj = wspr_lib.WsprObject(sTime) 
 #    wspr_obj.active.calc_reflection_points(reflection_type='miller2015')
