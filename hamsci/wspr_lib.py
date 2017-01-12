@@ -67,6 +67,18 @@ class BandData(object):
         bands.append(( 3.5,  '80 m'))
         bands.append(( 1.8, '160 m'))
 
+##        bands.append((144.0,  '2 m'))
+#        bands.append((50.0,  '6 m'))
+#        bands.append((28.0,  '10 m'))
+#        bands.append((24.0,  '12 m'))
+#        bands.append((21.0,  '15 m'))
+#        bands.append((18.0,  '17 m'))
+#        bands.append((14.0,  '20 m'))
+#        bands.append((10.0,  '30 m'))
+#        bands.append(( 7.0,  '40 m'))
+#        bands.append(( 5.0,  '60 m'))
+#        bands.append(( 3.5,  '80 m'))
+#        bands.append(( 1.8, '160 m'))
         self.__gen_band_dict__(bands)
 
     def __gen_band_dict__(self,bands):
@@ -155,6 +167,8 @@ def ham_band_errorbars(freqs):
 
     bands   = [ 1.80,  3.5,  7.0,  10.0,  14.0,  18.1,  21.0,
                24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+#    bands   = [ 1.80,  3.5, 5.0, 7.0,  10.0,  14.0,  18.1,  21.0,
+#               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
     bands   = np.array(bands)
 
     low_lst = []
@@ -1432,7 +1446,8 @@ class WsprMap(object):
         key                 = 'f_max_MHz'
         tmp                 = {}
         param_info[key]     = tmp
-        tmp['cbar_ticks']   = [1.8,3.5,7.,10.,14.,21.,24.,28.]
+#        tmp['cbar_ticks']   = [1.8,3.5,7.,10.,14.,21.,24.,28.]
+        tmp['cbar_ticks']   = [1.8,3.5, 5., 7.,10.,14.,18.1, 21.,24.,28., 50.]
         tmp['label']        = 'F_max [MHz]'
 
         key                 = 'counts'

@@ -69,7 +69,8 @@ def wspr_path_map(sTime,eTime,
     fig        = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
     ax0        = fig.add_subplot(1,1,1)
 
-    wspr_lib.WsprMap(wspr_obj, ax=ax0,nightshade=term[0], solar_zenith=term[1], other_plot='plot_paths', default_plot=False)
+    map_obj=wspr_lib.WsprMap(wspr_obj, ax=ax0,nightshade=term[0], solar_zenith=term[1], other_plot='plot_paths', default_plot=False)
+    map_obj.plot_link_stats()
 
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
@@ -244,16 +245,15 @@ if __name__ == '__main__':
     sTime = datetime.datetime(2016,5,13,15,5)
     eTime = datetime.datetime(2016,5,13,15,21)
     #Solar Flare Event
-    sTime = datetime.datetime(2016,5,13,15,5)
-    eTime = datetime.datetime(2016,5,13,17)
+    sTime = datetime.datetime(2013,5,13,15,5)
+    eTime = datetime.datetime(2013,5,13,17)
 #    import inspect 
 #    import mpl_toolkits
 #    print inspect.getfile(mpl_toolkits)
 #    import ipdb; ipdb.set_trace()
 
-
-    wspr_obj = wspr_lib.WsprObject(sTime,sTime+datetime.timedelta(minutes=15)) 
-    import ipdb; ipdb.set_trace()
+#    wspr_obj = wspr_lib.WsprObject(sTime,sTime+datetime.timedelta(minutes=15)) 
+#    import ipdb; ipdb.set_trace()
 
 
     term=[True, False]
