@@ -123,12 +123,33 @@ def create_rbn_obj(sTime,eTime,
     with open(filepath,'wb') as fl:
         pickle.dump(rbn_obj,fl)
 
-    fl = os.path.join(output_dir,"web_plot_data.json")
+    fl = os.path.join(output_dir,"rbn_path.json")
+    print('Saving to {}'.format(fl))
+    with open(fl, "w") as output:
+        ds  = rbn_obj.DS002_pathlength_filter
+        df  = ds.df
+        df["color"] = ds.get_band_color(encoding="hex")
+        output.write(df.T.to_json())
+
+    fl = os.path.join(output_dir,"rbn_reflect.json")
+    print('Saving to {}'.format(fl))
+    with open(fl, "w") as output:
+        ds          = rbn_obj.active
+        df          = ds.df
+        df.index    = range(df.index.size)
+        df["color"] = ds.get_band_color(encoding="hex")
+        output.write(df.T.to_json())
+
+    fl = os.path.join(output_dir,"rbn_grid.json")
     print('Saving to {}'.format(fl))
     with open(fl, "w") as output:
         df = rbn_obj.active.grid_data
         df["color"] = rbn_obj.active.get_grid_data_color(encoding="hex")
         output.write(df.T.to_json())
+
+
+    cbar_freqs  = range(31)
+    cbar        = rbn_obj.active.get_grid_data_color(vals=cbar_freqs,encoding="hex")
 
 if __name__ == '__main__':
     integration_time        = datetime.timedelta(minutes=15)
@@ -142,6 +163,7 @@ if __name__ == '__main__':
 #    reflection_type     = 'sp_mid'
 
     base                    = '/home/hamsci-live/scripts'
+#    base                    = '.'
     input_dir               = os.path.join(base,'realtime','rbn')
     output_dir              = os.path.join(base,'realtime','rbnobj')
 
