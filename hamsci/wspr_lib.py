@@ -142,6 +142,36 @@ def __add_months(sourcedate,months=1):
     day = min(sourcedate.day,calendar.monthrange(year,month)[1])
     return datetime.date(year,month,day)
 
+def ham_band_errorbars(freqs):
+    """
+    Return error bars based on ham radio band discretization.
+
+    Upper error bar is the bottom of the next highest ham radio band.
+    Lower error bar is 90% of the original frequency.
+    """
+
+    freqs   = np.array(freqs)
+    if freqs.shape == (): freqs.shape = (1,)
+
+    bands   = [ 1.80,  3.5,  7.0,  10.0,  14.0,  18.1,  21.0,
+               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+    bands   = np.array(bands)
+
+    low_lst = []
+    upp_lst = []
+
+    for freq in freqs:
+        diff    = np.abs(bands - freq)
+        argmin  = diff.argmin()
+
+        lower   = 0.10 * freq
+        low_lst.append(lower)
+
+        upper   = bands[argmin+1] - freq
+        upp_lst.append(upper)
+    
+    return (np.array(low_lst),np.array(upp_lst))
+
 def read_wspr(sTime,eTime=None,data_dir='data/wspr', overwrite=False, refresh=False):
      #refresh is keyword to tell function to download data from wspr website even if already have it on computer (if downloaded data from current month once before and now it is updated)
         #Will NOT overwrite pickle files!!!!
