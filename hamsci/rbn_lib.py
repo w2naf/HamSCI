@@ -629,6 +629,30 @@ class RbnDataSet(object):
 
         return colors
 
+    def get_band_color(self,vals=None,encoding='rgba'):
+        """
+        Return standard color values for band values.
+
+        Parameters:
+            encoding: 'rgba' or 'hex'
+
+            vals: values to use instead of supplied data. Useful for getting
+                colorbar values
+
+        Returns:
+            Array of encoded colors.
+        """
+        if vals is None:
+            vals    = self.df.freq/1000.
+
+        band_data   = BandData()
+        if encoding == 'rgba':
+            colors  = band_data.get_rgba(vals)
+        elif encoding == 'hex':
+            colors  = band_data.get_hex(vals)
+
+        return colors
+
     def filter_calls(self,calls,call_type='de',new_data_set='filter_calls',comment=None):
         """
         Filter data frame for specific calls.
