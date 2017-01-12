@@ -97,7 +97,8 @@ def create_rbn_obj(sTime,eTime,
         llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None,
         reflection_type     = 'sp_mid',
-        output_dir          = 'realtime/rbn_fof2',
+        input_dir           = None,
+        output_dir          = None,
         **kwargs):
 
     latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
@@ -105,7 +106,7 @@ def create_rbn_obj(sTime,eTime,
     filepath    = get_rbn_obj_path(output_dir,sTime,eTime)
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
 
-    df          = read_rbn_realtime(sTime,eTime)
+    df          = read_rbn_realtime(sTime,eTime,data_dir=input_dir)
 
     rbn_obj     = rbn_lib.RbnObject(df=df)
 
@@ -122,7 +123,9 @@ def create_rbn_obj(sTime,eTime,
     with open(filepath,'wb') as fl:
         pickle.dump(rbn_obj,fl)
 
-    with open("web_plot_data.json", "w") as output:
+    fl = os.path.join(output_dir,"web_plot_data.json")
+    print('Saving to {}'.format(fl))
+    with open(fl, "w") as output:
         df = rbn_obj.active.grid_data
         df["color"] = rbn_obj.active.get_grid_data_color(encoding="hex")
         output.write(df.T.to_json())
@@ -130,6 +133,7 @@ def create_rbn_obj(sTime,eTime,
 if __name__ == '__main__':
     integration_time        = datetime.timedelta(minutes=15)
     now                     = datetime.datetime.now()
+    print('Running create_rbnobj_realtime.py for {!s}'.format(now))
     eTime                   = datetime.datetime(now.year,now.month,now.day,
                                                 now.hour,now.minute)
     sTime                   = eTime - integration_time
@@ -137,13 +141,16 @@ if __name__ == '__main__':
     reflection_type     = 'miller2015'
 #    reflection_type     = 'sp_mid'
 
-    output_dir              = os.path.join('realtime','rbnobj')
+    base                    = '/home/hamsci-live/scripts'
+    input_dir               = os.path.join(base,'realtime','rbn')
+    output_dir              = os.path.join(base,'realtime','rbnobj')
 
     dct = {}
 #    dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
     dct['sTime']            = sTime
     dct['eTime']            = eTime
     dct['output_dir']       = output_dir
+    dct['input_dir']        = input_dir
     dct['reflection_type']  = reflection_type
 #    dct['call_filt_de'] = 'aa4vv'
 
