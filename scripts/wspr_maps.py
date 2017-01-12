@@ -246,6 +246,15 @@ if __name__ == '__main__':
     #Solar Flare Event
     sTime = datetime.datetime(2016,5,13,15,5)
     eTime = datetime.datetime(2016,5,13,17)
+#    import inspect 
+#    import mpl_toolkits
+#    print inspect.getfile(mpl_toolkits)
+#    import ipdb; ipdb.set_trace()
+
+
+    wspr_obj = wspr_lib.WsprObject(sTime,sTime+datetime.timedelta(minutes=15)) 
+    import ipdb; ipdb.set_trace()
+
 
     term=[True, False]
     dt=15
