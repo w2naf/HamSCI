@@ -339,7 +339,7 @@ class WsprObject(object):
                             'sp_mid': spherical midpoint
 
         Written by Magdalina Moses, Fall 2016 
-        (Based on code written by Nathaniel A. Frissell, Summer 2016)
+        (In part based on code written by Nathaniel A. Frissell, Summer 2016)
     """
     def __init__(self,sTime=None,eTime=None,data_dir='data/wspr',
             overwrite=False,refresh=False,qrz_call=None,qrz_passwd=None,comment='Raw Data',df=None,
@@ -784,6 +784,7 @@ class WsprDataSet(object):
 
         The method appends de and dx lat and lons to current dataframe and does
         NOT create a new dataset.
+        Written by: Magalina Moses Winter 2016/2017
         """
         df                          = self.df
         md                          = self.metadata
@@ -1722,6 +1723,31 @@ def filter_grid_pair(df, gridsq, precision=4):
     return df
 
 def calls_by_grid(df, prefix='', col='grid', col_call='call_sign'):
+    """Find calls of stations in a certain gridsquare 
+
+    Parameters
+    ----------
+    df  :   dataframe
+        Dataframe to search
+    prefix  : str
+        Prefix of gridsquare
+    col : str
+        Dataframe column with gridsquares
+    col_call : str
+        Dataframe column with callsigns
+
+    new_data_set : str
+        Name for the new data_set object.
+    comment : str
+        Comment describing the new data_set object.
+
+    Returns
+    -------
+    calls : list 
+        List of callsigns within the specified gridsquare
+
+    Written by Magdalina L. Moses, Fall 2016
+    """
     calls=[]
     precision = len(prefix)
     for inx in range(0,len(df)):
