@@ -13,8 +13,11 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
+import hamsci
 from hamsci import wspr_lib
 from hamsci import handling
+# Set default gridsquare precision
+gridsquare_precision = 4
 
 def loop_info(map_sTime,map_eTime):
     print ''
@@ -44,6 +47,7 @@ def wspr_full_map(sTime,eTime,
 
     wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
     wspr_obj.active.dxde_gs_latlon()
+    wspr_obj.active.filter_pathlength(500.)
     wspr_obj.active.calc_reflection_points(reflection_type=reflection_type)
     latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
     wspr_obj.active.latlon_filt(**latlon_bnds)
@@ -63,7 +67,6 @@ def wspr_full_map(sTime,eTime,
     ax0        = fig.add_subplot(1,1,1)
 
     map_obj=wspr_lib.WsprMap(wspr_obj, ax=ax0,nightshade=term[0], solar_zenith=term[1], default_plot=False)
-    import ipdb; ipdb.set_trace()
     if plot_de:
         map_obj.plot_de()
     if plot_midpoints:
@@ -76,6 +79,18 @@ def wspr_full_map(sTime,eTime,
         map_obj.plot_link_stats()
     if plot_legend:
         map_obj.plot_band_legend(band_data=map_obj.band_data)
+
+    if overlay_gridsquares:
+        map_obj.overlay_gridsquares()
+    if overlay_gridsquare_data:
+        wspr_obj.active.grid_data(gridsquare_precision)
+        wspr_obj.active.compute_grid_stats()
+        map_obj.overlay_gridsquare_data(param=gridsquare_data_param)
+
+    ecl         = hamsci.eclipse.Eclipse2017()
+    line, lbl   = ecl.overlay_umbra(map_obj.m,color='k')
+    handles     = [line]
+    labels      = [lbl]
 
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
@@ -283,17 +298,17 @@ if __name__ == '__main__':
     multiproc   = False 
     plot_de                 = True
     plot_midpoints          = False
-    plot_paths              = True
+    plot_paths              = False
     plot_ncdxf              = False
     plot_stats              = True
     plot_legend             = True
-    overlay_gridsquares     = False
+    overlay_gridsquares     = True
     overlay_gridsquare_data = True
     gridsquare_data_param   = 'f_max_MHz'
     fname_tag               = None
     #Initial WsprMap test code
-    sTime = datetime.datetime(2016,11,1)
-    eTime = datetime.datetime(2016,11,1,1)
+    sTime = datetime.datetime(2016,11,1,22)
+    eTime = datetime.datetime(2016,11,2,1)
 #    #Solar Flare Event
 ##    sTime = datetime.datetime(2016,5,13,15,5)
 ##    eTime = datetime.datetime(2016,5,13,15,21)
@@ -316,7 +331,7 @@ if __name__ == '__main__':
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
 
     filt_type='sp_mid'
-#    filt_type='miller2015'
+    filt_type='miller2015'
     reflection_type = filt_type
 
     map_sTime = sTime
@@ -332,6 +347,8 @@ if __name__ == '__main__':
             output_dir          = os.path.join('output','wspr','maps','midpoints',event_dir)
     if plot_paths: 
         output_dir          = os.path.join('output','wspr','maps','paths',event_dir)
+    if overlay_gridsquare_data:
+        output_dir          = os.path.join('output','wspr','maps','gridsqs',event_dir)
 
 #    output_dir          = os.path.join('output','wspr','maps','paths',event_dir)
 #    output_dir          = os.path.join('output','wspr','maps','midpoints',event_dir)
@@ -359,7 +376,6 @@ if __name__ == '__main__':
         pool.join()
     else:
         for run_dct in run_list:
-            import ipdb; ipdb.set_trace()
             wspr_map_dct_wrapper(run_dct)
 
 

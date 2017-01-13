@@ -578,7 +578,7 @@ class WsprDataSet(object):
         # Pull out the desired statistics.
         dct     = {}
         dct['counts']       = gs_grp.freq.count()
-        dct['f_max_MHz']    = gs_grp.freq.max()/1000.
+        dct['f_max_MHz']    = gs_grp.freq.max()
         dct['R_gc_min']     = gs_grp.R_gc.min()
         dct['R_gc_max']     = gs_grp.R_gc.max()
         dct['R_gc_mean']    = gs_grp.R_gc.mean()
@@ -616,6 +616,52 @@ class WsprDataSet(object):
         # Attach the new dataframe to the WsprDataObj and return.
         self.grid_data  = grid_data
         return grid_data
+
+    def gridsquare_grid(self,precision=None,mesh=True):
+        """
+        Return a grid square grid.
+
+        precision:
+            None:           Use the gridded precsion of this dataset.
+            Even integer:   Use specified precision.
+        """
+        if precision is None:
+            precision   = self.metadata.get('gridsquare_precision')
+
+        grid    = gridsquare.gridsquare_grid(precision=precision)
+        if mesh:
+            ret_val = grid
+        else:
+            xx = grid[:,0]
+            yy = grid[0,:]
+
+            ret_val = (xx,yy)
+        return ret_val 
+
+    def grid_latlons(self,precision=None,position='center',mesh=True):
+        """
+        Return a grid of gridsquare-based lat/lons.
+
+        precision:
+            None:           Use the gridded precsion of this dataset.
+            Even integer:   Use specified precision.
+
+        Position Options:
+            'center'
+            'lower left'
+            'upper left'
+            'upper right'
+            'lower right'
+        """
+        gs_grid     = self.gridsquare_grid(precision=precision,mesh=mesh)
+        lat_lons    = gridsquare.gridsquare2latlon(gs_grid,position=position)
+       
+        if mesh is False:
+            lats        = lat_lons[0][1,:]
+            lons        = lat_lons[1][0,:]
+            lat_lons    = (lats,lons)
+
+        return lat_lons
 
     def rbn_compatible(self,new_data_set='rbncomp',comment='RBN code compatible WSPR data'):
         """
@@ -820,6 +866,7 @@ class WsprDataSet(object):
         self.latlon_data(position=pos,
             grid_key='rep_grid',loc_key=['de_lat','de_lon'])
         print 'Found all lat/lon!'
+        self.calc_greatCircle_dist()
 
         return self
         
