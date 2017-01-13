@@ -58,27 +58,29 @@ class BandData(object):
 
         # Set up a dictionary which identifies which bands we want and some plotting attributes for each band
         bands   = []
-        bands.append((28.0,  '10 m'))
-        bands.append((21.0,  '15 m'))
-        bands.append((18.0,  '17 m'))
-        bands.append((14.0,  '20 m'))
-        bands.append((10.0,  '30 m'))
-        bands.append(( 7.0,  '40 m'))
-        bands.append(( 3.5,  '80 m'))
-        bands.append(( 1.8, '160 m'))
-
-##        bands.append((144.0,  '2 m'))
-#        bands.append((50.0,  '6 m'))
 #        bands.append((28.0,  '10 m'))
-#        bands.append((24.0,  '12 m'))
 #        bands.append((21.0,  '15 m'))
 #        bands.append((18.0,  '17 m'))
 #        bands.append((14.0,  '20 m'))
 #        bands.append((10.0,  '30 m'))
 #        bands.append(( 7.0,  '40 m'))
-#        bands.append(( 5.0,  '60 m'))
 #        bands.append(( 3.5,  '80 m'))
 #        bands.append(( 1.8, '160 m'))
+
+##        bands.append((144.0,  '2 m'))
+#        bands.append((50.0,  '6 m'))
+        bands.append((28.0,  '10 m'))
+        bands.append((24.0,  '12 m'))
+        bands.append((21.0,  '15 m'))
+        bands.append((18.0,  '17 m'))
+        bands.append((14.0,  '20 m'))
+        bands.append((10.0,  '30 m'))
+        bands.append(( 7.0,  '40 m'))
+#        bands.append(( 5.0,  '60 m'))
+        bands.append(( 3.5,  '80 m'))
+        bands.append(( 1.8, '160 m'))
+#        bands.append(( 0.5, '700 m'))
+#        bands.append(( 0.1, '1600 m'))
         self.__gen_band_dict__(bands)
 
     def __gen_band_dict__(self,bands):
@@ -102,15 +104,38 @@ class BandData(object):
 	fc = {}
         my_cdict = fc
 	fc[ 0.0] = (  0,   0,   0)
+#	fc[ 0.1] = cc255('magenta')
+	fc[ 0.5] = cc255('magenta')
 	fc[ 1.8] = cc255('violet')
 	fc[ 3.0] = cc255('blue')
+#	fc[ 5.5] = cc255('blue')
 	fc[ 8.0] = cc255('aqua')
-	fc[10.0] = cc255('green')
+#	fc[10.0] = cc255('green')
 	fc[13.0] = cc255('green')
 	fc[17.0] = cc255('yellow')
 	fc[21.0] = cc255('orange')
 	fc[28.0] = cc255('red')
 	fc[30.0] = cc255('red')
+
+#	fc[ 0.0] = (  0,   0,   0)
+##	fc[ 0.1] = cc255('magenta')
+#        import ipdb; ipdb.set_trace()
+#	fc[ 0.1] = cc255('magenta')
+##        fc[0.5] = (130, 130, 238)
+##	fc[ 1.8] = cc255('violet')
+#	fc[ 0.5] = cc255('violet')
+#        fc[ 1.8] = (130, 130, 238)
+#	fc[ 3.0] = cc255('blue')
+#	fc[ 5.5] = (130, 255,255/2)
+#	fc[ 8.0] = cc255('aqua')
+##	fc[10.0] = cc255('green')
+#	fc[10.0] = (0, 225,128)
+#	fc[13.0] = (0,128,225)
+#        fc[17.0] = cc255('green')
+#	fc[21.0] = cc255('yellow')
+#	fc[24.5] = cc255('orange')
+#	fc[28.0] = cc255('red')
+#	fc[30.0] = cc255('red')
         cmap    = cdict_to_cmap(fc,name=name,vmin=vmin,vmax=vmax)
 	return cmap
 
@@ -166,6 +191,8 @@ def ham_band_errorbars(freqs):
     if freqs.shape == (): freqs.shape = (1,)
 
     bands   = [ 1.80,  3.5,  7.0,  10.0,  14.0,  18.1,  21.0,
+               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+    bands   = [ 1.80,  3.5,  7.0, 14.0,  18.1,  21.0,
                24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
 #    bands   = [ 1.80,  3.5, 5.0, 7.0,  10.0,  14.0,  18.1,  21.0,
 #               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
@@ -332,6 +359,24 @@ def read_wspr(sTime,eTime=None,data_dir='data/wspr', overwrite=False, refresh=Fa
 
         return df
 
+def fix_wspr_band(df):
+    df = df.replace(to_replace = {'band': {0:0.5}})
+    df = df.replace(to_replace = {'band': {-1:0.1}})
+    return df
+#
+#def fix_wspr_band(df):
+#    grouped = df.groupby('band')
+#    all_bands = df['band'].unique()
+#    df=None
+#    for band in all_bands:
+#        tmp = grouped.get_group(band)
+#        import ipdb; ipdb.set_trace()
+#        if band == 0 or band == -1:
+#            tmp.loc[:,'band'] = np.array(np.round(tmp['freq'], decimals=1))
+#        if df is None: df = tmp
+#        else: df = pd.concat([df,tmp])
+#    return df
+
 class WsprObject(object):
     """
     gridsquare_precision:   Even number, typically 4 or 6
@@ -348,6 +393,7 @@ class WsprObject(object):
         if df is None:
             df = read_wspr(sTime=sTime,eTime=eTime,data_dir=data_dir,
                     overwrite=overwrite, refresh=refresh)
+        df = fix_wspr_band(df)
 
         #Make metadata block to hold information about the processing.
         metadata = {}

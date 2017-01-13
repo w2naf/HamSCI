@@ -63,6 +63,7 @@ def wspr_full_map(sTime,eTime,
     ax0        = fig.add_subplot(1,1,1)
 
     map_obj=wspr_lib.WsprMap(wspr_obj, ax=ax0,nightshade=term[0], solar_zenith=term[1], default_plot=False)
+    import ipdb; ipdb.set_trace()
     if plot_de:
         map_obj.plot_de()
     if plot_midpoints:
@@ -281,8 +282,8 @@ def wspr_map_dct_wrapper(run_dct):
 if __name__ == '__main__':
     multiproc   = False 
     plot_de                 = True
-    plot_midpoints          = True
-    plot_paths              = False
+    plot_midpoints          = False
+    plot_paths              = True
     plot_ncdxf              = False
     plot_stats              = True
     plot_legend             = True
@@ -298,6 +299,7 @@ if __name__ == '__main__':
 ##    eTime = datetime.datetime(2016,5,13,15,21)
 #    sTime = datetime.datetime(2013,5,13,15,5)
 #    eTime = datetime.datetime(2013,5,13,17)
+
 #    import inspect 
 #    import mpl_toolkits
 #    print inspect.getfile(mpl_toolkits)
@@ -306,9 +308,7 @@ if __name__ == '__main__':
 #    wspr_obj = wspr_lib.WsprObject(sTime,sTime+datetime.timedelta(minutes=15)) 
 #    import ipdb; ipdb.set_trace()
 
-
     term=[True, False]
-    dt=15
     integration_time    = datetime.timedelta(minutes=15)
     interval_time       = datetime.timedelta(minutes=60)
 
@@ -316,12 +316,13 @@ if __name__ == '__main__':
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
 
     filt_type='sp_mid'
-    filt_type='miller2015'
+#    filt_type='miller2015'
     reflection_type = filt_type
 
     map_sTime = sTime
 #    map_eTime = map_sTime + datetime.timedelta(minutes = dt)
     map_eTime = map_sTime + interval_time
+    map_eTime = map_sTime + integration_time
 
     event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
     if plot_midpoints:
@@ -349,6 +350,7 @@ if __name__ == '__main__':
 
     dct.update({'plot_de':plot_de, 'plot_midpoints':plot_midpoints, 'plot_paths':plot_paths, 'plot_ncdxf': plot_ncdxf, 'plot_stats':plot_stats, 'plot_legend':plot_legend, 'overlay_gridsquares':overlay_gridsquares, 'overlay_gridsquare_data':overlay_gridsquare_data, 'gridsquare_data_param':gridsquare_data_param, 'fname_tag':fname_tag})
     run_list    = gen_map_run_list(sTime,eTime,integration_time,interval_time,**dct)
+#    run_list    = gen_map_run_list(map_sTime,map_eTime,integration_time,interval_time,**dct)
 
     if multiproc:
         pool = multiprocessing.Pool()
