@@ -6,6 +6,7 @@ import os
 import glob
 import datetime
 import pickle
+import json
 
 import numpy as np
 import pandas as pd
@@ -147,9 +148,18 @@ def create_rbn_obj(sTime,eTime,
         df["color"] = rbn_obj.active.get_grid_data_color(encoding="hex")
         output.write(df.T.to_json())
 
+    metadata = {}
+    metadata['itegration_time'] = '{:.01f} min'.format(integration_time.total_seconds()/60.)
+    metadata['sTime']           = '{!s}'.format(sTime)
+    metadata['eTime']           = '{!s}'.format(eTime)
 
-    cbar_freqs  = range(31)
-    cbar        = rbn_obj.active.get_grid_data_color(vals=cbar_freqs,encoding="hex")
+    fl = os.path.join(output_dir,"metadata.json")
+    print('Saving to {}'.format(fl))
+    with open(fl, "w") as output:
+        output.write(json.dumps(metadata))
+
+#    cbar_freqs  = range(31)
+#    cbar        = rbn_obj.active.get_grid_data_color(vals=cbar_freqs,encoding="hex")
 
 if __name__ == '__main__':
     integration_time        = datetime.timedelta(minutes=15)
@@ -166,6 +176,7 @@ if __name__ == '__main__':
 #    base                    = '.'
     input_dir               = os.path.join(base,'realtime','rbn')
     output_dir              = os.path.join(base,'realtime','rbnobj')
+#    output_dir              = os.path.join('test','realtime','rbnobj')
 
     dct = {}
 #    dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
