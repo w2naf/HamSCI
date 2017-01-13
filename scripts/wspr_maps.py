@@ -300,20 +300,22 @@ def wspr_map_dct_wrapper(run_dct):
 if __name__ == '__main__':
     multiproc   = False 
     plot_de                 = True
-    plot_dx                 = True
+    plot_dx                 = False
     plot_midpoints          = False
-    plot_paths              = False
+    plot_paths              = True
     plot_ncdxf              = False
     plot_stats              = True
     plot_legend             = True
     overlay_gridsquares     = True
-    overlay_gridsquare_data = True
-#    gridsquare_data_param   = 'f_max_MHz'
-    gridsquare_data_param   = 'foF2'
+    overlay_gridsquare_data = False
+    gridsquare_data_param   = 'f_max_MHz'
+#    gridsquare_data_param   = 'foF2'
     fname_tag               = None
     #Initial WsprMap test code
     sTime = datetime.datetime(2016,11,1,22)
     eTime = datetime.datetime(2016,11,2,1)
+    sTime = datetime.datetime(2016,11,1)
+    eTime = datetime.datetime(2016,11,1,1)
 #    #Solar Flare Event
 ##    sTime = datetime.datetime(2016,5,13,15,5)
 ##    eTime = datetime.datetime(2016,5,13,15,21)

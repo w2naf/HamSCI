@@ -1056,6 +1056,83 @@ class WsprDataSet(object):
         for key in keys:
             print key,self.history[key]
 
+    def plot_spot_counts(self,sTime=None,eTime=None,
+            integration_time=datetime.timedelta(minutes=15),
+            plot_all        = True,     all_lw  = 2,
+            plot_by_band    = False,    band_lw = 3,
+            band_data=None,
+            plot_legend=True,legend_loc='upper left',legend_lw=None,
+            plot_title=True,format_xaxis=True,
+            xticks=None,
+            ax=None):
+        """
+        Plots counts of WSPR data.
+        """
+        if sTime is None:
+            sTime = self.df['timestamp'].min()
+        if eTime is None:
+            eTime = self.df['timestamp'].max()
+            
+        if ax is None:
+            ax  = plt.gca()
+
+        if plot_by_band:
+            if band_data is None:
+                band_data = BandData()
+
+            band_list = band_data.band_dict.keys()
+            band_list.sort()
+            for band in band_list:
+                this_group = self.get_band_group(band)
+                if this_group is None: continue
+
+                color       = band_data.band_dict[band]['color']
+                label       = band_data.band_dict[band]['freq_name']
+
+                counts      = rolling_counts_time(this_group,sTime=sTime,window_length=integration_time)
+                ax.plot(counts.index,counts,color=color,label=label,lw=band_lw)
+
+        if plot_all:
+            counts  = rolling_counts_time(self.df,sTime=sTime,window_length=integration_time)
+            ax.plot(counts.index,counts,color='k',label='All Spots',lw=all_lw)
+
+        ax.set_ylabel('WSPR Counts')
+
+        if plot_legend:
+            leg = ax.legend(loc=legend_loc,ncol=7)
+
+            if legend_lw is not None:
+                for legobj in leg.legendHandles:
+                    legobj.set_linewidth(legend_lw)
+
+        if plot_title:
+            title   = []
+            title.append(' WSPR Net')
+            date_fmt    = '%Y %b %d %H%M UT'
+            date_str    = '{} - {}'.format(sTime.strftime(date_fmt), eTime.strftime(date_fmt))
+            title.append(date_str)
+            ax.set_title('\n'.join(title))
+
+        if xticks is not None:
+            ax.set_xticks(xticks)
+
+        if format_xaxis:
+            ax.set_xlabel('UT')
+            ax.set_xlim(sTime,eTime)
+            xticks  = ax.get_xticks()
+            xtls    = []
+            for xtick in xticks:
+                xtd = matplotlib.dates.num2date(xtick)
+                if xtd.hour == 0 and xtd.minute == 0:
+                    xtl = xtd.strftime('%H%M\n%d %b %Y')
+                else:
+                    xtl = xtd.strftime('%H%M')
+                xtls.append(xtl)
+            ax.set_xticklabels(xtls)
+
+            for tl in ax.get_xticklabels():
+                tl.set_ha('left')
+
 def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
         title=None,bbox_to_anchor=None,wspr_rx=True,ncdxf=False,ncol=None,band_data=None):
 
@@ -1149,6 +1226,30 @@ def select_interval(df, sTime=None, eTime=None, dt = 5, replace = False, new_dat
     print time
     df = df[np.logical_and(df[time]>=sTime, df[time] < eTime)]
     return df
+
+def rolling_counts_time(df,sTime=None,window_length=datetime.timedelta(minutes=15)):
+    """
+    Rolling counts of a RBN dataframe using a time-based data window.
+    """
+    eTime = df['timestamp'].max().to_datetime()
+
+    if sTime is None:
+        sTime = df['timestamp'].min().to_datetime()
+        
+    this_time   = sTime
+    next_time   = this_time + window_length
+    date_list, val_list = [], []
+    while next_time <= eTime:
+        tf  = np.logical_and(df['timestamp'] >= this_time, df['timestamp'] < next_time)
+        val = np.count_nonzero(tf)
+        
+        date_list.append(this_time)
+        val_list.append(val)
+
+        this_time = next_time
+        next_time = this_time + window_length
+
+    return pd.Series(val_list,index=date_list)
 
 class WsprMap(object):
     """Plot WSPRNet data.
