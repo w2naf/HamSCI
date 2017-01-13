@@ -302,12 +302,12 @@ if __name__ == '__main__':
     plot_de                 = True
     plot_dx                 = False
     plot_midpoints          = False
-    plot_paths              = True
+    plot_paths              = False
     plot_ncdxf              = False
     plot_stats              = True
-    plot_legend             = True
+    plot_legend             = False
     overlay_gridsquares     = True
-    overlay_gridsquare_data = False
+    overlay_gridsquare_data = True
     gridsquare_data_param   = 'f_max_MHz'
 #    gridsquare_data_param   = 'foF2'
     fname_tag               = None
@@ -347,6 +347,7 @@ if __name__ == '__main__':
     map_eTime = map_sTime + integration_time
 
     event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
+#    filename    = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(fname_tag,sTime,eTime)
     if plot_midpoints:
         if reflection_type == 'miller2015':
             output_dir = os.path.join('output','wspr','maps','refl_points',event_dir)

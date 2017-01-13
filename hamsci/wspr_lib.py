@@ -71,7 +71,7 @@ class BandData(object):
 ##        bands.append((144.0,  '2 m'))
 #        bands.append((50.0,  '6 m'))
         bands.append((28.0,  '10 m'))
-        bands.append((24.0,  '12 m'))
+#        bands.append((24.0,  '12 m'))
         bands.append((21.0,  '15 m'))
         bands.append((18.0,  '17 m'))
         bands.append((14.0,  '20 m'))
@@ -106,7 +106,7 @@ class BandData(object):
         my_cdict = fc
 	fc[ 0.0] = (  0,   0,   0)
 #	fc[ 0.1] = cc255('magenta')
-	fc[ 0.5] = cc255('magenta')
+#	fc[ 0.5] = cc255('magenta')
 	fc[ 1.8] = cc255('violet')
 	fc[ 3.0] = cc255('blue')
 #	fc[ 5.5] = cc255('blue')
@@ -195,8 +195,42 @@ def ham_band_errorbars(freqs):
                24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
     bands   = [ 1.80,  3.5,  7.0, 14.0,  18.1,  21.0,
                24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
-#    bands   = [ 1.80,  3.5, 5.0, 7.0,  10.0,  14.0,  18.1,  21.0,
+#    bands   = [ 1.80,  3.5, 5.0, 7.0,  10.1,  14.0,  18.068,  21.0,
 #               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+    bands   = np.array(bands)
+
+    low_lst = []
+    upp_lst = []
+
+    for freq in freqs:
+        diff    = np.abs(bands - freq)
+        argmin  = diff.argmin()
+
+        lower   = 0.10 * freq
+        low_lst.append(lower)
+
+        upper   = bands[argmin+1] - freq
+        upp_lst.append(upper)
+    
+    return (np.array(low_lst),np.array(upp_lst))
+
+def wspr_band_errorbars(freqs):
+    """
+    Return error bars based on wspr radio band discretization.
+
+    Upper error bar is the bottom of the next highest ham radio band.
+    Lower error bar is 90% of the original frequency.
+    """
+
+    freqs   = np.array(freqs)
+    if freqs.shape == (): freqs.shape = (1,)
+
+#    bands   = [ 1.80,  3.5,  7.0,  10.0,  14.0,  18.1,  21.0,
+#               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+#    bands   = [ 1.80,  3.5,  7.0, 14.0,  18.1,  21.0,
+#               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+    bands   = [ 1.80,  3.5, 5.0, 7.0,  10.1,  14.0,  18.068,  21.0,
+               24.89, 28.0, 50.0, 144.0, 220.0, 440.0, 1296.5]
     bands   = np.array(bands)
 
     low_lst = []
@@ -587,12 +621,14 @@ class WsprDataSet(object):
 
         # Error bar info.
         f_max               = dct['f_max_MHz']
+        #Needs Modification for WSPR frequencies!
         lower,upper         = ham_band_errorbars(f_max)
 
         # Compute Zenith Angle Theta and FoF2.
         lambda_by_2         = dct['R_gc_min']/Re
         theta               = np.arctan( np.sin(lambda_by_2)/( (Re+hgt)/Re - np.cos(lambda_by_2) ) )
         foF2                = dct['f_max_MHz']*np.cos(theta)
+        #Not Accurate! Must be modified for WSPR
         foF2_err_low        = lower*np.cos(theta)
         foF2_err_up         = upper*np.cos(theta)
         dct['theta']        = theta
