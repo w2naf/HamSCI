@@ -2,6 +2,7 @@
 #Including the above line as the first line of the script allows this script to be run
 #directly from the command line without first calling python/ipython.
 de_prop         = {'marker':'^','edgecolor':'k','facecolor':'white'}
+dx_prop         = {'marker':'o','edgecolor':'k','facecolor':'white'}
 dxf_prop        = {'marker':'*','color':'blue'}
 dxf_leg_size    = 150
 dxf_plot_size   = 50
@@ -1399,6 +1400,18 @@ class WsprMap(object):
 
         rx      = m.scatter(df['de_lon'],df['de_lat'],
                 s=s,zorder=zorder,**de_prop)
+
+    def plot_dx(self,s=25,zorder=150):
+        m       = self.m
+        df      = self.data_set.df
+
+        # Only plot the actual receiver location.
+        if 'hop_nr' in df.keys():
+            tf  = df.hop_nr == 0
+            df  = df[tf]
+
+        tx      = m.scatter(df['dx_lon'],df['dx_lat'],
+                s=s,zorder=zorder,**dx_prop)
 
     def plot_midpoints(self,s=20):
         band_data   = self.band_data

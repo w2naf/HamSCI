@@ -29,6 +29,7 @@ def wspr_full_map(sTime,eTime,
         call_filt_de = None, call_filt_dx = None,
         reflection_type         = 'sp_mid',
         plot_de                 = True,
+        plot_dx                 = True,
         plot_midpoints          = True,
         plot_paths              = False,
         plot_ncdxf              = False,
@@ -69,6 +70,8 @@ def wspr_full_map(sTime,eTime,
     map_obj=wspr_lib.WsprMap(wspr_obj, ax=ax0,nightshade=term[0], solar_zenith=term[1], default_plot=False)
     if plot_de:
         map_obj.plot_de()
+    if plot_dx:
+        map_obj.plot_dx()
     if plot_midpoints:
         map_obj.plot_midpoints()
     if plot_paths:
@@ -297,6 +300,7 @@ def wspr_map_dct_wrapper(run_dct):
 if __name__ == '__main__':
     multiproc   = False 
     plot_de                 = True
+    plot_dx                 = True
     plot_midpoints          = False
     plot_paths              = False
     plot_ncdxf              = False
@@ -304,7 +308,8 @@ if __name__ == '__main__':
     plot_legend             = True
     overlay_gridsquares     = True
     overlay_gridsquare_data = True
-    gridsquare_data_param   = 'f_max_MHz'
+#    gridsquare_data_param   = 'f_max_MHz'
+    gridsquare_data_param   = 'foF2'
     fname_tag               = None
     #Initial WsprMap test code
     sTime = datetime.datetime(2016,11,1,22)
@@ -348,7 +353,10 @@ if __name__ == '__main__':
     if plot_paths: 
         output_dir          = os.path.join('output','wspr','maps','paths',event_dir)
     if overlay_gridsquare_data:
-        output_dir          = os.path.join('output','wspr','maps','gridsqs',event_dir)
+        if gridsquare_data_param   == 'foF2':
+            output_dir          = os.path.join('output','wspr','maps','fof2',event_dir)
+        else:
+            output_dir          = os.path.join('output','wspr','maps','gridsqs',event_dir)
 
 #    output_dir          = os.path.join('output','wspr','maps','paths',event_dir)
 #    output_dir          = os.path.join('output','wspr','maps','midpoints',event_dir)
@@ -365,7 +373,7 @@ if __name__ == '__main__':
     dct.update({'reflection_type':filt_type})
     dct.update({'output_dir':output_dir})
 
-    dct.update({'plot_de':plot_de, 'plot_midpoints':plot_midpoints, 'plot_paths':plot_paths, 'plot_ncdxf': plot_ncdxf, 'plot_stats':plot_stats, 'plot_legend':plot_legend, 'overlay_gridsquares':overlay_gridsquares, 'overlay_gridsquare_data':overlay_gridsquare_data, 'gridsquare_data_param':gridsquare_data_param, 'fname_tag':fname_tag})
+    dct.update({'plot_de':plot_de, 'plot_dx':plot_dx, 'plot_midpoints':plot_midpoints, 'plot_paths':plot_paths, 'plot_ncdxf': plot_ncdxf, 'plot_stats':plot_stats, 'plot_legend':plot_legend, 'overlay_gridsquares':overlay_gridsquares, 'overlay_gridsquare_data':overlay_gridsquare_data, 'gridsquare_data_param':gridsquare_data_param, 'fname_tag':fname_tag})
     run_list    = gen_map_run_list(sTime,eTime,integration_time,interval_time,**dct)
 #    run_list    = gen_map_run_list(map_sTime,map_eTime,integration_time,interval_time,**dct)
 
