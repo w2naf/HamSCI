@@ -1690,8 +1690,8 @@ class WsprMap(object):
         key                 = 'f_max_MHz'
         tmp                 = {}
         param_info[key]     = tmp
-#        tmp['cbar_ticks']   = [1.8,3.5,7.,10.,14.,21.,24.,28.]
-        tmp['cbar_ticks']   = [1.8,3.5, 5., 7.,10.,14.,18.1, 21.,24.,28., 50.]
+        tmp['cbar_ticks']   = [1.8,3.5,7.,10.,14.,21.,24.,28.]
+#        tmp['cbar_ticks']   = [1.8,3.5, 5., 7.,10.,14.,18.1, 21.,24.,28., 50.]
         tmp['label']        = 'F_max [MHz]'
 
         key                 = 'counts'
