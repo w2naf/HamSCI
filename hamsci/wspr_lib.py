@@ -532,6 +532,7 @@ class WsprDataSet(object):
 
     def select_interval(self, sTime, eTime=None, dt = 5, replace = False, new_data_set = None, comment = None): 
         """
+        Creat  WsprObj data set of data within a specified period of time
         Parameters
         ----------
         sTime : datetime
@@ -895,6 +896,7 @@ class WsprDataSet(object):
 
         The method appends de and dx lat and lons to current dataframe and does
         NOT create a new dataset.
+
         Written by Magdalina Moses, Fall 2016
         """
         print 'Finding dx lat/lon....'
@@ -914,6 +916,7 @@ class WsprDataSet(object):
 
         The method appends de and dx lat and lons to current dataframe and does
         NOT create a new dataset.
+
         Written by: Magalina Moses Winter 2016/2017
         """
         df                          = self.df
@@ -977,17 +980,17 @@ class WsprDataSet(object):
 
         return this_group
 
-    def get_band_group(self,band):
-        if not hasattr(self,'band_groups'):
-            srt                 = self.df.sort_values(by=['band','timestamp'])
-            self.band_groups    = srt.groupby('band')
-
-        try:
-            this_group  = self.band_groups.get_group(band)
-        except:
-            this_group  = None
-
-        return this_group
+#    def get_band_group(self,band):
+#        if not hasattr(self,'band_groups'):
+#            srt                 = self.df.sort_values(by=['band','timestamp'])
+#            self.band_groups    = srt.groupby('band')
+#
+#        try:
+#            this_group  = self.band_groups.get_group(band)
+#        except:
+#            this_group  = None
+#
+#        return this_group
 
     def dedx_list(self):
         """
@@ -1690,8 +1693,8 @@ class WsprMap(object):
         key                 = 'f_max_MHz'
         tmp                 = {}
         param_info[key]     = tmp
-#        tmp['cbar_ticks']   = [1.8,3.5,7.,10.,14.,21.,24.,28.]
-        tmp['cbar_ticks']   = [1.8,3.5, 5., 7.,10.,14.,18.1, 21.,24.,28., 50.]
+        tmp['cbar_ticks']   = [1.8,3.5,7.,10.,14.,21.,24.,28.]
+#        tmp['cbar_ticks']   = [1.8,3.5, 5., 7.,10.,14.,18.1, 21.,24.,28., 50.]
         tmp['label']        = 'F_max [MHz]'
 
         key                 = 'counts'

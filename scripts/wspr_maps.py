@@ -46,7 +46,9 @@ def wspr_full_map(sTime,eTime,
     filename    = 'wspr_map-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(sTime,eTime)
     filepath    = os.path.join(output_dir,filename)
 
+    #Create wspr object
     wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
+    #find lat/lon from gridsquares
     wspr_obj.active.dxde_gs_latlon()
     wspr_obj.active.filter_pathlength(500.)
     wspr_obj.active.calc_reflection_points(reflection_type=reflection_type)
