@@ -5,6 +5,21 @@ import sys
 import os
 import datetime
 
+def wspr_counts(sTime=None,eTime=None,
+            integration_time=datetime.timedelta(minutes=15),
+            plot_all        = True,     all_lw  = 2,
+            plot_by_band    = False,    band_lw = 3,
+            band_data=None,
+            plot_legend=True,legend_loc='upper left',legend_lw=None,
+            plot_title=True,format_xaxis=True,
+            xticks=None,
+            ax=None):
+    """
+    Make count plots of wspr data
+
+
+    """
+
 def archive_wspr_data(sTime, eTime=None, pathlen=500., reflection_type='miller2015'):
     #Create wspr object
     wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
