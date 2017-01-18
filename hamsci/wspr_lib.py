@@ -1129,10 +1129,14 @@ class WsprDataSet(object):
                 label       = band_data.band_dict[band]['freq_name']
 
                 counts      = rolling_counts_time(this_group,sTime=sTime,window_length=integration_time)
+                print counts.index
+                print '\n'
                 ax.plot(counts.index,counts,color=color,label=label,lw=band_lw)
 
         if plot_all:
             counts  = rolling_counts_time(self.df,sTime=sTime,window_length=integration_time)
+            print counts.index
+            print '\n'
             ax.plot(counts.index,counts,color='k',label='All Spots',lw=all_lw)
 
         ax.set_ylabel('WSPR Counts')

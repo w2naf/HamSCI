@@ -21,7 +21,7 @@ def wspr_counts(sTime=None,eTime=None,
         llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None, integration_time=datetime.timedelta(minutes=15),
         reflection_type         = 'sp_mid',
-        output_dir = 'output'):
+        output_dir = 'output/wspr'):
 #            plot_all        = True,     all_lw  = 2,
 #            plot_by_band    = False,    band_lw = 3,
 #            band_data=None,
@@ -43,19 +43,20 @@ def wspr_counts(sTime=None,eTime=None,
 
     wspr_obj     = wspr_lib.WsprObject(sTime,eTime)
     import ipdb; ipdb.set_trace()
-    #find lat/lon from gridsquares
-    wspr_obj.active.dxde_gs_latlon()
-    wspr_obj.active.filter_pathlength(500.)
-    wspr_obj.active.calc_reflection_points(reflection_type=reflection_type)
-
-    wspr_obj.active.latlon_filt(**latlon_bnds)
-    wspr_obj.active.filter_calls(call_filt_de,call_type='de')
-    wspr_obj.active.filter_calls(call_filt_dx,call_type='dx')
-
-#    wspr_grid   = wspr_obj.active.create_geo_grid()
-    wspr_obj.active.grid_data(gridsquare_precision)
-    import ipdb; ipdb.set_trace()
-    wspr_obj.active.compute_grid_stats()
+#    import ipdb; ipdb.set_trace()
+#    #find lat/lon from gridsquares
+#    wspr_obj.active.dxde_gs_latlon()
+#    wspr_obj.active.filter_pathlength(500.)
+#    wspr_obj.active.calc_reflection_points(reflection_type=reflection_type)
+#
+#    wspr_obj.active.latlon_filt(**latlon_bnds)
+#    wspr_obj.active.filter_calls(call_filt_de,call_type='de')
+#    wspr_obj.active.filter_calls(call_filt_dx,call_type='dx')
+#
+##    wspr_grid   = wspr_obj.active.create_geo_grid()
+#    wspr_obj.active.grid_data(gridsquare_precision)
+#    import ipdb; ipdb.set_trace()
+#    wspr_obj.active.compute_grid_stats()
 
     # Go plot!! ############################ 
     ## Determine the aspect ratio of subplot.
@@ -87,7 +88,7 @@ def wspr_counts(sTime=None,eTime=None,
     
     title = []
     title.append(' WSPR Network ')
-    title.append(latlon_str)
+#    title.append(latlon_str)
     ax0.set_title('\n'.join(title))
 
     ax0.grid(True)
@@ -139,6 +140,7 @@ if __name__ == '__main__':
     sTime = datetime.datetime(2014, 11,1)
     eTime = datetime.datetime(2014, 11,4)
     eTime = datetime.datetime(2014, 11,5)
+    eTime = datetime.datetime(2014, 11,1,2)
 
     dct = {}
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
@@ -146,7 +148,8 @@ if __name__ == '__main__':
 #    event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
     output_dir          = os.path.join('output','wspr','counts')
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
-    dct['output_dir']   = output_dir
+#    dct['output_dir']   = output_dir
+    dct.update({'output_dir':output_dir})
 
     wspr_counts(sTime,eTime,**dct)
 
