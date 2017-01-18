@@ -42,7 +42,6 @@ def wspr_counts(sTime=None,eTime=None,
     filepath    = os.path.join(output_dir,filename)
 
     wspr_obj     = wspr_lib.WsprObject(sTime,eTime)
-    import ipdb; ipdb.set_trace()
 #    import ipdb; ipdb.set_trace()
 #    #find lat/lon from gridsquares
 #    wspr_obj.active.dxde_gs_latlon()
@@ -139,8 +138,8 @@ if __name__ == '__main__':
 
     sTime = datetime.datetime(2014, 11,1)
     eTime = datetime.datetime(2014, 11,4)
-    eTime = datetime.datetime(2014, 11,5)
-    eTime = datetime.datetime(2014, 11,1,2)
+    eTime = datetime.datetime(2014, 11,5, 0, 30)
+#    eTime = datetime.datetime(2014, 11,1,2)
 
     dct = {}
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
