@@ -7,6 +7,7 @@ import glob
 import datetime
 import multiprocessing
 import pickle
+import shutil
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -55,6 +56,20 @@ def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
         this_sTime      = this_sTime + interval_time
 
     return dct_list
+
+def update_run_list(run_list,**kwargs):
+    """
+    Returns a copy of a list of dictionaries
+    with new/updated items in each dictionary.
+    """
+
+    new_list    = []
+    for item in run_list:
+        item_copy   = item.copy() 
+        item_copy.update(kwargs)
+        new_list.append(item_copy)
+
+    return new_list
 
 def rbn_map_dct_wrapper(run_dct):
     rbn_map(**run_dct)
@@ -420,6 +435,15 @@ def plot_grid_timeseries(run_list,
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
 
+def write_csv_dct(run_dct):
+    """
+    Dictionary wrapper for write_csv() to help with
+    pool multiprocessing.
+    """
+
+    csv_path    = write_csv(**run_dct)
+    return csv_path
+
 def write_csv(sTime,eTime,reflection_type,output_dir,rbn_fof2_dir,data_set='active',dataframe='grid_data',
         print_header=True,**kwargs):
     """
@@ -477,17 +501,17 @@ if __name__ == '__main__':
 
     gen_csv             = True
     plot_maps           = True
-    plot_foF2           = False
+    plot_foF2           = True
     clear_foF2_cache    = True
 
     reflection_type     = 'miller2015'
 #    reflection_type     = 'sp_mid'
 
 #    # 2014 Nov Sweepstakes
-#    sTime   = datetime.datetime(2014,11,1)
-#    eTime   = datetime.datetime(2014,11,4)
-    sTime   = datetime.datetime(2014,11,2,12)
-    eTime   = datetime.datetime(2014,11,2,13)
+    sTime   = datetime.datetime(2014,11,1)
+    eTime   = datetime.datetime(2014,11,4)
+#    sTime   = datetime.datetime(2014,11,2,12)
+#    eTime   = datetime.datetime(2014,11,2,13)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
@@ -527,14 +551,33 @@ if __name__ == '__main__':
             for run_dct in run_list:
                 create_rbn_obj_dct_wrapper(run_dct)
  
-    # Plot Maps ####################################################################
+    # Prepare and Clear Output Directories #########################################
     if plot_maps or gen_csv:
         handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True,php_viewers=False)
 
+    # Generate CSV Files ###########################################################
     if gen_csv:
-        for run_dct in run_list:
-            write_csv(**run_dct)
 
+        csv_requests = []
+        csv_requests.append( {'data_set':'active', 'dataframe':'grid_data'} )
+        csv_requests.append( {'data_set':'active', 'dataframe':'df'} )
+
+        for csv_request in csv_requests:
+            csv_list    = update_run_list(run_list,**csv_request)
+            if multiproc:
+                pool = multiprocessing.Pool()
+                vals = pool.map(write_csv_dct,csv_list)
+                pool.close()
+                pool.join()
+                csv_path = vals[-1]
+            else:
+                for csv_dct in csv_list:
+                    csv_path = write_csv_dct(csv_dct)
+
+            path        = os.path.split(csv_path)[0]
+            shutil.make_archive(path, 'zip', path)
+
+    # Plot Maps ####################################################################
     if plot_maps:
         if multiproc:
             pool = multiprocessing.Pool()
