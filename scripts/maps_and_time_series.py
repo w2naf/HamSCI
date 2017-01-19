@@ -420,11 +420,64 @@ def plot_grid_timeseries(run_list,
     fig.savefig(filepath,bbox_inches='tight')
     plt.close(fig)
 
+def write_csv(sTime,eTime,reflection_type,output_dir,rbn_fof2_dir,data_set='active',dataframe='grid_data',
+        print_header=True,**kwargs):
+    """
+    Write RBN Obj data to a CSV File.
+    """
+
+    # Load in data.
+    rbn_fof2_fp = get_rbn_obj_path(rbn_fof2_dir,reflection_type,sTime,eTime)
+    with open(rbn_fof2_fp,'rb') as fl:
+        rbn_obj = pickle.load(fl)
+
+    ds          = getattr(rbn_obj,data_set)
+    df          = getattr(ds,dataframe)
+
+    # Prepare file names.
+    data_set_name   = ds.metadata['data_set_name']
+    filetag         = '{}.{}'.format(data_set_name,dataframe)
+
+    output_dir      = os.path.join(output_dir,'csv',filetag)
+    handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False,php_viewers=False)
+
+    csv_fname       = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.{}.csv'.format(sTime,eTime,filetag)
+    csv_path        = os.path.join(output_dir,csv_fname)
+
+    with open(csv_path,'w') as fl:
+        if print_header:
+            fl.write('# Data Source: {!s}\n'.format(rbn_fof2_fp))
+            fl.write('#\n')
+            fl.write('## Data Set History ############################################################\n')
+
+            keys = ds.history.keys()
+            keys.sort()
+            for key in keys:
+                line = '# {!s}: {!s}\n'.format(key,ds.history[key])
+                fl.write(line)
+
+            fl.write('#\n')
+            fl.write('## Data Set Metadata ###########################################################\n')
+
+            keys = ds.metadata.keys()
+            keys.sort()
+            for key in keys:
+                line = '# {!s}: {!s}\n'.format(key,ds.metadata[key])
+                fl.write(line)
+
+            fl.write('#\n')
+            fl.write('## CSV Data ####################################################################\n')
+
+    df.to_csv(csv_path,mode='a')
+    return csv_path
+
 if __name__ == '__main__':
-    multiproc           = True
+    multiproc           = False
     create_rbn_objs     = False
-    plot_maps           = True
-    plot_foF2           = True
+
+    gen_csv             = True
+    plot_maps           = False
+    plot_foF2           = False
     clear_foF2_cache    = True
 
     reflection_type     = 'miller2015'
@@ -475,8 +528,14 @@ if __name__ == '__main__':
                 create_rbn_obj_dct_wrapper(run_dct)
  
     # Plot Maps ####################################################################
-    if plot_maps:
+    if plot_maps or gen_csv:
         handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
+
+    if gen_csv:
+        for run_dct in run_list:
+            write_csv(**run_dct)
+
+    if plot_maps:
         if multiproc:
             pool = multiprocessing.Pool()
             pool.map(rbn_map_multiview,run_list)
