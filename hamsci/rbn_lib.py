@@ -416,7 +416,8 @@ class RbnDataSet(object):
         dct['foF2_err_up']  = foF2_err_up
 
         # Put into a new dataframe organized by grid square.
-        grid_data       = pd.DataFrame(dct,index=grids)
+        grid_data               = pd.DataFrame(dct,index=grids)
+        grid_data.index.name    = 'grid_square'
 
 #        fig     = plt.figure()
 #        ax  = fig.add_subplot(111)
