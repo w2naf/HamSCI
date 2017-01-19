@@ -101,7 +101,7 @@ def rbn_map_multiview(run_dct):
         rbn_map(**run_dct)
         serial  += 1
 
-def create_webview(tags=None,html_fname='0001-multiview.html',
+def create_webview(tags=None,html_fname='0-multiview.html',
         output_dir='output',width=500):
     # Get the names of the directories in the output_dir.
     dirs    = os.walk(output_dir).next()[1] 
@@ -472,11 +472,11 @@ def write_csv(sTime,eTime,reflection_type,output_dir,rbn_fof2_dir,data_set='acti
     return csv_path
 
 if __name__ == '__main__':
-    multiproc           = False
-    create_rbn_objs     = False
+    multiproc           = True
+    create_rbn_objs     = True
 
     gen_csv             = True
-    plot_maps           = False
+    plot_maps           = True
     plot_foF2           = False
     clear_foF2_cache    = True
 
@@ -484,10 +484,10 @@ if __name__ == '__main__':
 #    reflection_type     = 'sp_mid'
 
 #    # 2014 Nov Sweepstakes
-    sTime   = datetime.datetime(2014,11,1)
-    eTime   = datetime.datetime(2014,11,4)
-#    sTime   = datetime.datetime(2014,11,2,12)
-#    eTime   = datetime.datetime(2014,11,2,13)
+#    sTime   = datetime.datetime(2014,11,1)
+#    eTime   = datetime.datetime(2014,11,4)
+    sTime   = datetime.datetime(2014,11,2,12)
+    eTime   = datetime.datetime(2014,11,2,13)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
@@ -517,7 +517,7 @@ if __name__ == '__main__':
 
     # Create RBN Object ###############################################
     if create_rbn_objs:
-        handling.prepare_output_dirs({0:rbn_fof2_dir},clear_output_dirs=True)
+        handling.prepare_output_dirs({0:rbn_fof2_dir},clear_output_dirs=True,php_viewers=False)
         if multiproc:
             pool = multiprocessing.Pool()
             pool.map(create_rbn_obj_dct_wrapper,run_list)
@@ -529,7 +529,7 @@ if __name__ == '__main__':
  
     # Plot Maps ####################################################################
     if plot_maps or gen_csv:
-        handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True)
+        handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True,php_viewers=False)
 
     if gen_csv:
         for run_dct in run_list:
@@ -547,11 +547,11 @@ if __name__ == '__main__':
 
         create_webview(output_dir=output_dir)
 
-        name    = '0001-fof2.html'
+        name    = '0-fof2.html'
         tags    = ['foF2','f_max_MHz','theta','R_gc_min','counts','midpoints']
         create_webview(tags=tags,html_fname=name,output_dir=output_dir)
 
-        name    = '0001-rgc.html'
+        name    = '0-rgc.html'
         tags    = ['R_gc_min','R_gc_max','R_gc_mean']
         create_webview(tags=tags,html_fname=name,output_dir=output_dir)
 
