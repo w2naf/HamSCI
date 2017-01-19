@@ -313,7 +313,7 @@ class RbnObject(object):
                             'sp_mid': spherical midpoint
     """
     def __init__(self,sTime=None,eTime=None,data_dir='data/rbn',
-            qrz_call=None,qrz_passwd=None,comment='Raw Data',df=None,
+            qrz_call=None,qrz_passwd=None,comment='Raw Data',df=None,reindex=True,
             gridsquare_precision=4,reflection_type='sp_mid'):
 
         if df is None:
@@ -327,6 +327,11 @@ class RbnObject(object):
         metadata['serial']                  = 0
         cmt     = '[{}] {}'.format(data_set,comment)
         
+
+        if reindex:
+            df.index        = range(df.index.size)
+            df.index.name   = 'index'
+
         rbn_ds  = RbnDataSet(df,parent=self,comment=cmt)
         setattr(self,data_set,rbn_ds)
         setattr(rbn_ds,'metadata',metadata)
@@ -480,16 +485,21 @@ class RbnDataSet(object):
 
         return lat_lons
 
-    def dropna(self,new_data_set='dropna',comment='Remove Non-Geolocated Spots'):
+    def dropna(self,new_data_set='dropna',comment='Remove Non-Geolocated Spots',
+            reindex=True):
         """
         Removes spots that do not have geolocated Transmitters or Recievers.
         """
         new_ds      = self.copy(new_data_set,comment)
         new_ds.df   = new_ds.df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+        if reindex:
+            new_ds.df.index         = range(new_ds.df.index.size)
+            new_ds.df.index.name    = 'index'
+
         new_ds.set_active()
         return new_ds
 
-    def calc_reflection_points(self,reflection_type='sp_mid',**kwargs):
+    def calc_reflection_points(self,reflection_type='sp_mid',reindex=True,**kwargs):
         """
         Determine ionospheric reflection points of RBN data.
 
@@ -523,6 +533,9 @@ class RbnDataSet(object):
             df.loc[:,'refl_lon']    = refl_lon
 
             md['reflection_type']   = 'sp_mid'
+            if reindex:
+                new_ds.df.index         = range(new_ds.df.index.size)
+                new_ds.df.index.name    = 'index'
             new_ds.set_active()
             return new_ds
 
@@ -581,6 +594,9 @@ class RbnDataSet(object):
             new_df.loc[:,'refl_lon']    = refl_lon
 
             md['reflection_type']       = 'miller2015'
+            if reindex:
+                new_ds.df.index         = range(new_ds.df.index.size)
+                new_ds.df.index.name    = 'index'
             new_ds.set_active()
             return new_ds
 
@@ -654,7 +670,8 @@ class RbnDataSet(object):
 
         return colors
 
-    def filter_calls(self,calls,call_type='de',new_data_set='filter_calls',comment=None):
+    def filter_calls(self,calls,call_type='de',new_data_set='filter_calls',comment=None,
+            reindex=True):
         """
         Filter data frame for specific calls.
 
@@ -686,11 +703,14 @@ class RbnDataSet(object):
 
         new_ds      = self.copy(new_data_set,comment)
         new_ds.df   = df
+        if reindex:
+            new_ds.df.index         = range(new_ds.df.index.size)
+            new_ds.df.index.name    = 'index'
         new_ds.set_active()
         return new_ds
 
     def filter_pathlength(self,min_length=None,max_length=None,
-            new_data_set='pathlength_filter',comment=None):
+            new_data_set='pathlength_filter',comment=None,reindex=True):
         """
         """
 
@@ -712,6 +732,9 @@ class RbnDataSet(object):
             df  = df[tf]
         
         new_ds.df = df
+        if reindex:
+            new_ds.df.index         = range(new_ds.df.index.size)
+            new_ds.df.index.name    = 'index'
         new_ds.set_active()
         return new_ds
 
@@ -753,7 +776,7 @@ class RbnDataSet(object):
         self.geo_grid = RbnGeoGrid(self.df)
         return self.geo_grid
 
-    def apply(self,function,arg_dct,new_data_set=None,comment=None):
+    def apply(self,function,arg_dct,new_data_set=None,comment=None,reindex=True):
         if new_data_set is None:
             new_data_set = function.func_name
 
@@ -762,6 +785,9 @@ class RbnDataSet(object):
 
         new_ds      = self.copy(new_data_set,comment)
         new_ds.df   = function(self.df,**arg_dct)
+        if reindex:
+            new_ds.df.index         = range(new_ds.df.index.size)
+            new_ds.df.index.name    = 'index'
         new_ds.set_active()
 
         return new_ds
