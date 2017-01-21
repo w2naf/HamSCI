@@ -623,19 +623,19 @@ class WsprDataSet(object):
         # Error bar info.
         f_max               = dct['f_max_MHz']
         #Needs Modification for WSPR frequencies!
-        lower,upper         = ham_band_errorbars(f_max)
+#        lower,upper         = ham_band_errorbars(f_max)
 
         # Compute Zenith Angle Theta and FoF2.
         lambda_by_2         = dct['R_gc_min']/Re
         theta               = np.arctan( np.sin(lambda_by_2)/( (Re+hgt)/Re - np.cos(lambda_by_2) ) )
         foF2                = dct['f_max_MHz']*np.cos(theta)
         #Not Accurate! Must be modified for WSPR
-        foF2_err_low        = lower*np.cos(theta)
-        foF2_err_up         = upper*np.cos(theta)
+#        foF2_err_low        = lower*np.cos(theta)
+#        foF2_err_up         = upper*np.cos(theta)
         dct['theta']        = theta
         dct['foF2']         = foF2
-        dct['foF2_err_low'] = foF2_err_low
-        dct['foF2_err_up']  = foF2_err_up
+#        dct['foF2_err_low'] = foF2_err_low
+#        dct['foF2_err_up']  = foF2_err_up
 
         # Put into a new dataframe organized by grid square.
         grid_data       = pd.DataFrame(dct,index=grids)

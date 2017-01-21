@@ -310,14 +310,18 @@ if __name__ == '__main__':
     plot_legend             = False
     overlay_gridsquares     = True
     overlay_gridsquare_data = True
-    gridsquare_data_param   = 'f_max_MHz'
-#    gridsquare_data_param   = 'foF2'
+#    gridsquare_data_param   = 'f_max_MHz'
+    gridsquare_data_param   = 'foF2'
     fname_tag               = None
     #Initial WsprMap test code
     sTime = datetime.datetime(2016,11,1,22)
     eTime = datetime.datetime(2016,11,2,1)
     sTime = datetime.datetime(2016,11,1)
     eTime = datetime.datetime(2016,11,1,1)
+    #CW Sweapstakes 2014
+    sTime = datetime.datetime(2014, 11,1)
+    eTime = datetime.datetime(2014, 11,4)
+#    eTime = datetime.datetime(2014, 11,2)
 #    #Solar Flare Event
 ##    sTime = datetime.datetime(2016,5,13,15,5)
 ##    eTime = datetime.datetime(2016,5,13,15,21)
@@ -348,20 +352,26 @@ if __name__ == '__main__':
     map_eTime = map_sTime + interval_time
     map_eTime = map_sTime + integration_time
 
+    #Create output directory based on start and end time and parameter ploted
     event_dir           = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}'.format(sTime,eTime)
 #    filename    = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(fname_tag,sTime,eTime)
     if plot_midpoints:
         if reflection_type == 'miller2015':
-            output_dir = os.path.join('output','wspr','maps','refl_points',event_dir)
+            tag = 'refl_points'
+#            output_dir = os.path.join('output','wspr','maps','refl_points',event_dir)
         if reflection_type == 'sp_mid':
-            output_dir          = os.path.join('output','wspr','maps','midpoints',event_dir)
+            tag='midpoints'
     if plot_paths: 
-        output_dir          = os.path.join('output','wspr','maps','paths',event_dir)
+        tag = 'paths'
+#        output_dir          = os.path.join('output','wspr','maps','paths',event_dir)
     if overlay_gridsquare_data:
         if gridsquare_data_param   == 'foF2':
-            output_dir          = os.path.join('output','wspr','maps','fof2',event_dir)
+            tag='fof2'
+#            output_dir          = os.path.join('output','wspr','maps','fof2',event_dir)
         else:
-            output_dir          = os.path.join('output','wspr','maps','gridsqs',event_dir)
+            tag = 'gridsqs'
+#            output_dir          = os.path.join('output','wspr','maps','gridsqs',event_dir)
+    output_dir          = os.path.join('output','wspr','maps',event_dir, tag)
 
 #    output_dir          = os.path.join('output','wspr','maps','paths',event_dir)
 #    output_dir          = os.path.join('output','wspr','maps','midpoints',event_dir)
@@ -374,14 +384,17 @@ if __name__ == '__main__':
     except:
         pass
 
+# Create input parameter dictionary 
 #    dct.update({'filt_type':filt_type})
     dct.update({'reflection_type':filt_type})
     dct.update({'output_dir':output_dir})
-
     dct.update({'plot_de':plot_de, 'plot_dx':plot_dx, 'plot_midpoints':plot_midpoints, 'plot_paths':plot_paths, 'plot_ncdxf': plot_ncdxf, 'plot_stats':plot_stats, 'plot_legend':plot_legend, 'overlay_gridsquares':overlay_gridsquares, 'overlay_gridsquare_data':overlay_gridsquare_data, 'gridsquare_data_param':gridsquare_data_param, 'fname_tag':fname_tag})
+
+    #Generate list of input values for every interval to plot 
     run_list    = gen_map_run_list(sTime,eTime,integration_time,interval_time,**dct)
 #    run_list    = gen_map_run_list(map_sTime,map_eTime,integration_time,interval_time,**dct)
-
+    
+    #Run map code
     if multiproc:
         pool = multiprocessing.Pool()
         pool.map(wspr_map_dct_wrapper,run_list)
