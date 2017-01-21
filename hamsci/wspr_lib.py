@@ -629,7 +629,7 @@ class WsprDataSet(object):
         lambda_by_2         = dct['R_gc_min']/Re
         theta               = np.arctan( np.sin(lambda_by_2)/( (Re+hgt)/Re - np.cos(lambda_by_2) ) )
         foF2                = dct['f_max_MHz']*np.cos(theta)
-        #Not Accurate! Must be modified for WSPR
+        # Error Bars Not Accurate! Must be modified for WSPR
 #        foF2_err_low        = lower*np.cos(theta)
 #        foF2_err_up         = upper*np.cos(theta)
         dct['theta']        = theta
