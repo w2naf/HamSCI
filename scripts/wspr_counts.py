@@ -121,6 +121,28 @@ def archive_wspr_data(sTime, eTime=None, pathlen=500., reflection_type='miller20
     wspr_obj.active.grid_data(gridsquare_precision)
     wspr_obj.active.compute_grid_stats()
 
+
+def find_freq_bnds(sTime, eTime=None):
+
+    wspr_obj = wspr_lib.WsprObj(sTime, eTime)
+
+    #Group by bands
+    grouped = wspr_obj.active.df.groupby('band')
+   
+   #Find frequency limits by band
+    f_min=[]
+    f_max=[]
+    all_bands=[]
+    for band in wspr_obj.active.df.band.unique():
+        this_group=grouped.get_group(band)
+        all_bands.append(band)
+        f_min.append(this_group.freq.min())
+        f_max.append(this_group.freq.max())
+
+    df = pd.DataFrame({'band':all_bands, 'f_min':f_min, 'f_max':f_max})
+    return df
+
+
 if __name__ == '__main__':
     multiproc   = False 
     plot_de                 = True

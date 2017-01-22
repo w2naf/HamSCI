@@ -1176,6 +1176,31 @@ class WsprDataSet(object):
             for tl in ax.get_xticklabels():
                 tl.set_ha('left')
 
+    def find_freq_bnds(self):
+        """Find the frequency bounds by band for wspr data
+
+        Written by Magdalina Moses, Spring 2017 
+        """
+
+#        wspr_obj = wspr_lib.WsprObj(sTime, eTime)
+
+        #Group by bands
+        grouped = self.df.groupby('band')
+       
+       #Find frequency limits by band
+        f_min=[]
+        f_max=[]
+        all_bands=[]
+        for band in self.df.band.unique():
+            this_group=grouped.get_group(band)
+            all_bands.append(band)
+            f_min.append(this_group.freq.min())
+            f_max.append(this_group.freq.max())
+
+        df = pd.DataFrame({'band':all_bands, 'f_min':f_min, 'f_max':f_max})
+        self.freq_bnds = df
+        return df
+
 def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
         title=None,bbox_to_anchor=None,wspr_rx=True,ncdxf=False,ncol=None,band_data=None):
 
