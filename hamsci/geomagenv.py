@@ -13,8 +13,6 @@ from matplotlib import pyplot as plt
 
 from mpl_toolkits.basemap import solar
 
-import davitpy.gme as gme
-
 from general_lib import prepare_output_dirs
 
 # script filename (usually with path)
@@ -108,6 +106,7 @@ class GmeDataSet(object):
     def __init__(self,sTime,eTime,gme_param,
             oversamp_T=datetime.timedelta(minutes=1),
             plot_info=None,comment=None,parent=None):
+        import davitpy.gme as gme
 
         # Save the input plot_info to override default data later.
         _plot_info          = plot_info

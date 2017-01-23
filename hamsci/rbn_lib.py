@@ -24,7 +24,6 @@ pd.set_option('display.width', 1000)
 
 from hamtools import qrz
 
-import davitpy
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1160,6 +1159,7 @@ class RbnMap(object):
         
     def plot_solar_zenith_angle(self,
             cmap=None,vmin=0,vmax=180,plot_colorbar=False):
+        import davitpy
 
         if cmap is None:
             fc = {}
