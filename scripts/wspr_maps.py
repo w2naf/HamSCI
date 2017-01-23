@@ -322,6 +322,14 @@ if __name__ == '__main__':
     sTime = datetime.datetime(2014, 11,1)
     eTime = datetime.datetime(2014, 11,4)
 #    eTime = datetime.datetime(2014, 11,2)
+    #CW Sweapstakes 2016
+    sTime = datetime.datetime(2016, 11,5)
+    eTime = datetime.datetime(2016, 11,7)
+    #Test CW Sweapstakes 2016
+    sTime = datetime.datetime(2016, 11,4)
+    eTime = datetime.datetime(2016, 11,7)
+
+
 #    #Solar Flare Event
 ##    sTime = datetime.datetime(2016,5,13,15,5)
 ##    eTime = datetime.datetime(2016,5,13,15,21)

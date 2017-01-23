@@ -78,6 +78,7 @@ def wspr_counts(sTime=None,eTime=None,
     fig     = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize))
 
     ax0     = fig.add_subplot(ny_plots,nx_plots,1)
+    print 'Plotting all counts'
     wspr_obj.active.plot_spot_counts(sTime=sTime,eTime=eTime,
             integration_time=integration_time,
             plot_by_band=False,plot_all=True,
@@ -93,6 +94,7 @@ def wspr_counts(sTime=None,eTime=None,
     ax0.grid(True)
 
     ax0     = fig.add_subplot(ny_plots,nx_plots,2)
+    print 'Plotting band counts'
     wspr_obj.active.plot_spot_counts(sTime=sTime,eTime=eTime,
             integration_time=integration_time,
             plot_by_band=True,plot_all=False,legend_lw=7,
@@ -162,6 +164,8 @@ if __name__ == '__main__':
     eTime = datetime.datetime(2014, 11,4)
     eTime = datetime.datetime(2014, 11,5, 0, 30)
 #    eTime = datetime.datetime(2014, 11,1,2)
+    sTime = datetime.datetime(2016, 11,3)
+    eTime = datetime.datetime(2016, 11,7)
 
     dct = {}
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
@@ -173,5 +177,7 @@ if __name__ == '__main__':
     dct.update({'output_dir':output_dir})
 
     wspr_counts(sTime,eTime,**dct)
+    command = 'cp '+output_dir+' ~/Dropbox/ws1_images/wspr/'
+    os.system(command)
 
 
