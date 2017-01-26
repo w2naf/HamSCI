@@ -69,7 +69,7 @@ def geoloc_info(rbn_obj):
     good_count      = good_loc['callsign'].count()
     total_count     = len(rbn_obj.DS000.df)
     good_pct        = float(good_count) / total_count * 100.
-    print('Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count,total_count,good_pct))
+    print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count,total_count,good_pct)
 
     return {'good_count':good_count,'total_count':total_count}
    
@@ -125,7 +125,7 @@ def create_rbn_obj(sTime,eTime,
         pickle.dump(rbn_obj,fl)
 
     fl = os.path.join(output_dir,"rbn_path.json")
-    print(('Saving to {}'.format(fl)))
+    print('Saving to {}'.format(fl))
     with open(fl, "w") as output:
         ds  = rbn_obj.DS002_pathlength_filter
         df  = ds.df
@@ -133,16 +133,16 @@ def create_rbn_obj(sTime,eTime,
         output.write(df.T.to_json())
 
     fl = os.path.join(output_dir,"rbn_reflect.json")
-    print(('Saving to {}'.format(fl)))
+    print('Saving to {}'.format(fl))
     with open(fl, "w") as output:
         ds          = rbn_obj.active
         df          = ds.df
-        df.index    = list(range(df.index.size))
+        df.index    = range(df.index.size)
         df["color"] = ds.get_band_color(encoding="hex")
         output.write(df.T.to_json())
 
     fl = os.path.join(output_dir,"rbn_grid.json")
-    print(('Saving to {}'.format(fl)))
+    print('Saving to {}'.format(fl))
     with open(fl, "w") as output:
         df = rbn_obj.active.grid_data
         df["color"] = rbn_obj.active.get_grid_data_color(encoding="hex")
@@ -154,7 +154,7 @@ def create_rbn_obj(sTime,eTime,
     metadata['eTime']           = eTime.strftime('%Y %b %m %H:%M UT')
 
     fl = os.path.join(output_dir,"metadata.json")
-    print(('Saving to {}'.format(fl)))
+    print('Saving to {}'.format(fl))
     with open(fl, "w") as output:
         output.write(json.dumps(metadata))
 
@@ -164,7 +164,7 @@ def create_rbn_obj(sTime,eTime,
 if __name__ == '__main__':
     integration_time        = datetime.timedelta(minutes=15)
     now                     = datetime.datetime.now()
-    print(('Running create_rbnobj_realtime.py for {!s}'.format(now)))
+    print('Running create_rbnobj_realtime.py for {!s}'.format(now))
     eTime                   = datetime.datetime(now.year,now.month,now.day,
                                                 now.hour,now.minute)
     sTime                   = eTime - integration_time
