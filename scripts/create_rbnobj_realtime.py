@@ -150,8 +150,8 @@ def create_rbn_obj(sTime,eTime,
 
     metadata = {}
     metadata['itegration_time'] = '{:.01f} min'.format(integration_time.total_seconds()/60.)
-    metadata['sTime']           = '{!s}'.format(sTime)
-    metadata['eTime']           = '{!s}'.format(eTime)
+    metadata['sTime']           = sTime.strftime('%Y %b %m %H:%M UT')
+    metadata['eTime']           = eTime.strftime('%Y %b %m %H:%M UT')
 
     fl = os.path.join(output_dir,"metadata.json")
     print('Saving to {}'.format(fl))
