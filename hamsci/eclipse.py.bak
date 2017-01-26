@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import numpy as np
+from pykml import parser
 
 class Eclipse2017(object):
     def __init__(self,fname=None):
@@ -10,7 +11,6 @@ class Eclipse2017(object):
         Data comes from KML/KMZ file from
         http://xjubier.free.fr/en/site_pages/SolarEclipsesGoogleEarth.html.
         """
-        from pykml import parser
         if fname is None:
             base    = os.path.split(__file__)[0]
             fname   = os.path.join(base,'2017_eclipse.kml')
@@ -26,10 +26,10 @@ class Eclipse2017(object):
         in the 2017 Eclipse KML File.
         """
         for fl_inx, folder in enumerate(self.root.Document.Folder):
-            print('[{!s}] {}'.format(fl_inx,folder.name))
+            print '[{!s}] {}'.format(fl_inx,folder.name)
             if hasattr(folder,'Placemark'):
                 for pm_inx,pm in enumerate(folder.Placemark):
-                    print('    [{!s}] {}'.format(pm_inx,pm.name))
+                    print '    [{!s}] {}'.format(pm_inx,pm.name)
     
     def get_latlon(self,folder_inx=1,placemark_inx=1):
         """
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     import matplotlib as mpl
     from mpl_toolkits.basemap import Basemap
 
-    from .gridsquare import *
+    from gridsquare import *
 
     llcrnrlon = -130.
     llcrnrlat =  20.

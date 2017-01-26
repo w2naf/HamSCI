@@ -11,9 +11,7 @@ import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
-from mpl_toolkits.basemap import solar
 
-from general_lib import prepare_output_dirs
 
 # script filename (usually with path)
 import inspect
@@ -106,6 +104,7 @@ class GmeDataSet(object):
     def __init__(self,sTime,eTime,gme_param,
             oversamp_T=datetime.timedelta(minutes=1),
             plot_info=None,comment=None,parent=None):
+        from mpl_toolkits.basemap import solar
         import davitpy.gme as gme
 
         # Save the input plot_info to override default data later.
@@ -418,7 +417,7 @@ class GmeDataSet(object):
         """
 
         if self.parent is None:
-            print 'No parent object; cannot copy.'
+            print('No parent object; cannot copy.')
             return
 
         all_data_sets   = self.parent.get_all_data_sets()
@@ -515,15 +514,15 @@ class GmeDataSet(object):
             md          = self.metadata
             warn        = 'WARNING'
             if md.has_key('title'): warn = ' '.join([warn,'FOR','"'+md['title']+'"'])
-            print warn + ':'
-            print '   Date time vector is not regularly sampled!'
-            print '   Maximum difference in sampling rates is ' + str(maxDt) + ' sec.'
+            print(warn + ':')
+            print('   Date time vector is not regularly sampled!')
+            print('   Maximum difference in sampling rates is ' + str(maxDt) + ' sec.')
             samplePeriod = mode
 
             if not allow_mode:
                 raise()
             else:
-                print '   Using mode sampling period of ' + str(mode) + ' sec.'
+                print('   Using mode sampling period of ' + str(mode) + ' sec.')
         
         smp = datetime.timedelta(seconds=samplePeriod)
         return smp
@@ -547,7 +546,7 @@ class GmeDataSet(object):
         keys = self.metadata.keys()
         keys.sort()
         for key in keys:
-            print key+':',self.metadata[key]
+            print(key+':',self.metadata[key])
 
     def append_history(self,comment):
         """Add an entry to the processing history dictionary of the current musicDataObj object.
@@ -567,7 +566,7 @@ class GmeDataSet(object):
         keys = self.history.keys()
         keys.sort()
         for key in keys:
-            print key,self.history[key]
+            print(key,self.history[key])
 
     def get_short_name(self,sep='-'):
         """

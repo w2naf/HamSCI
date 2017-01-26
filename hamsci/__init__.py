@@ -1,6 +1,6 @@
-import rbn_lib
-import geopack
-import handling
-import geomagenv
-import general_lib
-import eclipse
+from . import rbn_lib
+from . import geopack
+from . import handling
+from . import geomagenv
+from . import general_lib
+from . import eclipse

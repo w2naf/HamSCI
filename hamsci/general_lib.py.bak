@@ -48,7 +48,7 @@ def get_custom_cmap(name='blue_red'):
     return new_cmap
 
 def get_iterable(x):
-    if isinstance(x, collections.Iterable) and not isinstance(x,str):
+    if isinstance(x, collections.Iterable) and not isinstance(x,basestring):
         return x
     else:
         return [x]
@@ -92,7 +92,7 @@ def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,img_ext
     txt.append('?>')
     show_all_txt = '\n'.join(txt)
 
-    for value in output_dirs.values():
+    for value in output_dirs.itervalues():
         if clear_output_dirs:
             try:
                 shutil.rmtree(value)

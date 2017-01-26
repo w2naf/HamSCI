@@ -34,9 +34,9 @@ for sTime in cTimes:
 
     eTime = sTime + datetime.timedelta(minutes=59)
 
-    print('')
-    print('################################################################################')
-    print('Downloading and Geolocating RBN Data: {0} - {1}'.format(sTime.strftime('%d %b %Y %H%M UT'),eTime.strftime('%d %b %Y %H%M UT')))
+    print ''
+    print '################################################################################'
+    print 'Downloading and Geolocating RBN Data: {0} - {1}'.format(sTime.strftime('%d %b %Y %H%M UT'),eTime.strftime('%d %b %Y %H%M UT'))
 
     qrz_call    = 'w2naf'
     qrz_passwd  = "hamscience"
@@ -48,7 +48,7 @@ for sTime in cTimes:
     good_count      = good_loc['callsign'].count()
     total_count     = len(rbn_df)
     if total_count == 0:
-        print("No call signs geolocated.")
+        print "No call signs geolocated."
     else:
         good_pct        = float(good_count) / total_count * 100.
-        print('Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count,total_count,good_pct))
+        print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count,total_count,good_pct)

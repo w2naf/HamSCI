@@ -24,7 +24,7 @@ class TimeCheck(object):
         if self.log is not None:
             log.info(txt)
         else:
-            print(txt)
+            print txt
 
 def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,width_100=False,img_extra='',
         php_viewers=True):
@@ -50,7 +50,7 @@ def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,width_1
     txt.append('?>')
     show_all_txt_breaks = '\n'.join(txt)
 
-    for value in output_dirs.values():
+    for value in output_dirs.itervalues():
         if clear_output_dirs:
             try:
                 shutil.rmtree(value)

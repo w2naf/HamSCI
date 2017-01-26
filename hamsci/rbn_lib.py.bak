@@ -5,11 +5,11 @@ dxf_leg_size    = 150
 dxf_plot_size   = 50
 Re              = 6371  # Radius of the Earth
 
-from . import geopack
+import geopack
 import os               # Provides utilities that help us do os-level operations like create directories
 import datetime         # Really awesome module for working with dates and times.
 import zipfile
-import urllib.request, urllib.error, urllib.parse          # Used to automatically download data files from the web.
+import urllib2          # Used to automatically download data files from the web.
 import pickle
 import copy
 
@@ -22,17 +22,19 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
-from pyporktools import qrz
+from hamtools import qrz
+
 
 import matplotlib
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
+from mpl_toolkits.basemap import Basemap
 import matplotlib.patches as mpatches
 import matplotlib.markers as mmarkers
 from matplotlib.collections import PolyCollection
 
-from . import gridsquare
+import gridsquare
 
 
 def cc255(color):
@@ -97,20 +99,20 @@ class BandData(object):
         return hexes
 
     def hf_cmap(self,name='HFRadio',vmin=0.,vmax=30.):
-        fc = {}
+	fc = {}
         my_cdict = fc
-        fc[ 0.0] = (  0,   0,   0)
-        fc[ 1.8] = cc255('violet')
-        fc[ 3.0] = cc255('blue')
-        fc[ 8.0] = cc255('aqua')
-        fc[10.0] = cc255('green')
-        fc[13.0] = cc255('green')
-        fc[17.0] = cc255('yellow')
-        fc[21.0] = cc255('orange')
-        fc[28.0] = cc255('red')
-        fc[30.0] = cc255('red')
+	fc[ 0.0] = (  0,   0,   0)
+	fc[ 1.8] = cc255('violet')
+	fc[ 3.0] = cc255('blue')
+	fc[ 8.0] = cc255('aqua')
+	fc[10.0] = cc255('green')
+	fc[13.0] = cc255('green')
+	fc[17.0] = cc255('yellow')
+	fc[21.0] = cc255('orange')
+	fc[28.0] = cc255('red')
+	fc[30.0] = cc255('red')
         cmap    = cdict_to_cmap(fc,name=name,vmin=vmin,vmax=vmax)
-        return cmap
+	return cmap
 
 def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
 	norm = matplotlib.colors.Normalize(vmin=vmin,vmax=vmax)
@@ -119,7 +121,7 @@ def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
 	green = []
 	blue  = []
 	
-	keys = list(cdict.keys())
+	keys = cdict.keys()
 	keys.sort()
 	
 	for x in keys:
@@ -181,7 +183,7 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
         data_path   = os.path.join(data_dir,data_file)  
 
         time_0      = datetime.datetime.now()
-        print('Starting RBN processing on <%s> at %s.' % (data_file,str(time_0)))
+        print 'Starting RBN processing on <%s> at %s.' % (data_file,str(time_0))
 
         ################################################################################
         # Make sure the data file exists.  If not, download it and open it.
@@ -191,15 +193,15 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
              except:
                  pass
 
-             qz      = qrz.QRZSession(qrz_call,qrz_passwd)
+             qz      = qrz.Session(qrz_call,qrz_passwd)
              # File downloading code from: http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
              url = 'http://www.reversebeacon.net/raw_data/dl.php?f='+ymd
 
-             u = urllib.request.urlopen(url)
+             u = urllib2.urlopen(url)
              f = open(data_path, 'wb')
              meta = u.info()
              file_size = int(meta.getheaders("Content-Length")[0])
-             print("Downloading: %s Bytes: %s" % (data_path, file_size))
+             print "Downloading: %s Bytes: %s" % (data_path, file_size)
          
              file_size_dl = 0
              block_sz = 8192
@@ -212,10 +214,10 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
                  f.write(buffer)
                  status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
                  status = status + chr(8)*(len(status)+1)
-                 print(status, end=' ')
+                 print status,
              f.close()
              status = 'Done downloading!  Now converting to Pandas dataframe...'
-             print(status)
+             print status
 
         std_sTime=datetime.datetime(sTime.year,sTime.month,sTime.day, sTime.hour)
         if eTime.minute == 0 and eTime.second == 0:
@@ -250,12 +252,12 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
                     success = 0
                     for index,row in df.iterrows():
                         if index % 50   == 0:
-                            print(index,datetime.datetime.now()-time_0,row['date'])
+                            print index,datetime.datetime.now()-time_0,row['date']
                         de_call = row['callsign']
                         dx_call = row['dx']
                         try:
-                            de      = qz.lookup_callsign(de_call)
-                            dx      = qz.lookup_callsign(dx_call)
+                            de      = qz.qrz(de_call)
+                            dx      = qz.qrz(dx_call)
 
                             row['de_lat'] = de['lat']
                             row['de_lon'] = de['lon']
@@ -270,20 +272,14 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
 
                     total   = success + errors
                     if total == 0:
-                        print("No call signs geolocated.")
+                        print "No call signs geolocated."
                     else:
                         pct     = success / float(total) * 100.
-                        print('{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct))
+                        print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
                     df.to_pickle(p_filepath)
                 else:
                     with open(p_filepath,'rb') as fl:
-                        # Because why should we be backwards compatable?
-                        # I'm sure the programmer will like relying on ugly
-                        # hacks?... Thanks numpy
-                        u = pickle._Unpickler(fl)
-                        u.encoding = "latin1"
-                        # df = pickle.load(fl)
-                        df = u.load()
+                        df = pickle.load(fl)
 
                 if hour_flag==0:
                     df_comp=df
@@ -332,7 +328,7 @@ class RbnObject(object):
         
 
         if reindex:
-            df.index        = list(range(df.index.size))
+            df.index        = range(df.index.size)
             df.index.name   = 'index'
 
         rbn_ds  = RbnDataSet(df,parent=self,comment=cmt)
@@ -366,7 +362,7 @@ class RbnObject(object):
         good_count_map  = good_loc['callsign'].count()
         total_count_map = len(rbn_obj.DS000.df)
         good_pct_map    = float(good_count_map) / total_count_map * 100.
-        print('Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map))
+        print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
 
 def make_list(item):
     """ Force something to be iterable. """
@@ -397,7 +393,7 @@ class RbnDataSet(object):
         gs_grp  = self.df.groupby('refl_grid')
 
         # Get a list of the gridsquares in use.
-        grids   = list(gs_grp.indices.keys())
+        grids   = gs_grp.indices.keys()
 
         # Pull out the desired statistics.
         dct     = {}
@@ -496,7 +492,7 @@ class RbnDataSet(object):
         new_ds      = self.copy(new_data_set,comment)
         new_ds.df   = new_ds.df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
         if reindex:
-            new_ds.df.index         = list(range(new_ds.df.index.size))
+            new_ds.df.index         = range(new_ds.df.index.size)
             new_ds.df.index.name    = 'index'
 
         new_ds.set_active()
@@ -537,7 +533,7 @@ class RbnDataSet(object):
 
             md['reflection_type']   = 'sp_mid'
             if reindex:
-                new_ds.df.index         = list(range(new_ds.df.index.size))
+                new_ds.df.index         = range(new_ds.df.index.size)
                 new_ds.df.index.name    = 'index'
             new_ds.set_active()
             return new_ds
@@ -598,7 +594,7 @@ class RbnDataSet(object):
 
             md['reflection_type']       = 'miller2015'
             if reindex:
-                new_ds.df.index         = list(range(new_ds.df.index.size))
+                new_ds.df.index         = range(new_ds.df.index.size)
                 new_ds.df.index.name    = 'index'
             new_ds.set_active()
             return new_ds
@@ -707,7 +703,7 @@ class RbnDataSet(object):
         new_ds      = self.copy(new_data_set,comment)
         new_ds.df   = df
         if reindex:
-            new_ds.df.index         = list(range(new_ds.df.index.size))
+            new_ds.df.index         = range(new_ds.df.index.size)
             new_ds.df.index.name    = 'index'
         new_ds.set_active()
         return new_ds
@@ -736,7 +732,7 @@ class RbnDataSet(object):
         
         new_ds.df = df
         if reindex:
-            new_ds.df.index         = list(range(new_ds.df.index.size))
+            new_ds.df.index         = range(new_ds.df.index.size)
             new_ds.df.index.name    = 'index'
         new_ds.set_active()
         return new_ds
@@ -781,7 +777,7 @@ class RbnDataSet(object):
 
     def apply(self,function,arg_dct,new_data_set=None,comment=None,reindex=True):
         if new_data_set is None:
-            new_data_set = function.__name__
+            new_data_set = function.func_name
 
         if comment is None:
             comment = str(arg_dct)
@@ -789,7 +785,7 @@ class RbnDataSet(object):
         new_ds      = self.copy(new_data_set,comment)
         new_ds.df   = function(self.df,**arg_dct)
         if reindex:
-            new_ds.df.index         = list(range(new_ds.df.index.size))
+            new_ds.df.index         = range(new_ds.df.index.size)
             new_ds.df.index.name    = 'index'
         new_ds.set_active()
 
@@ -842,10 +838,10 @@ class RbnDataSet(object):
 
         Written by Nathaniel A. Frissell, Summer 2016
         """
-        keys = list(self.metadata.keys())
+        keys = self.metadata.keys()
         keys.sort()
         for key in keys:
-            print(key+':',self.metadata[key])
+            print key+':',self.metadata[key]
 
     def append_history(self,comment):
         """Add an entry to the processing history dictionary of the current data_set object.
@@ -864,10 +860,10 @@ class RbnDataSet(object):
 
         Written by Nathaniel A. Frissell, Summer 2016
         """
-        keys = list(self.history.keys())
+        keys = self.history.keys()
         keys.sort()
         for key in keys:
-            print(key,self.history[key])
+            print key,self.history[key]
 
     def plot_spot_counts(self,sTime=None,eTime=None,
             integration_time=datetime.timedelta(minutes=15),
@@ -893,7 +889,7 @@ class RbnDataSet(object):
             if band_data is None:
                 band_data = BandData()
 
-            band_list = list(band_data.band_dict.keys())
+            band_list = band_data.band_dict.keys()
             band_list.sort()
             for band in band_list:
                 this_group = self.get_band_group(band)
@@ -958,7 +954,7 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
     labels  = []
 
     # Force freqs to go low to high regardless of plotting order.
-    band_list   = list(band_data.band_dict.keys())
+    band_list   = band_data.band_dict.keys()
     band_list.sort()
     for band in band_list:
         color = band_data.band_dict[band]['color']
@@ -1114,7 +1110,6 @@ class RbnMap(object):
 
     def __setup_map__(self,ax=None,llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,
             coastline_color='0.65',coastline_zorder=10):
-        from mpl_toolkits.basemap import Basemap
         sTime       = self.metadata['sTime']
         eTime       = self.metadata['eTime']
 
@@ -1201,7 +1196,7 @@ class RbnMap(object):
         df      = self.data_set.df
 
         # Only plot the actual receiver location.
-        if 'hop_nr' in list(df.keys()):
+        if 'hop_nr' in df.keys():
             tf  = df.hop_nr == 0
             df  = df[tf]
 
@@ -1210,7 +1205,7 @@ class RbnMap(object):
 
     def plot_midpoints(self,s=20):
         band_data   = self.band_data
-        band_list   = list(band_data.band_dict.keys())
+        band_list   = band_data.band_dict.keys()
         band_list.sort(reverse=True)
         for band in band_list:
             this_group = self.data_set.get_band_group(band)
@@ -1227,7 +1222,7 @@ class RbnMap(object):
         if band_data is None:
             band_data = BandData()
 
-        band_list   = list(band_data.band_dict.keys())
+        band_list   = band_data.band_dict.keys()
         band_list.sort(reverse=True)
         for band in band_list:
             this_group = self.data_set.get_band_group(band)
@@ -1329,11 +1324,11 @@ class RbnMap(object):
             m.drawmeridians(lons,labels=[False,False,False,False],**minor_style)
 
 	# Label Grid Squares
-        lats,lons   = ds.grid_latlons(label_prec,position='center')
+	lats,lons   = ds.grid_latlons(label_prec,position='center')
         grid_grid   = ds.gridsquare_grid(label_prec)
-        xx,yy = m(lons,lats)
-        for xxx,yyy,grd in zip(xx.ravel(),yy.ravel(),grid_grid.ravel()):
-            ax.text(xxx,yyy,grd,ha='center',va='center',clip_on=True,
+	xx,yy = m(lons,lats)
+	for xxx,yyy,grd in zip(xx.ravel(),yy.ravel(),grid_grid.ravel()):
+	    ax.text(xxx,yyy,grd,ha='center',va='center',clip_on=True,
                     fontdict=label_fontdict, zorder=label_zorder)
 
     def overlay_gridsquare_data(self, param='f_max_MHz',
@@ -1413,8 +1408,8 @@ class RbnMap(object):
         lats_ur, lons_ur    = ll(grid_data.index,'upper right')
         lats_ul, lons_ul    = ll(grid_data.index,'upper left')
 
-        coords  = list(zip(lats_ll,lons_ll,lats_lr,lons_lr,
-                      lats_ur,lons_ur,lats_ul,lons_ul))
+        coords  = zip(lats_ll,lons_ll,lats_lr,lons_lr,
+                      lats_ur,lons_ur,lats_ul,lons_ul)
 
         verts   = []
         for lat_ll,lon_ll,lat_lr,lon_lr,lat_ur,lon_ur,lat_ul,lon_ul in coords:

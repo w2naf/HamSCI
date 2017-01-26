@@ -121,7 +121,7 @@ def gridsquare2latlon(gridsquare,position='center'):
     gss = np.char.array(gs_2).lower()
 
     # Create string lookup lists for each of the codes.
-    alpha_pd = pd.Series(list(range(26)),index=alpha_lower)
+    alpha_pd = pd.Series(range(26),index=alpha_lower)
 
     # Make sure precision of array is uniform.
     precs       = np.array([len(x) for x in gss.ravel()])
@@ -142,7 +142,7 @@ def gridsquare2latlon(gridsquare,position='center'):
     while pos < precision:
         # Get the 2 characters of the grid square we will work on.
         codes               = [(x[pos],x[pos+1]) for x in gss]
-        lon_code, lat_code  = np.array(list(zip(*codes)))
+        lon_code, lat_code  = np.array(zip(*codes))
 
         # Convert code into an index number and choose a base.
         alpha        = not bool(pos/2 % 2)
