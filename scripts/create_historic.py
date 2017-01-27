@@ -95,7 +95,7 @@ def binrange(start, end, step=timedelta(minutes=15)):
 
 def create_historic_bin(args):
     frame, output_dir, bin_start, bin_end = args
-    frame = frame.loc[frame["date"] <= bin_end]
+    frame = frame.loc[frame["date"] >= bin_start]
     frame = frame.loc[frame["date"] <= bin_end]
     dump_files(create_rbn_obj(frame), bin_start, bin_end, output_dir=output_dir)
 
