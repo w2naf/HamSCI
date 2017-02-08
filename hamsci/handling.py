@@ -26,7 +26,8 @@ class TimeCheck(object):
         else:
             print txt
 
-def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,width_100=False,img_extra=''):
+def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,width_100=False,img_extra='',
+        php_viewers=True):
     import os
     import shutil
 
@@ -59,7 +60,8 @@ def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,width_1
             os.makedirs(value)
         except:
             pass
-        with open(os.path.join(value,'0000-show_all.php'),'w') as file_obj:
-            file_obj.write(show_all_txt)
-        with open(os.path.join(value,'0000-show_all_breaks.php'),'w') as file_obj:
-            file_obj.write(show_all_txt_breaks)
+        if php_viewers:
+            with open(os.path.join(value,'0000-show_all.php'),'w') as file_obj:
+                file_obj.write(show_all_txt)
+            with open(os.path.join(value,'0000-show_all_breaks.php'),'w') as file_obj:
+                file_obj.write(show_all_txt_breaks)
