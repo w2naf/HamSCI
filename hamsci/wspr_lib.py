@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+#Including the above line as the first line of the script allows this script to be run
+#directly from the command line without first calling python/ipython.
 de_prop         = {'marker':'^','edgecolor':'k','facecolor':'white'}
+dx_prop         = {'marker':'o','edgecolor':'k','facecolor':'white'}
 dxf_prop        = {'marker':'*','color':'blue'}
 dxf_leg_size    = 150
 dxf_plot_size   = 50
@@ -8,10 +11,12 @@ Re              = 6371  # Radius of the Earth
 import geopack
 import os               # Provides utilities that help us do os-level operations like create directories
 import datetime         # Really awesome module for working with dates and times.
-import zipfile
+import gzip             # Allows us to read from gzipped files directly!
 import urllib2          # Used to automatically download data files from the web.
 import pickle
-import copy
+import sys
+import copy 
+
 
 import numpy as np      #Numerical python - provides array types and operations
 import pandas as pd     #This is a nice utility for working with time-series type data.
@@ -24,6 +29,7 @@ pd.set_option('display.width', 1000)
 
 from hamtools import qrz
 
+import davitpy
 
 import matplotlib
 matplotlib.use('Agg')
@@ -35,7 +41,6 @@ import matplotlib.markers as mmarkers
 from matplotlib.collections import PolyCollection
 
 import gridsquare
-
 
 def cc255(color):
     cc = matplotlib.colors.ColorConverter().to_rgb
@@ -54,15 +59,29 @@ class BandData(object):
 
         # Set up a dictionary which identifies which bands we want and some plotting attributes for each band
         bands   = []
+#        bands.append((28.0,  '10 m'))
+#        bands.append((21.0,  '15 m'))
+#        bands.append((18.0,  '17 m'))
+#        bands.append((14.0,  '20 m'))
+#        bands.append((10.0,  '30 m'))
+#        bands.append(( 7.0,  '40 m'))
+#        bands.append(( 3.5,  '80 m'))
+#        bands.append(( 1.8, '160 m'))
+
+##        bands.append((144.0,  '2 m'))
+#        bands.append((50.0,  '6 m'))
         bands.append((28.0,  '10 m'))
+#        bands.append((24.0,  '12 m'))
         bands.append((21.0,  '15 m'))
         bands.append((18.0,  '17 m'))
         bands.append((14.0,  '20 m'))
         bands.append((10.0,  '30 m'))
         bands.append(( 7.0,  '40 m'))
+#        bands.append(( 5.0,  '60 m'))
         bands.append(( 3.5,  '80 m'))
         bands.append(( 1.8, '160 m'))
-
+#        bands.append(( 0.5, '700 m'))
+#        bands.append(( 0.1, '1600 m'))
         self.__gen_band_dict__(bands)
 
     def __gen_band_dict__(self,bands):
@@ -82,37 +101,42 @@ class BandData(object):
         rgba    = self.cmap(nrm)
         return rgba
 
-    def get_hex(self,freq):
-
-        freq    = np.array(freq)
-        shape   = freq.shape
-        if shape == ():
-            freq.shape = (1,)
-
-        freq    = freq.flatten()
-        rgbas   = self.get_rgba(freq)
-
-        hexes   = []
-        for rgba in rgbas:
-            hexes.append(matplotlib.colors.rgb2hex(rgba))
-
-        hexes   = np.array(hexes)
-        hexes.shape = shape
-        return hexes
-
     def hf_cmap(self,name='HFRadio',vmin=0.,vmax=30.):
 	fc = {}
         my_cdict = fc
 	fc[ 0.0] = (  0,   0,   0)
+#	fc[ 0.1] = cc255('magenta')
+#	fc[ 0.5] = cc255('magenta')
 	fc[ 1.8] = cc255('violet')
 	fc[ 3.0] = cc255('blue')
+#	fc[ 5.5] = cc255('blue')
 	fc[ 8.0] = cc255('aqua')
-	fc[10.0] = cc255('green')
+#	fc[10.0] = cc255('green')
 	fc[13.0] = cc255('green')
 	fc[17.0] = cc255('yellow')
 	fc[21.0] = cc255('orange')
 	fc[28.0] = cc255('red')
 	fc[30.0] = cc255('red')
+
+#	fc[ 0.0] = (  0,   0,   0)
+##	fc[ 0.1] = cc255('magenta')
+#        import ipdb; ipdb.set_trace()
+#	fc[ 0.1] = cc255('magenta')
+##        fc[0.5] = (130, 130, 238)
+##	fc[ 1.8] = cc255('violet')
+#	fc[ 0.5] = cc255('violet')
+#        fc[ 1.8] = (130, 130, 238)
+#	fc[ 3.0] = cc255('blue')
+#	fc[ 5.5] = (130, 255,255/2)
+#	fc[ 8.0] = cc255('aqua')
+##	fc[10.0] = cc255('green')
+#	fc[10.0] = (0, 225,128)
+#	fc[13.0] = (0,128,225)
+#        fc[17.0] = cc255('green')
+#	fc[21.0] = cc255('yellow')
+#	fc[24.5] = cc255('orange')
+#	fc[28.0] = cc255('red')
+#	fc[30.0] = cc255('red')
         cmap    = cdict_to_cmap(fc,name=name,vmin=vmin,vmax=vmax)
 	return cmap
 
@@ -141,6 +165,21 @@ def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
 	cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
 	return cmap
 
+
+#Now we import libraries that are not "built-in" to python.
+def __add_months(sourcedate,months=1):
+    """
+    Add 1 month to a datetime object.
+    """
+    import calendar
+    import datetime
+
+    month = sourcedate.month - 1 + months
+    year = sourcedate.year + month / 12
+    month = month % 12 + 1
+    day = min(sourcedate.day,calendar.monthrange(year,month)[1])
+    return datetime.date(year,month,day)
+
 def ham_band_errorbars(freqs):
     """
     Return error bars based on ham radio band discretization.
@@ -154,6 +193,10 @@ def ham_band_errorbars(freqs):
 
     bands   = [ 1.80,  3.5,  7.0,  10.0,  14.0,  18.1,  21.0,
                24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+    bands   = [ 1.80,  3.5,  7.0, 14.0,  18.1,  21.0,
+               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+#    bands   = [ 1.80,  3.5, 5.0, 7.0,  10.1,  14.0,  18.068,  21.0,
+#               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
     bands   = np.array(bands)
 
     low_lst = []
@@ -171,34 +214,73 @@ def ham_band_errorbars(freqs):
     
     return (np.array(low_lst),np.array(upp_lst))
 
-def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None):
+def wspr_band_errorbars(freqs):
+    """
+    Return error bars based on wspr radio band discretization.
+
+    Upper error bar is the bottom of the next highest ham radio band.
+    Lower error bar is 90% of the original frequency.
+    """
+
+    freqs   = np.array(freqs)
+    if freqs.shape == (): freqs.shape = (1,)
+
+#    bands   = [ 1.80,  3.5,  7.0,  10.0,  14.0,  18.1,  21.0,
+#               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+    bands   = [ 1.80,  3.5,  7.0, 14.0,  18.1,  21.0,
+               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+#    bands   = [ 1.80,  3.5, 5.0, 7.0,  10.1,  14.0,  18.068,  21.0,
+#               24.89, 28.0, 50.0, 144.0, 220.0, 440.0, 1296.5]
+    bands   = np.array(bands)
+
+    low_lst = []
+    upp_lst = []
+
+    for freq in freqs:
+        diff    = np.abs(bands - freq)
+        argmin  = diff.argmin()
+
+        lower   = 0.10 * freq
+        low_lst.append(lower)
+
+        upper   = bands[argmin+1] - freq
+        upp_lst.append(upper)
+    
+    return (np.array(low_lst),np.array(upp_lst))
+
+def read_wspr(sTime,eTime=None,data_dir='data/wspr', overwrite=False, refresh=False):
+     #refresh is keyword to tell function to download data from wspr website even if already have it on computer (if downloaded data from current month once before and now it is updated)
+        #Will NOT overwrite pickle files!!!!
+
+     #overwrite is keyword to tell function to act as if no data files exist all ready
+
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
-    ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
-    eDay        =  datetime.datetime(eTime.year,eTime.month,eTime.day)
-    while ymd_list[-1] < eDay:
-        ymd_list.append(ymd_list[-1] + datetime.timedelta(days=1))
+    if eTime is None: eTime = sTime + datetime.timedelta(days=1)
 
-    for ymd_dt in ymd_list:
-        ymd         = ymd_dt.strftime('%Y%m%d')
-        data_file   = '{0}.zip'.format(ymd)
+    #Determine which months of data to download.
+    ym_list     = [datetime.date(sTime.year,sTime.month,1)]
+    eMonth      = datetime.date(eTime.year,eTime.month,1)
+    while ym_list[-1] < eMonth:
+        ym_list.append(__add_months(ym_list[-1]))
+
+#    df = None
+    for year_month in ym_list:
+        data_file   = 'wsprspots-%s.csv.gz' % year_month.strftime('%Y-%m')
         data_path   = os.path.join(data_dir,data_file)  
 
         time_0      = datetime.datetime.now()
-        print 'Starting RBN processing on <%s> at %s.' % (data_file,str(time_0))
+        print 'Starting WSPRNet histogram processing on <%s> at %s.' % (data_file,str(time_0))
 
         ################################################################################
         # Make sure the data file exists.  If not, download it and open it.
-        if not os.path.exists(data_path):
+        if not os.path.exists(data_path) or overwrite or refresh:
              try:    # Create the output directory, but fail silently if it already exists
                  os.makedirs(data_dir) 
              except:
                  pass
-
-             qz      = qrz.Session(qrz_call,qrz_passwd)
              # File downloading code from: http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
-             url = 'http://www.reversebeacon.net/raw_data/dl.php?f='+ymd
-
+             url = 'http://wsprnet.org/archive/'+data_file
              u = urllib2.urlopen(url)
              f = open(data_path, 'wb')
              meta = u.info()
@@ -218,8 +300,12 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
                  status = status + chr(8)*(len(status)+1)
                  print status,
              f.close()
-             status = 'Done downloading!  Now converting to Pandas dataframe...'
-             print status
+
+        print 'Loading Dataframe'
+
+        # Load data into dataframe here. ###############################################
+        # Here I define the column names of the data file, and also specify which ones to load into memory.  By only loading in some, I save time and memory.
+        names       = ['spot_id', 'timestamp', 'reporter', 'rep_grid', 'snr', 'freq', 'call_sign', 'grid', 'power', 'drift', 'dist', 'azm', 'band', 'version', 'code']
 
         std_sTime=datetime.datetime(sTime.year,sTime.month,sTime.day, sTime.hour)
         if eTime.minute == 0 and eTime.second == 0:
@@ -231,95 +317,118 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
         std_eTime=std_sTime+datetime.timedelta(hours=1)
 
         hour_flag=0
+        extract=True
+        print 'Initial interval: '+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M')
+        print 'End: '+hourly_eTime.strftime('%Y%m%d%H%M')
+        ref_month=std_eTime.month
         while std_eTime<=hourly_eTime:
-                p_filename = 'rbn_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
-                p_filepath = os.path.join(data_dir,p_filename)
-                if not os.path.exists(p_filepath):
-                    # Load data into dataframe here. ###############################################
-                    with zipfile.ZipFile(data_path,'r') as z:   #This block lets us directly read the compressed gz file into memory.
-                        with z.open(ymd+'.csv') as fl:
-                            df          = pd.read_csv(fl,parse_dates=[10])
+            p_filename = 'wspr_'+std_sTime.strftime('%Y%m%d%H%M-')+std_eTime.strftime('%Y%m%d%H%M.p')
+            p_filepath = os.path.join(data_dir,p_filename)
+            if not os.path.exists(p_filepath) or overwrite:
+                # Load data into dataframe here. ###############################################
+#                if std_eTime.month != ref_month or hour_flag == 0:
+                # Reset flag to extract file to dataframe if looking at a new month 
+                if std_sTime.month != ref_month:
+                    extract = True
+                    ref_month = std_sTime.month
+#                # Reset flag to extract file to dataframe if looking at a new month 
+#                if std_eTime.month != ref_month:
+#                    extract = True
+#                    ref_month = std_eTime.month
+                if extract: 
+                    with gzip.GzipFile(data_path,'rb') as fl:   #This block lets us directly read the compressed gz file into memory.  The 'with' construction means that the file is automatically closed for us when we are done.
+    #                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
+                        print 'Loading '+str(data_path)+' into Pandas Dataframe'
+                        df_tmp      = pd.read_csv(fl,names=names,index_col='spot_id')
+#                    df=df_tmp
 
-                    # Create columns for storing geolocation data.
-                    df['dx_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
-                    df['dx_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
-                    df['de_lat'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
-                    df['de_lon'] = np.zeros(df.shape[0],dtype=np.float)*np.nan
+#                    if df is None:
+#                        df = df_tmp
+#                    else:
+#                        df = df.append(df_tmp)
+                    df_tmp['timestamp'] = pd.to_datetime(df_tmp['timestamp'],unit='s')
+                    extract = False
 
-                    # Trim dataframe to just the entries in a 1 hour time period.
-                    df = df[np.logical_and(df['date'] >= std_sTime,df['date'] < std_eTime)]
+                # Trim dataframe to just the entries in a 1 hour time period.
+                df = df_tmp[np.logical_and(df_tmp['timestamp'] >= std_sTime,df_tmp['timestamp'] < std_eTime)]
 
-                    # Look up lat/lons in QRZ.com
-                    errors  = 0
-                    success = 0
-                    for index,row in df.iterrows():
-                        if index % 50   == 0:
-                            print index,datetime.datetime.now()-time_0,row['date']
-                        de_call = row['callsign']
-                        dx_call = row['dx']
-                        try:
-                            de      = qz.qrz(de_call)
-                            dx      = qz.qrz(dx_call)
+#        df = df[np.logical_and(df['timestamp'] >= sTime, df['timestamp'] < eTime)]
 
-                            row['de_lat'] = de['lat']
-                            row['de_lon'] = de['lon']
-                            row['dx_lat'] = dx['lat']
-                            row['dx_lon'] = dx['lon']
-                            df.loc[index] = row
-            #                print '{index:06d} OK - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
-                            success += 1
-                        except:
-            #                print '{index:06d} LOOKUP ERROR - DX: {dx} DE: {de}'.format(index=index,dx=dx_call,de=de_call)
-                            errors += 1
 
-                    total   = success + errors
-                    if total == 0:
-                        print "No call signs geolocated."
-                    else:
-                        pct     = success / float(total) * 100.
-                        print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
-                    df.to_pickle(p_filepath)
-                else:
-                    with open(p_filepath,'rb') as fl:
-                        df = pickle.load(fl)
+#                sys.stdout.write('\r'+'\r'+'WSPR Data: '+std_sTime.strftime('%Y%m%d%H%M - ')+std_eTime.strftime('%Y%m%d%H%M')) 
+#                sys.stdout.write('# Entries: '+str(len(df['call_sign'])))
+#                sys.stdout.flush()
+                print 'WSPR Data: '+std_sTime.strftime('%Y%m%d%H%M - ')+std_eTime.strftime('%Y%m%d%H%M') 
+                print '# Entries: '+str(len(df['call_sign']))+'\n'
+#                    print '# Entries: '+str(len(df['call_sign'].unique())
 
-                if hour_flag==0:
-                    df_comp=df
-                    hour_flag=hour_flag+1
-                #When specified start/end times cross over the hour mark
-                else:
-                    df_comp=pd.concat([df_comp, df])
+#                    if total == 0:
+#                        print "No call signs geolocated."
+#                    else:
+#                        pct     = success / float(total) * 100.
+#                        print '{0:d} of {1:d} ({2:.1f} %) call signs geolocated via qrz.com.'.format(success,total,pct)
 
-                std_sTime=std_eTime
-                std_eTime=std_sTime+datetime.timedelta(hours=1)
-        
+                df.to_pickle(p_filepath)
+            else:
+                print 'Found Pickle File for '+std_sTime.strftime('%Y%m%d%H%M - ')+std_eTime.strftime('%Y%m%d%H%M') 
+                with open(p_filepath,'rb') as fl:
+                    df = pickle.load(fl)
+
+            if hour_flag==0:
+                df_comp=df
+                hour_flag=hour_flag+1
+            #When specified start/end times cross over the hour mark
+            else:
+                df_comp=pd.concat([df_comp, df])
+
+            std_sTime=std_eTime
+            std_eTime=std_sTime+datetime.timedelta(hours=1)
+    
         # Trim dataframe to just the entries we need.
-        df = df_comp[np.logical_and(df_comp['date'] >= sTime,df_comp['date'] < eTime)]
+        df = df_comp[np.logical_and(df_comp['timestamp'] >= sTime,df_comp['timestamp'] < eTime)]
 
-        # Calculate Total Great Circle Path Distance
-        lat1, lon1          = df['de_lat'],df['de_lon']
-        lat2, lon2          = df['dx_lat'],df['dx_lon']
-        R_gc                = Re*geopack.greatCircleDist(lat1,lon1,lat2,lon2)
-        df.loc[:,'R_gc']    = R_gc
+        df['timestamp']=df['timestamp'].astype(datetime.datetime)
 
-        # Calculate Band
-        df.loc[:,'band']        = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
+#        # Calculate Band
+#        df.loc[:,'band']        = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
 
         return df
 
-class RbnObject(object):
+def fix_wspr_band(df):
+    df = df.replace(to_replace = {'band': {0:0.5}})
+    df = df.replace(to_replace = {'band': {-1:0.1}})
+    return df
+#
+#def fix_wspr_band(df):
+#    grouped = df.groupby('band')
+#    all_bands = df['band'].unique()
+#    df=None
+#    for band in all_bands:
+#        tmp = grouped.get_group(band)
+#        import ipdb; ipdb.set_trace()
+#        if band == 0 or band == -1:
+#            tmp.loc[:,'band'] = np.array(np.round(tmp['freq'], decimals=1))
+#        if df is None: df = tmp
+#        else: df = pd.concat([df,tmp])
+#    return df
+
+class WsprObject(object):
     """
     gridsquare_precision:   Even number, typically 4 or 6
     reflection_type:        Model used to determine reflection point in ionopshere.
                             'sp_mid': spherical midpoint
+
+        Written by Magdalina Moses, Fall 2016 
+        (In part based on code written by Nathaniel A. Frissell, Summer 2016)
     """
-    def __init__(self,sTime=None,eTime=None,data_dir='data/rbn',
-            qrz_call=None,qrz_passwd=None,comment='Raw Data',df=None,reindex=True,
+    def __init__(self,sTime=None,eTime=None,data_dir='data/wspr',
+            overwrite=False,refresh=False,qrz_call=None,qrz_passwd=None,comment='Raw Data',df=None,
             gridsquare_precision=4,reflection_type='sp_mid'):
 
         if df is None:
-            df = read_rbn(sTime=sTime,eTime=eTime,data_dir=data_dir,
-                    qrz_call=qrz_call,qrz_passwd=qrz_passwd)
+            df = read_wspr(sTime=sTime,eTime=eTime,data_dir=data_dir,
+                    overwrite=overwrite, refresh=refresh)
+        df = fix_wspr_band(df)
 
         #Make metadata block to hold information about the processing.
         metadata = {}
@@ -328,15 +437,10 @@ class RbnObject(object):
         metadata['serial']                  = 0
         cmt     = '[{}] {}'.format(data_set,comment)
         
-
-        if reindex:
-            df.index        = range(df.index.size)
-            df.index.name   = 'index'
-
-        rbn_ds  = RbnDataSet(df,parent=self,comment=cmt)
-        setattr(self,data_set,rbn_ds)
-        setattr(rbn_ds,'metadata',metadata)
-        rbn_ds.set_active()
+        wspr_ds  = WsprDataSet(df,parent=self,comment=cmt)
+        setattr(self,data_set,wspr_ds)
+        setattr(wspr_ds,'metadata',metadata)
+        wspr_ds.set_active()
 
     def get_data_sets(self):
         """Return a sorted list of musicDataObj's contained in this musicArray.
@@ -358,14 +462,6 @@ class RbnObject(object):
         data_sets.sort()
         return data_sets
 
-    def geo_loc_stats(self,verbose=True):
-        # Figure out how many records properly geolocated.
-        good_loc        = rbn_obj.DS001_dropna.df
-        good_count_map  = good_loc['callsign'].count()
-        total_count_map = len(rbn_obj.DS000.df)
-        good_pct_map    = float(good_count_map) / total_count_map * 100.
-        print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
-
 def make_list(item):
     """ Force something to be iterable. """
     item = np.array(item)
@@ -374,7 +470,15 @@ def make_list(item):
 
     return item.tolist()
 
-class RbnDataSet(object):
+#    def geo_loc_stats(self,verbose=True):
+#        # Figure out how many records properly geolocated.
+#        good_loc        = rbn_obj.DS001_dropna.df
+#        good_count_map  = good_loc['callsign'].count()
+#        total_count_map = len(rbn_obj.DS000.df)
+#        good_pct_map    = float(good_count_map) / total_count_map * 100.
+#        print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
+
+class WsprDataSet(object):
     def __init__(self, df, comment=None, parent=0, **metadata):
         self.parent = parent
 
@@ -383,6 +487,116 @@ class RbnDataSet(object):
         self.metadata.update(metadata)
 
         self.history = {datetime.datetime.now():comment}
+
+#    def qth_latlon_data(self,gridsquare_precision=4,
+#            dx_key='grid',de_key='rep_grid',grid_key=None):
+#        """
+#        Determine latitde and longitude data from the reported gridsquares for the data.
+#
+#        The method appends de and dx lat and lons to current dataframe and does
+#        NOT create a new dataset.
+#        """
+##        df                          = self.df
+#        df                          = self.df
+#        md                          = self.metadata
+#        gridsq                   = df[grid_key]
+#
+#        lat, lon              =gridsquare2latlon(gridsquare=gridsq,position=position)
+#        df.loc[:,loc_key[0]]           = lat 
+#        df.loc[:,loc_key[1]]           = lon 
+#
+#        df.loc[:,grid_key]          = gridsquare.latlon2gridsquare(lats,lons,
+#                                        precision=gridsquare_precision)
+#        md['position']  = position
+#        md                          = self.metadata
+#        dx_gridsq                   = df[dx_key]
+#        de_gridsq                   = df[de_key]
+#        self.latlon_data()
+#        gs_0        = np.array(gridsquare)
+#        gs_1        = gs_0.flatten()
+#        gs_good_tf  = gs_1 != ''
+#        gs_2        = gs_1[gs_good_tf]
+#        gss = np.char.array(gs_2).lower()
+#        precs       = np.array([len(x) for x in gss.ravel()])
+#
+#        return self
+
+#    def dropna(self,new_data_set='dropna',comment='Remove Non-Geolocated Spots'):
+#        """
+#        Removes spots that do not have geolocated Transmitters or Recievers.
+#        """
+#        new_ds      = self.copy(new_data_set,comment)
+#        new_ds.df   = new_ds.df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
+#        new_ds.set_active()
+#        return new_ds
+
+    def select_interval(self, sTime, eTime=None, dt = 5, replace = False, new_data_set = None, comment = None): 
+        """
+        Creat  WsprObj data set of data within a specified period of time
+        Parameters
+        ----------
+        sTime : datetime
+            
+        eTime : datetime
+
+        dt : int
+            Interval in minutes
+
+        replace : boolean
+            Specifies when to replace current data set object
+                True: Replace current data set object 
+                False: (Default) Create new data set object 
+        new_data_set : string
+            Name of new WsprObj data set. (Default to date with start and end times)
+        comment : 
+            Comment for new WsprObj data set. (Default to date with interval in minutes.)
+
+        Returns
+        -------
+        new_data_set_obj : data_set
+            New data set object  
+
+        Written by Magdalina Moses, January 2017
+        """
+
+        if sTime is None:
+            sTime = ds.df['timestamp'].min()
+        if eTime is None:
+            eTime = sTime + datetime.timedelta(minutes = dt) 
+
+        if not replace:
+            if new_data_set is None: new_data_set=sTime.strftime('%Y%m%d_%H%M_')+eTime.strftime('%H%M')
+            else: new_data_set = new_data_set
+            if comment is None: comment = sTime.strftime('%Y%m%d')+' WSPR data over '+str(dt)+'minutes'
+            else: comment = comment 
+            new_ds  = self.copy(new_data_set, comment)
+            df = new_ds.df
+#        else: new_ds = self
+#        else: df = self.df
+        else:
+            new_ds = self
+            df = self.df
+
+        #Replace following with code to check dataset name and decide
+        try: 
+            df['timestamp']
+            time = 'timestamp'
+        except:
+            time = 'date'
+        # Clip to times need
+        print time
+        df = df[np.logical_and(df[time]>=sTime, df[time] < eTime)]
+        new_ds.df = df
+        if not replace: new_ds.set_active()
+#        if not replace: 
+#            new_ds.df = df
+#            new_ds.set_active()
+#            return new_ds
+#
+#        else: 
+#            self.df = df
+#            return self
+        return new_ds
 
     def compute_grid_stats(self,hgt=300.):
         """
@@ -400,7 +614,7 @@ class RbnDataSet(object):
         # Pull out the desired statistics.
         dct     = {}
         dct['counts']       = gs_grp.freq.count()
-        dct['f_max_MHz']    = gs_grp.freq.max()/1000.
+        dct['f_max_MHz']    = gs_grp.freq.max()
         dct['R_gc_min']     = gs_grp.R_gc.min()
         dct['R_gc_max']     = gs_grp.R_gc.max()
         dct['R_gc_mean']    = gs_grp.R_gc.mean()
@@ -408,22 +622,23 @@ class RbnDataSet(object):
 
         # Error bar info.
         f_max               = dct['f_max_MHz']
-        lower,upper         = ham_band_errorbars(f_max)
+        #Needs Modification for WSPR frequencies!
+#        lower,upper         = ham_band_errorbars(f_max)
 
         # Compute Zenith Angle Theta and FoF2.
         lambda_by_2         = dct['R_gc_min']/Re
         theta               = np.arctan( np.sin(lambda_by_2)/( (Re+hgt)/Re - np.cos(lambda_by_2) ) )
         foF2                = dct['f_max_MHz']*np.cos(theta)
-        foF2_err_low        = lower*np.cos(theta)
-        foF2_err_up         = upper*np.cos(theta)
+        # Error Bars Not Accurate! Must be modified for WSPR
+#        foF2_err_low        = lower*np.cos(theta)
+#        foF2_err_up         = upper*np.cos(theta)
         dct['theta']        = theta
         dct['foF2']         = foF2
-        dct['foF2_err_low'] = foF2_err_low
-        dct['foF2_err_up']  = foF2_err_up
+#        dct['foF2_err_low'] = foF2_err_low
+#        dct['foF2_err_up']  = foF2_err_up
 
         # Put into a new dataframe organized by grid square.
-        grid_data               = pd.DataFrame(dct,index=grids)
-        grid_data.index.name    = 'grid_square'
+        grid_data       = pd.DataFrame(dct,index=grids)
 
 #        fig     = plt.figure()
 #        ax  = fig.add_subplot(111)
@@ -436,7 +651,7 @@ class RbnDataSet(object):
 #        ax.set_ylim(0,50)
 #        fig.savefig('error.png',bbox_inches='tight')
 
-        # Attach the new dataframe to the RbnDataObj and return.
+        # Attach the new dataframe to the WsprDataObj and return.
         self.grid_data  = grid_data
         return grid_data
 
@@ -486,21 +701,19 @@ class RbnDataSet(object):
 
         return lat_lons
 
-    def dropna(self,new_data_set='dropna',comment='Remove Non-Geolocated Spots',
-            reindex=True):
+    def rbn_compatible(self,new_data_set='rbncomp',comment='RBN code compatible WSPR data'):
         """
-        Removes spots that do not have geolocated Transmitters or Recievers.
+        Rename certain columns of wspr object dataframe and convert units to be compatible with a rbn object
+
+        Written by : Magdalina Moses January 2017
         """
         new_ds      = self.copy(new_data_set,comment)
-        new_ds.df   = new_ds.df.dropna(subset=['dx_lat','dx_lon','de_lat','de_lon'])
-        if reindex:
-            new_ds.df.index         = range(new_ds.df.index.size)
-            new_ds.df.index.name    = 'index'
-
+        new_ds.df   = new_ds.df.rename(columns = {'timestamp' : 'date', 'reporter' : 'callsign', 'call_sign' : 'dx'})
+        new_ds.df['freq'] = new_ds.df['freq']*1000.
         new_ds.set_active()
         return new_ds
 
-    def calc_reflection_points(self,reflection_type='sp_mid',reindex=True,**kwargs):
+    def calc_reflection_points(self,reflection_type='sp_mid',**kwargs):
         """
         Determine ionospheric reflection points of RBN data.
 
@@ -534,13 +747,14 @@ class RbnDataSet(object):
             df.loc[:,'refl_lon']    = refl_lon
 
             md['reflection_type']   = 'sp_mid'
-            if reindex:
-                new_ds.df.index         = range(new_ds.df.index.size)
-                new_ds.df.index.name    = 'index'
             new_ds.set_active()
             return new_ds
 
         if reflection_type == 'miller2015':
+            try:
+                df['R_gc'] 
+            except:
+                self.calc_greatCircle_dist()
             new_data_set            = kwargs.get('new_data_set',reflection_type)
             comment                 = kwargs.get('comment','Miller et al 2015 Reflection Points')
             hgt                     = kwargs.get('hgt',300.)
@@ -595,11 +809,33 @@ class RbnDataSet(object):
             new_df.loc[:,'refl_lon']    = refl_lon
 
             md['reflection_type']       = 'miller2015'
-            if reindex:
-                new_ds.df.index         = range(new_ds.df.index.size)
-                new_ds.df.index.name    = 'index'
             new_ds.set_active()
             return new_ds
+        else:
+            raise Exception('Error: Invalid reflection_type Input!')
+
+    def calc_greatCircle_dist(self):
+        """
+        Determine great circle distance from lat and lons
+
+        The method appends de and dx lat and lons to current dataframe and does
+        NOT create a new dataset.
+        """
+#        try self.metadata['position']:
+        try: 
+            self.df['dx_lat'].head()
+        except:
+            self.dxde_gs_latlon()
+#
+#        except:
+#            self.dxde_gs_latlon()
+
+        df                          = self.df
+        # Calculate Total Great Circle Path Distance
+        lat1, lon1          = df['de_lat'],df['de_lon']
+        lat2, lon2          = df['dx_lat'],df['dx_lon']
+        R_gc                = Re*geopack.greatCircleDist(lat1,lon1,lat2,lon2)
+        df.loc[:,'R_gc']    = R_gc
 
     def grid_data(self,gridsquare_precision=4,
             lat_key='refl_lat',lon_key='refl_lon',grid_key='refl_grid'):
@@ -619,60 +855,7 @@ class RbnDataSet(object):
 
         return self
 
-    def get_grid_data_color(self,key='foF2',encoding='rgba',vals=None):
-        """
-        Return standard color values for gridsquared data.
-
-        Currently, only foF2 is supported.
-
-        Parameters:
-            key: dataframe column key for self.grid_square
-
-            encoding: 'rgba' or 'hex'
-
-            vals: values to use instead of supplied data. Useful for getting
-                colorbar values
-
-        Returns:
-            Array of encoded colors.
-        """
-        if vals is None:
-            vals    = self.grid_data[key]
-
-        band_data   = BandData()
-        if encoding == 'rgba':
-            colors  = band_data.get_rgba(vals)
-        elif encoding == 'hex':
-            colors  = band_data.get_hex(vals)
-
-        return colors
-
-    def get_band_color(self,vals=None,encoding='rgba'):
-        """
-        Return standard color values for band values.
-
-        Parameters:
-            encoding: 'rgba' or 'hex'
-
-            vals: values to use instead of supplied data. Useful for getting
-                colorbar values
-
-        Returns:
-            Array of encoded colors.
-        """
-        if vals is None:
-            vals    = self.df.freq/1000.
-
-        band_data   = BandData()
-        if encoding == 'rgba':
-            colors  = band_data.get_rgba(vals)
-        elif encoding == 'hex':
-            colors  = band_data.get_hex(vals)
-
-        return colors
-
-    def filter_calls(self,calls,call_type='de',new_data_set='filter_calls',comment=None,
-            reindex=True):
+    def filter_calls(self,calls,call_type='de',new_data_set='filter_calls',comment=None):
         """
         Filter data frame for specific calls.
 
@@ -685,8 +868,8 @@ class RbnDataSet(object):
         if calls is None:
             return self
 
-        if call_type == 'de': key = 'callsign'
-        if call_type == 'dx': key = 'dx'
+        if call_type == 'de': key = 'reporter'
+        if call_type == 'dx': key = 'call_sign'
 
         df          = self.df
         df_calls    = df[key].apply(str.upper)
@@ -704,14 +887,53 @@ class RbnDataSet(object):
 
         new_ds      = self.copy(new_data_set,comment)
         new_ds.df   = df
-        if reindex:
-            new_ds.df.index         = range(new_ds.df.index.size)
-            new_ds.df.index.name    = 'index'
         new_ds.set_active()
         return new_ds
 
+    def dxde_gs_latlon(self,pos='center'):
+        """
+        Determine latitde and longitude data for dx and de stations from the reported gridsquares for the data.
+
+        The method appends de and dx lat and lons to current dataframe and does
+        NOT create a new dataset.
+
+        Written by Magdalina Moses, Fall 2016
+        """
+        print 'Finding dx lat/lon....'
+        self.latlon_data(position=pos,grid_key='grid',loc_key=['dx_lat','dx_lon'])
+        print 'Finding de lat/lon....'
+        self.latlon_data(position=pos,
+            grid_key='rep_grid',loc_key=['de_lat','de_lon'])
+        print 'Found all lat/lon!'
+        self.calc_greatCircle_dist()
+
+        return self
+        
+    def latlon_data(self,position='center',
+            grid_key='grid',loc_key=['dx_lat','dx_lon']):
+        """
+        Determine latitde and longitude data from the reported gridsquares for the data.
+
+        The method appends de and dx lat and lons to current dataframe and does
+        NOT create a new dataset.
+
+        Written by: Magalina Moses Winter 2016/2017
+        """
+        df                          = self.df
+        md                          = self.metadata
+        gridsq                   = df[grid_key]
+        lat, lon              = gridsquare.gridsquare2latlon(gridsquare=gridsq,position=position)
+        df.loc[:,loc_key[0]]           = lat 
+        df.loc[:,loc_key[1]]           = lon 
+
+#        df.loc[:,grid_key]          = gridsquare.latlon2gridsquare(lats,lons,
+#                                        precision=gridsquare_precision)
+        md['position']  = position
+
+        return self
+
     def filter_pathlength(self,min_length=None,max_length=None,
-            new_data_set='pathlength_filter',comment=None,reindex=True):
+            new_data_set='pathlength_filter',comment=None):
         """
         """
 
@@ -733,9 +955,6 @@ class RbnDataSet(object):
             df  = df[tf]
         
         new_ds.df = df
-        if reindex:
-            new_ds.df.index         = range(new_ds.df.index.size)
-            new_ds.df.index.name    = 'index'
         new_ds.set_active()
         return new_ds
 
@@ -751,7 +970,7 @@ class RbnDataSet(object):
 
     def get_band_group(self,band):
         if not hasattr(self,'band_groups'):
-            srt                 = self.df.sort_values(by=['band','date'])
+            srt                 = self.df.sort_values(by=['band','timestamp'])
             self.band_groups    = srt.groupby('band')
 
         try:
@@ -761,23 +980,35 @@ class RbnDataSet(object):
 
         return this_group
 
+#    def get_band_group(self,band):
+#        if not hasattr(self,'band_groups'):
+#            srt                 = self.df.sort_values(by=['band','timestamp'])
+#            self.band_groups    = srt.groupby('band')
+#
+#        try:
+#            this_group  = self.band_groups.get_group(band)
+#        except:
+#            this_group  = None
+#
+#        return this_group
+
     def dedx_list(self):
         """
         Return unique, sorted lists of DE and DX stations in a dataframe.
         """
-        de_list = self.df['callsign'].unique().tolist()
-        dx_list = self.df['dx'].unique().tolist()
+        de_list = self.df['reporter'].unique().tolist()
+        dx_list = self.df['call_sign'].unique().tolist()
 
         de_list.sort()
         dx_list.sort()
 
         return (de_list,dx_list)
 
-    def create_geo_grid(self):
-        self.geo_grid = RbnGeoGrid(self.df)
-        return self.geo_grid
+#    def create_geo_grid(self):
+#        self.geo_grid = RbnGeoGrid(self.df)
+#        return self.geo_grid
 
-    def apply(self,function,arg_dct,new_data_set=None,comment=None,reindex=True):
+    def apply(self,function,arg_dct,new_data_set=None,comment=None):
         if new_data_set is None:
             new_data_set = function.func_name
 
@@ -786,15 +1017,12 @@ class RbnDataSet(object):
 
         new_ds      = self.copy(new_data_set,comment)
         new_ds.df   = function(self.df,**arg_dct)
-        if reindex:
-            new_ds.df.index         = range(new_ds.df.index.size)
-            new_ds.df.index.name    = 'index'
         new_ds.set_active()
 
         return new_ds
 
     def copy(self,new_data_set,comment):
-        """Copy a RbnDataSet object.  This deep copies data and metadata, updates the serial
+        """Copy a WsprDataSet object.  This deep copies data and metadata, updates the serial
         number, and logs a comment in the history.  Methods such as plot are kept as a reference.
 
         Parameters
@@ -877,12 +1105,12 @@ class RbnDataSet(object):
             xticks=None,
             ax=None):
         """
-        Plots counts of RBN data.
+        Plots counts of WSPR data.
         """
         if sTime is None:
-            sTime = self.df['date'].min()
+            sTime = self.df['timestamp'].min()
         if eTime is None:
-            eTime = self.df['date'].max()
+            eTime = self.df['timestamp'].max()
             
         if ax is None:
             ax  = plt.gca()
@@ -901,13 +1129,17 @@ class RbnDataSet(object):
                 label       = band_data.band_dict[band]['freq_name']
 
                 counts      = rolling_counts_time(this_group,sTime=sTime,window_length=integration_time)
+                print counts.index
+                print '\n'
                 ax.plot(counts.index,counts,color=color,label=label,lw=band_lw)
 
         if plot_all:
             counts  = rolling_counts_time(self.df,sTime=sTime,window_length=integration_time)
+            print counts.index
+            print '\n'
             ax.plot(counts.index,counts,color='k',label='All Spots',lw=all_lw)
 
-        ax.set_ylabel('RBN Counts')
+        ax.set_ylabel('WSPR Counts')
 
         if plot_legend:
             leg = ax.legend(loc=legend_loc,ncol=7)
@@ -918,7 +1150,7 @@ class RbnDataSet(object):
 
         if plot_title:
             title   = []
-            title.append('Reverse Beacon Network')
+            title.append(' WSPR Net')
             date_fmt    = '%Y %b %d %H%M UT'
             date_str    = '{} - {}'.format(sTime.strftime(date_fmt), eTime.strftime(date_fmt))
             title.append(date_str)
@@ -944,8 +1176,33 @@ class RbnDataSet(object):
             for tl in ax.get_xticklabels():
                 tl.set_ha('left')
 
+    def find_freq_bnds(self):
+        """Find the frequency bounds by band for wspr data
+
+        Written by Magdalina Moses, Spring 2017 
+        """
+
+#        wspr_obj = wspr_lib.WsprObj(sTime, eTime)
+
+        #Group by bands
+        grouped = self.df.groupby('band')
+       
+       #Find frequency limits by band
+        f_min=[]
+        f_max=[]
+        all_bands=[]
+        for band in self.df.band.unique():
+            this_group=grouped.get_group(band)
+            all_bands.append(band)
+            f_min.append(this_group.freq.min())
+            f_max.append(this_group.freq.max())
+
+        df = pd.DataFrame({'band':all_bands, 'f_min':f_min, 'f_max':f_max})
+        self.freq_bnds = df
+        return df
+
 def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
-        title=None,bbox_to_anchor=None,rbn_rx=True,ncdxf=False,ncol=None,band_data=None):
+        title=None,bbox_to_anchor=None,wspr_rx=True,ncdxf=False,ncol=None,band_data=None):
 
     if fig is None: fig = plt.gcf() 
 
@@ -967,9 +1224,9 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
     fig_tmp = plt.figure()
     ax_tmp = fig_tmp.add_subplot(111)
     ax_tmp.set_visible(False)
-    if rbn_rx:
+    if wspr_rx:
         scat = ax_tmp.scatter(0,0,s=50,**de_prop)
-        labels.append('RBN Receiver')
+        labels.append('WSPR Receiver')
         handles.append(scat)
     if ncdxf:
         scat = ax_tmp.scatter(0,0,s=dxf_leg_size,**dxf_prop)
@@ -985,7 +1242,7 @@ def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
 def latlon_filt(df,lat_col='refl_lat',lon_col='refl_lon',
         llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.):
     """
-    Return an RBN Dataframe with entries only within a specified lat/lon box.
+    Return an WSPR Dataframe with entries only within a specified lat/lon box.
     """
     df          = df.copy()
     lat_tf      = np.logical_and(df[lat_col] >= llcrnrlat,df[lat_col] < urcrnrlat)
@@ -994,20 +1251,64 @@ def latlon_filt(df,lat_col='refl_lat',lon_col='refl_lon',
     df          = df[tf]
     return df
 
+def select_interval(df, sTime=None, eTime=None, dt = 5, replace = False, new_data_set = None, comment = None): 
+    """
+    Parameters
+    ----------
+    sTime : datetime
+        
+    eTime : datetime
+
+    dt : int
+        Interval in minutes
+
+    replace : boolean
+        Specifies when to replace current data set object
+            True: Replace current data set object 
+            False: (Default) Create new data set object 
+    new_data_set : string
+        Name of new WsprObj data set. (Default to date with start and end times)
+    comment : 
+        Comment for new WsprObj data set. (Default to date with interval in minutes.)
+
+    Returns
+    -------
+    new_data_set_obj : data_set
+        New data set object  
+
+    Written by Magdalina Moses, January 2017
+    """
+
+    if sTime is None:
+        sTime = df['timestamp'].min()
+    if eTime is None:
+        eTime = sTime + datetime.timedelta(minutes = dt) 
+
+    #Replace following with code to check dataset name and decide
+    try: 
+        df['timestamp']
+        time = 'timestamp'
+    except:
+        time = 'date'
+    # Clip to times need
+    print time
+    df = df[np.logical_and(df[time]>=sTime, df[time] < eTime)]
+    return df
+
 def rolling_counts_time(df,sTime=None,window_length=datetime.timedelta(minutes=15)):
     """
     Rolling counts of a RBN dataframe using a time-based data window.
     """
-    eTime = df['date'].max().to_datetime()
+    eTime = df['timestamp'].max().to_datetime()
 
     if sTime is None:
-        sTime = df['date'].min().to_datetime()
+        sTime = df['timestamp'].min().to_datetime()
         
     this_time   = sTime
     next_time   = this_time + window_length
     date_list, val_list = [], []
     while next_time <= eTime:
-        tf  = np.logical_and(df['date'] >= this_time, df['date'] < next_time)
+        tf  = np.logical_and(df['timestamp'] >= this_time, df['timestamp'] < next_time)
         val = np.count_nonzero(tf)
         
         date_list.append(this_time)
@@ -1018,8 +1319,8 @@ def rolling_counts_time(df,sTime=None,window_length=datetime.timedelta(minutes=1
 
     return pd.Series(val_list,index=date_list)
 
-class RbnMap(object):
-    """Plot Reverse Beacon Network data.
+class WsprMap(object):
+    """Plot WSPRNet data.
 
     **Args**:
         * **[sTime]**: datetime.datetime object for start of plotting.
@@ -1034,21 +1335,42 @@ class RbnMap(object):
     .. note::
         If a matplotlib figure currently exists, it will be modified by this routine.  If not, a new one will be created.
 
-    Written by Nathaniel Frissell 2014 Sept 06
+    Written by Magdalina Moses Jan 2017 and Nathaniel Frissell 2014 Sept 06
     """
-    def __init__(self,rbn_obj,data_set='active',data_set_all='DS001_dropna',ax=None,
+    def __init__(self,wspr_obj,data_set='active',data_set_all='DS000',ax=None,
             sTime=None,eTime=None,
             llcrnrlon=None,llcrnrlat=None,urcrnrlon=None,urcrnrlat=None,
             coastline_color='0.65',coastline_zorder=10,
             nightshade=False,solar_zenith=True,solar_zenith_dict={},
-            band_data=None,default_plot=True):
+            band_data=None,default_plot=True, other_plot=None):
 
-        self.rbn_obj        = rbn_obj
-        self.data_set       = getattr(rbn_obj,data_set)
-        self.data_set_all   = getattr(rbn_obj,data_set_all)
+#        rcp = matplotlib.rcParams
+#        rcp['axes.titlesize']     = 'large'
+#        rcp['axes.titleweight']   = 'bold'
+        self.wspr_obj        = wspr_obj
+        self.data_set       = getattr(wspr_obj,data_set)
+        self.data_set_all   = getattr(wspr_obj,data_set_all)
 
         ds                  = self.data_set
         ds_md               = self.data_set.metadata
+
+        if sTime is None:
+            sTime = ds.df['timestamp'].min()
+        if eTime is None:
+            eTime = ds.df['timestamp'].max()
+        #Added this because in RBN code there did not appear to be any place where times were selected maybe it is unecessary
+        else:
+#            wspr_obj = wspr_obj.active.select_interval(sTime, eTime, replace = True)
+            wspr_obj.active.select_interval(sTime, eTime)
+            print sTime.strftime('%Y%h%d %H%M')
+            print eTime.strftime('%Y%h%d %H%M')
+
+            self.wspr_obj        = wspr_obj
+            self.data_set       = getattr(wspr_obj,data_set)
+    #        self.data_set_all   = getattr(wspr_obj,data_set_all)
+
+            ds                  = self.data_set
+            ds_md               = self.data_set.metadata
 
         llb = {}
         if llcrnrlon is None:
@@ -1063,11 +1385,6 @@ class RbnMap(object):
         self.latlon_bnds    = llb
 
         self.metadata       = {}
-
-        if sTime is None:
-            sTime = ds.df['date'].min()
-        if eTime is None:
-            eTime = ds.df['date'].max()
 
         self.metadata['sTime'] = sTime
         self.metadata['eTime'] = eTime
@@ -1088,6 +1405,12 @@ class RbnMap(object):
 
         if default_plot:
             self.default_plot()
+#            self.default_plot(plot_de=True, plot_midpoints = False, plot_paths = True, plot_ncdxf = True, plot_stats=False)
+        if other_plot == 'plot_paths':
+            self.path_plot()
+        if other_plot == 'plot_mid':
+            self.mid_plot()
+
 
     def default_plot(self,
             plot_de         = True,
@@ -1110,6 +1433,48 @@ class RbnMap(object):
         if plot_legend:
             self.plot_band_legend(band_data=self.band_data)
 
+    def path_plot(self,
+            plot_de         = True,
+            plot_midpoints  = False,
+            plot_paths      = True,
+            plot_ncdxf      = True,
+            plot_stats      = False,
+            plot_legend     = True):
+
+        if plot_de:
+            self.plot_de()
+        if plot_midpoints:
+            self.plot_midpoints()
+        if plot_paths:
+            self.plot_paths()
+        if plot_ncdxf:
+            self.plot_ncdxf()
+#        if plot_stats:
+#            self.plot_link_stats()
+        if plot_legend:
+            self.plot_band_legend(band_data=self.band_data)
+
+    def mid_plot(self,
+            plot_de         = True,
+            plot_midpoints  = True,
+            plot_paths      = False,
+            plot_ncdxf      = True,
+            plot_stats      = False,
+            plot_legend     = True):
+
+        if plot_de:
+            self.plot_de()
+        if plot_midpoints:
+            self.plot_midpoints()
+        if plot_paths:
+            self.plot_paths()
+        if plot_ncdxf:
+            self.plot_ncdxf()
+#        if plot_stats:
+#            self.plot_link_stats()
+        if plot_legend:
+            self.plot_band_legend(band_data=self.band_data)
+
     def __setup_map__(self,ax=None,llcrnrlon=-180.,llcrnrlat=-90,urcrnrlon=180.,urcrnrlat=90.,
             coastline_color='0.65',coastline_zorder=10):
         sTime       = self.metadata['sTime']
@@ -1123,8 +1488,9 @@ class RbnMap(object):
 
         m = Basemap(llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,resolution='l',area_thresh=1000.,projection='cyl',ax=ax)
 
-        title = sTime.strftime('RBN: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
-        fontdict = {'size':matplotlib.rcParams['axes.titlesize'],'weight':matplotlib.rcParams['axes.titleweight']}
+        title = sTime.strftime('WSPR: %d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT')
+#        fontdict = {'size':matplotlib.rcParams['axes.titlesize'],'weight':matplotlib.rcParams['axes.titleweight']}
+        fontdict = {'size':matplotlib.rcParams['axes.titlesize'],'weight':'bold'}
         ax.text(0.5,1.075,title,fontdict=fontdict,transform=ax.transAxes,ha='center')
 
         rft         = self.data_set.metadata.get('reflection_type')
@@ -1161,7 +1527,6 @@ class RbnMap(object):
         
     def plot_solar_zenith_angle(self,
             cmap=None,vmin=0,vmax=180,plot_colorbar=False):
-        import davitpy
 
         if cmap is None:
             fc = {}
@@ -1204,6 +1569,18 @@ class RbnMap(object):
 
         rx      = m.scatter(df['de_lon'],df['de_lat'],
                 s=s,zorder=zorder,**de_prop)
+
+    def plot_dx(self,s=25,zorder=150):
+        m       = self.m
+        df      = self.data_set.df
+
+        # Only plot the actual receiver location.
+        if 'hop_nr' in df.keys():
+            tf  = df.hop_nr == 0
+            df  = df[tf]
+
+        tx      = m.scatter(df['dx_lon'],df['dx_lat'],
+                s=s,zorder=zorder,**dx_prop)
 
     def plot_midpoints(self,s=20):
         band_data   = self.band_data
@@ -1276,7 +1653,6 @@ class RbnMap(object):
     def plot_band_legend(self,*args,**kw_args):
         band_legend(*args,**kw_args)
 
-
     def overlay_gridsquares(self,
             major_precision = 2,    major_style = {'color':'k',   'dashes':[1,1]}, 
             minor_precision = None, minor_style = {'color':'0.8', 'dashes':[1,1]},
@@ -1347,6 +1723,7 @@ class RbnMap(object):
         tmp                 = {}
         param_info[key]     = tmp
         tmp['cbar_ticks']   = [1.8,3.5,7.,10.,14.,21.,24.,28.]
+#        tmp['cbar_ticks']   = [1.8,3.5, 5., 7.,10.,14.,18.1, 21.,24.,28., 50.]
         tmp['label']        = 'F_max [MHz]'
 
         key                 = 'counts'
@@ -1436,3 +1813,420 @@ class RbnMap(object):
         cbar    = fig.colorbar(pcoll,label=label)
         if cbar_ticks is not None:
             cbar.set_ticks(cbar_ticks)
+#End of WSPR Class Code
+
+def find_hour(df):
+    hours=[]
+    for inx in range(0,len(df)):
+        hours.append(df['timestamp'].iloc[inx].hour)
+
+    df['hour']=hours
+    return df
+
+def find_hour(df, timebin=datetime.timedelta(minutes=30)):
+    hours=[]
+    for inx in range(0,len(df)):
+        hours.append(df['timestamp'].iloc[inx].hour)
+
+    df['hour']=hours
+    return df
+
+#def bin_time(df, timebin=datetime.timedelta(minutes=30)):
+#    binned=[]
+#
+#    df=df.sort('timestamp')
+#    grouped=df.groupby('hour')
+##    for hour in df.hour.unique():
+#    sTime=df['timestamp'].min()
+#    sTime=df['timestamp'].max()
+#    bin1=sTime
+#    bin2=sTime+timebin
+#    
+#    df['time']=df.timestamp.copy()
+#
+#    while bin1 < eTime:
+#        df_temp=df[np.logical_and(bin1<=df['timestamp'], df['timestamp']<bin2)]
+#        for inx in range(0,len(df)):
+#            hour=df['timestamp'].iloc[inx].hour
+#            minute=min
+#        hours.append(r)
+#        df['time']
+#
+#
+#
+#
+#        df[bin1<df.timestamp<
+#
+#        for
+#
+#    for inx in range(0,len(df)):
+#        hours.append(df['timestamp'].iloc[inx].hour)
+#
+#    df['hour']=hours
+#    return df
+
+def redefine_grid(df,precision=4):
+    """Define the number of characters used in the grid square reporting
+
+    Parameters
+    ----------
+    df  :   dataframe
+        Dataframe to redefine gridsquares over
+    precision   :   int
+        Number of characters in grid square
+
+    new_data_set : str
+        Name for the new data_set object.
+    comment : str
+        Comment describing the new data_set object.
+
+    Returns
+    -------
+    new_data_set_obj : data_set 
+        Copy of the original data_set with new name and history entry.
+
+    Written by Magdalina L. Moses, Fall 2016
+    """
+    import sys
+
+    print 'Redefining Grid Square Precision to '+str(precision)
+    print 'Converting '+str(len(df.grid.unique()))+' grids'
+    i=1
+    for grid in df.grid.unique():
+        new_grid=grid[0:precision]
+        if new_grid != grid:
+            df=df.replace(to_replace={'grid': {grid:new_grid}})
+#        print '{0}\r'.format(str(i)+' grid squares converted'),
+        sys.stdout.write('\r'+str(i)+' grid squares converted')
+        sys.stdout.flush()
+        i=i+1
+
+    print '\nConverting '+str(len(df.rep_grid.unique()))+' reporter grids'
+    i=1
+    for rep_grid in df.rep_grid.unique():
+        new_repgrid=rep_grid[0:precision]
+        if new_repgrid != rep_grid:
+            df=df.replace(to_replace={'rep_grid': {rep_grid:new_repgrid}})
+#        print '{0}\r'.format(str(i)+' grid squares converted'),
+        sys.stdout.write('\r'+str(i)+' reporter grid squares converted')
+        sys.stdout.flush()
+        i=i+1
+#            if len(df.rep_grid.unique()) % 100 == 0:
+#                print str(i)+' records remaining\n'
+#    for inx in range(0,len(df)):
+#            grid=df['grid'].iloc[inx][0:precision]
+#            rep_grid=df['rep_grid'].iloc[inx][0:precision]  
+#            df['rep_grid'].iloc[inx]=df['rep_grid'].iloc[inx][0:precision]
+#            df['grid'].iloc[inx]=df['grid'].iloc[inx][0:precision]
+    print '\nGrid Square Precision Task Complete'  
+    return df
+
+#def filter_grid_pair(df, gridsq, redef=False, precision=4):
+#    """Filter to spots with stations only in specified two grid squares
+#
+#    Parameters
+#    ----------
+#    df  :   dataframe
+#        Dataframe of wspr data
+#    gridsq  :   list or numpy.array of str
+#        Pair of grid squares to limit stations to 
+#    redef   :   boolean
+#        Flag to indicate if user would like to redefine grid before filtering
+#    precision   :   int
+#        Number of characters in grid square
+#
+#    new_data_set : str
+#        Name for the new data_set object.
+#    comment : str
+#        Comment describing the new data_set object.
+#
+#    Returns
+#    -------
+#    new_data_set_obj : data_set 
+#        Copy of the original data_set with new name and history entry.
+#
+#    Written by Magdalina L. Moses, Fall 2016
+#    """
+#    import wspr_lib
+#    if redef:
+#        df=wspr_lib.redefine_grid(df, precision=precision)
+#   
+#    df0=df[np.logical_and(df['grid']==gridsq[0], df['rep_grid']==gridsq[1])]
+#    df0=pd.concat([df0,df[np.logical_and(df['grid']==gridsq[1], df['rep_grid']==gridsq[0])]])
+#    return df0
+
+#Write new filter code that checks uniques callsigns and copies/concatenates ones matiching the filter into new dataframe
+#Combining the two current redefining and filtering functions
+def filter_grid_pair(df, gridsq, precision=4):
+    """Filter links to those between specified gridsquares
+
+    Parameters
+    ----------
+    df  :   dataframe
+        Dataframe to redefine gridsquares over
+    gridsq  :   list or numpy.array of str
+        Pair of grid squares to limit stations to 
+    precision   :   int
+        Number of characters in grid square
+
+    new_data_set : str
+        Name for the new data_set object.
+    comment : str
+        Comment describing the new data_set object.
+
+    Returns
+    -------
+    new_data_set_obj : data_set 
+        Copy of the original data_set with new name and history entry.
+
+    Written by Magdalina L. Moses, Fall 2016
+    """
+    import sys
+
+    cond1=np.logical_and(df['grid'].str.startswith(gridsq[0]), df['rep_grid'].str.startswith(gridsq[1]))
+    cond2=np.logical_and(df['grid'].str.startswith(gridsq[1]), df['rep_grid'].str.startswith(gridsq[0]))
+
+    print 'Fetching Requested Entries...'
+
+#    cond = []
+#    for grid in gridsq:
+
+    df=df[np.logical_or(cond1, cond2)]
+
+    print 'Success!'
+
+    return df
+
+def calls_by_grid(df, prefix='', col='grid', col_call='call_sign'):
+    """Find calls of stations in a certain gridsquare 
+
+    Parameters
+    ----------
+    df  :   dataframe
+        Dataframe to search
+    prefix  : str
+        Prefix of gridsquare
+    col : str
+        Dataframe column with gridsquares
+    col_call : str
+        Dataframe column with callsigns
+
+    new_data_set : str
+        Name for the new data_set object.
+    comment : str
+        Comment describing the new data_set object.
+
+    Returns
+    -------
+    calls : list 
+        List of callsigns within the specified gridsquare
+
+    Written by Magdalina L. Moses, Fall 2016
+    """
+    calls=[]
+    precision = len(prefix)
+    for inx in range(0,len(df)):
+        if df[col].iloc[inx][0:precision]==prefix:
+            calls.append(df[col_call].iloc[inx])
+##        call=df[col][df[col].iloc[inx][precision]==prefix]
+#        if call.any():
+#            calls.append(call[:])
+
+    return calls
+
+#def save_wspr(sTime,eTime=None,data_dir='data/wspr'):
+#
+#    return None
+#
+#def grsq_latlon(df,geoloc='gridsquare'):
+#        """Select nodes based on reporter or transmitter geographic location.
+#
+#        Parameters
+#        ----------
+#        new_data_set : str
+#            Name for the new data_set object.
+#        comment : str
+#            Comment describing the new data_set object.
+#
+#        Returns
+#        -------
+#        new_data_set_obj : data_set 
+#            Copy of the original data_set with new name and history entry.
+#
+#        Written by Magdalina L. Moses, Fall 2016
+#        """
+#        return df
+#
+#
+#def select_geo(df,node_type='reporter', grsq=None):
+#        """Select nodes based on reporter or transmitter geographic location.
+#
+#        Parameters
+#        ----------
+#        new_data_set : str
+#            Name for the new data_set object.
+#        comment : str
+#            Comment describing the new data_set object.
+#
+#        Returns
+#        -------
+#        new_data_set_obj : data_set 
+#            Copy of the original data_set with new name and history entry.
+#
+#        Written by Magdalina L. Moses, Fall 2016
+#        """
+##    if grdsq ==
+##    rbn_lib.latlon_filt(df, )
+#
+#    return df
+
+def select_pair(df, station):
+
+    df0=df[np.logical_and(df['call_sign']==station[0], df['reporter']==station[1])]
+    df=pd.concat([df0,df[np.logical_and(df['call_sign']==station[1], df['reporter']==station[0])]])
+    del df0
+
+    return df
+
+def average_dB(df, col='snr'):
+
+    sn=np.power(10,df[col]/10)
+    avg=sn.mean()
+    df=df.drop(col, axis=1)
+    df[col] = 10*np.log10(avg)
+    #Could make this function just return the value and not put it in the dataframe yet!
+    
+    return df
+
+def dB_to_Watt(df, col='snr'):
+    """Convert dB values in dataframe column to watts
+
+    Parameters
+    ----------
+    df  :   dataframe
+        Dataframe of wspr data
+    col :   str 
+        Dataframe column to convert
+
+    new_data_set : str
+        Name for the new data_set object.
+    comment : str
+        Comment describing the new data_set object.
+
+    Returns
+    -------
+    new_data_set_obj : data_set 
+        Copy of the original data_set with new name and history entry.
+
+    Written by Magdalina L. Moses, Fall 2016
+    """
+    df[col]=np.power(10,df[col]/10)
+
+    return df
+
+#def station_counts():
+#    tx  =   df['call_sign'].unique()
+#    rx  =   df['reciever'].unique()
+#
+#    rx_count=0
+#    tx_count=0
+#    for this_tx in tx:
+#        for this_rx in rx:
+#            tx
+#    return counts
+
+
+
+
+
+def plot_wspr_histograms(df):
+    import matplotlib       # Plotting toolkit
+    matplotlib.use('Agg')   # Anti-grain geometry backend.
+                            # This makes it easy to plot things to files without having to connect to X11.
+                            # If you want to avoid using X11, you must call matplotlib.use('Agg') BEFORE calling anything that might use pyplot
+                            # I don't like X11 because I often run my code in terminal or web server environments that don't have access to it.
+    import matplotlib.pyplot as plt #Pyplot gives easier acces to Matplotlib.  
+    import pandas as pd     #This is a nice utility for working with time-series type data.
+    import os
+    import datetime 
+
+    output_dir  = 'output'
+
+    #Pick off the start time and end times.
+    sTime       = pd.to_datetime(df['timestamp'].min())
+    eTime       = pd.to_datetime(df['timestamp'].max())
+
+    #Sort the data by band and time, then group by band.
+    srt         = df.sort(['band','timestamp'])
+    grouped     = srt.groupby('band')
+
+    # Plotting section #############################################################
+    try:    # Create the output directory, but fail silently if it already exists
+        os.makedirs(output_dir) 
+    except:
+        pass
+
+    # Set up a dictionary which identifies which bands we want and some plotting attributes for each band
+    bands       = {}
+    bands[28]   = {'name': '10 m',  'color':'red'}
+    bands[21]   = {'name': '15 m',  'color':'orange'}
+    bands[14]   = {'name': '20 m',  'color':'yellow'}
+    bands[7]    = {'name': '40 m',  'color':'green'}
+    bands[3]    = {'name': '80 m',  'color':'blue'}
+    bands[1]    = {'name': '160 m', 'color':'aqua'}
+
+    # Determine the aspect ratio of each histogram.
+    xsize       = 8.
+    ysize       = 2.5
+    nx_plots    = 1                     # Let's just do 1 panel across.
+    ny_plots    = len(bands.keys())     # But we will do a stackplot with one panel for each band of interest.
+
+    fig         = plt.figure(figsize=(nx_plots*xsize,ny_plots*ysize)) # Create figure with the appropriate size.
+    subplot_nr  = 0 # Counter for the subplot
+    xrng        = (0,15000)
+    for band_key in sorted(bands.keys(),reverse=True):   # Now loop through the bands and create 1 histogram for each.
+        subplot_nr += 1 # Increment subplot number... it likes to start at 1.
+        ax      = fig.add_subplot(ny_plots,nx_plots,subplot_nr)
+        grouped.get_group(band_key)['dist'].hist(bins=100,range=xrng,
+                    ax=ax,color=bands[band_key]['color'],label=bands[band_key]['name']) #Pandas has a built-in wrapper for the numpy and matplotlib histogram function.
+        ax.legend(loc='upper right')
+        ax.set_xlim(xrng)
+        ax.set_ylabel('WSPR Soundings')
+
+        if subplot_nr == 1:
+            txt = []
+            txt.append('WSPRNet Distances')
+            txt.append(sTime.strftime('%d %b %Y %H%M UT - ')+eTime.strftime('%d %b %Y %H%M UT'))
+            ax.set_title('\n'.join(txt)) #\n creates a new line... here I'm joining two strings in a list to form a single string with \n as the joiner
+
+        if subplot_nr == len(bands.keys()):
+            ax.set_xlabel('WSPR Reported Distance [km]')
+
+    fig.tight_layout()  #This often cleans up subplot spacing when you have multiple panels.
+
+#    filename    = os.path.join(output_dir,'%s_histogram.png' % year_month)
+#    fig.savefig(filename,bbox_inches='tight') # bbox_inches='tight' removes whitespace at the edge of the figure.  Very useful when creating PDFs for papers.
+
+#    filename    = os.path.join(output_dir,'%s_histogram.pdf' % year_month)
+#    fig.savefig(filename,bbox_inches='tight') # Now we save as a scalar-vector-graphics PDF ready to drop into PDFLatex
+
+    time_1      = datetime.datetime.now()
+
+#    print 'Total processing time is %.1f s.' % (time_1-time_0).total_seconds()
+    return fig
+
+if __name__ == '__main__':
+    import datetime
+
+    sTime       = datetime.datetime(2014,2,1)
+    eTime       = datetime.datetime(2014,2,28)
+
+    sTime       = datetime.datetime(2016,8,27)
+    eTime       = datetime.datetime(2016,8,28)
+
+    sTime       = datetime.datetime(2016,11,11)
+    eTime       = datetime.datetime(2016,11,18)
+    data_dir    = 'data/wspr' 
+
+    df = read_wspr(sTime,eTime,data_dir)
+    import ipdb; ipdb.set_trace()

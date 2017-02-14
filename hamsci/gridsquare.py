@@ -130,7 +130,17 @@ def gridsquare2latlon(gridsquare,position='center'):
         # If a vector of gridsqaures is given without uniform precision,
         # there should be a subroutine to pad the gridsquares with less
         # to the center of the cell. e.g. FN20 --> FN20mm
-        raise Exception('All input grid squares must be of same precision.')
+        # EDIT by Magda Moses Winter 2016-17:
+            # Added subroutine to pad gridsquares as described above
+        #Need to check this implementation
+        #Assumes all values that are less than precision are 4, which may or may not be true
+        cond=np.where(precs<precision)
+        gs_center = np.chararray(len(cond[0]), itemsize=2)
+        gs_center.fill('mm')
+        gss[cond] = np.char.add(gss[cond], gs_center)
+#        raise Exception('All input grid squares must be of same precision.')
+#        num_fill = len(gs_center)
+#    else: num_fill=None
 
     # Seed values for field calculation.
     base               = 18.
@@ -203,7 +213,11 @@ def gridsquare2latlon(gridsquare,position='center'):
 
     ret_lat     = ret_lat.reshape(gs_0.shape)
     ret_lon     = ret_lon.reshape(gs_0.shape)
-
+    
+#    if num_fill:
+#        return ret_lat,ret_lon,num_fill
+#    else:
+#        return ret_lat,ret_lon
     return ret_lat,ret_lon
 
 
