@@ -105,6 +105,53 @@ def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
     cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
     return cmap
 
+# Event Control ################################################################
+def gen_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
+    """
+    Generate a list of dictionaries containing the parameters necessary to
+    define and analyze event periods.
+
+    Args:
+        sTime:              datetime.datetime object
+        eTime:              datetime.datetime object
+        integration_time:   datetime.timedelta object
+                            How much time to include in an analysis period.
+        interval_time:      datetime.timedelta object
+                            How much time between consecutive startimes.
+
+    Returns:
+        dct_list:           List of dictionaries.
+
+    """
+    dct_list    = []
+    this_sTime  = sTime
+    while this_sTime+integration_time < eTime:
+        this_eTime   = this_sTime + integration_time
+
+        tmp = {}
+        tmp['sTime']    = this_sTime
+        tmp['eTime']    = this_eTime
+        tmp.update(kw_args)
+        dct_list.append(tmp)
+
+        this_sTime      = this_sTime + interval_time
+
+    return dct_list
+
+def update_run_list(run_list,**kwargs):
+    """
+    Returns a copy of a list of dictionaries
+    with new/updated items in each dictionary.
+    """
+
+    new_list    = []
+    for item in run_list:
+        item_copy   = item.copy() 
+        item_copy.update(kwargs)
+        new_list.append(item_copy)
+
+    return new_list
+
 # Misc. Functions ##############################################################
 def get_iterable(x):
     if isinstance(x, collections.Iterable) and not isinstance(x,basestring):

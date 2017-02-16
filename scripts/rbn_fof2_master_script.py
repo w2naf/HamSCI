@@ -20,56 +20,10 @@ import pandas as pd
 
 import hamsci
 from hamsci import rbn_lib
-from hamsci.general_lib import prepare_output_dirs
+from hamsci.general_lib import prepare_output_dirs, gen_run_list, update_run_list
 
 # Set default gridsquare precision
 gridsquare_precision = 4
-
-def gen_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
-    """
-    Generate a list of dictionaries containing the parameters necessary to
-    define and analyze event periods.
-
-    Args:
-        sTime:              datetime.datetime object
-        eTime:              datetime.datetime object
-        integration_time:   datetime.timedelta object
-                            How much time to include in an analysis period.
-        interval_time:      datetime.timedelta object
-                            How much time between consecutive startimes.
-
-    Returns:
-        dct_list:           List of dictionaries.
-
-    """
-    dct_list    = []
-    this_sTime  = sTime
-    while this_sTime+integration_time < eTime:
-        this_eTime   = this_sTime + integration_time
-
-        tmp = {}
-        tmp['sTime']    = this_sTime
-        tmp['eTime']    = this_eTime
-        tmp.update(kw_args)
-        dct_list.append(tmp)
-
-        this_sTime      = this_sTime + interval_time
-
-    return dct_list
-
-def update_run_list(run_list,**kwargs):
-    """
-    Returns a copy of a list of dictionaries
-    with new/updated items in each dictionary.
-    """
-
-    new_list    = []
-    for item in run_list:
-        item_copy   = item.copy() 
-        item_copy.update(kwargs)
-        new_list.append(item_copy)
-
-    return new_list
 
 def rbn_map_dct_wrapper(run_dct):
     rbn_map(**run_dct)
@@ -499,7 +453,7 @@ def write_csv(sTime,eTime,reflection_type,output_dir,rbn_fof2_dir,data_set='acti
 
 if __name__ == '__main__':
     multiproc           = True
-    create_rbn_objs     = True
+    create_rbn_objs     = False
 
     gen_csv             = True
     plot_maps           = True
