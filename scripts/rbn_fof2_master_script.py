@@ -25,23 +25,6 @@ from hamsci import handling
 # Set default gridsquare precision
 gridsquare_precision = 4
 
-def loop_info(map_sTime,map_eTime):
-    print ''
-    print '################################################################################'
-    print 'Plotting RBN Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
-
-    
-def geoloc_info(rbn_obj):
-    # Figure out how many records properly geolocated.
-    good_loc        = rbn_obj.DS001_dropna.df
-    good_count      = good_loc['callsign'].count()
-    total_count     = len(rbn_obj.DS000.df)
-    good_pct        = float(good_count) / total_count * 100.
-    print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count,total_count,good_pct)
-
-    return {'good_count':good_count,'total_count':total_count}
-
-   
 def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
     dct_list    = []
     this_sTime  = sTime
@@ -203,7 +186,9 @@ def rbn_map(sTime,eTime,
     filepath    = os.path.join(output_dir,filename)
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
 
-    li          = loop_info(sTime,eTime)
+    print('')
+    print('################################################################################')
+    print('Plotting RBN Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT')))
 
     t0          = datetime.datetime.now()
     # Load in data.
