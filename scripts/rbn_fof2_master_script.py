@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-#This code is used to generate the RBN-GOES map for the Space Weather feature article.
+# This code calculates RBN foF2, generates appropriate plots and maps,
+# and exports data to a CSV format.
 
 import sys
 import os
