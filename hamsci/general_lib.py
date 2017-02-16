@@ -1,11 +1,13 @@
 import os
 import shutil
+import datetime
 
 import collections
 
 import numpy as np
 import matplotlib
 
+# Colormap Routines ############################################################
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=None,name=None):
     if n is None:
         n = cmap.N
@@ -103,11 +105,24 @@ def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
     cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
     return cmap
 
+# Misc. Functions ##############################################################
 def get_iterable(x):
     if isinstance(x, collections.Iterable) and not isinstance(x,basestring):
         return x
     else:
         return [x]
+
+def make_list(item):
+    """
+    Force something to be iterable.
+
+    This should probably be deprecated in favor of get_iterable.
+    """
+    item = np.array(item)
+    if item.shape == ():
+        item.shape = (1,)
+
+    return item.tolist()
 
 def generate_radar_dict():
     rad_list = []
@@ -132,7 +147,6 @@ def generate_radar_dict():
     return radar_dict
 
 class TimeCheck(object):
-    import datetime
     #import inspect
     #curr_file = inspect.getfile(inspect.currentframe()) # script filename (usually with path)
     #import logging
@@ -159,18 +173,9 @@ class TimeCheck(object):
         else:
             print txt
 
-def make_list(item):
-    """ Force something to be iterable. """
-    item = np.array(item)
-    if item.shape == ():
-        item.shape = (1,)
-
-    return item.tolist()
-
+# File Handling ################################################################
 def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,width_100=False,img_extra='',
         php_viewers=True):
-    import os
-    import shutil
 
     if width_100:
         img_extra = "width='100%'"

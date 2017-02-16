@@ -20,12 +20,28 @@ import pandas as pd
 
 import hamsci
 from hamsci import rbn_lib
-from hamsci import handling
+from hamsci.general_lib import prepare_output_dirs
 
 # Set default gridsquare precision
 gridsquare_precision = 4
 
-def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
+def gen_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
+    """
+    Generate a list of dictionaries containing the parameters necessary to
+    define and analyze event periods.
+
+    Args:
+        sTime:              datetime.datetime object
+        eTime:              datetime.datetime object
+        integration_time:   datetime.timedelta object
+                            How much time to include in an analysis period.
+        interval_time:      datetime.timedelta object
+                            How much time between consecutive startimes.
+
+    Returns:
+        dct_list:           List of dictionaries.
+
+    """
     dct_list    = []
     this_sTime  = sTime
     while this_sTime+integration_time < eTime:
@@ -184,7 +200,7 @@ def rbn_map(sTime,eTime,
     filename    = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.png'.format(fname_tag,sTime,eTime)
     output_dir  = os.path.join(output_dir,fname_tag)
     filepath    = os.path.join(output_dir,filename)
-    handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
+    prepare_output_dirs({0:output_dir},clear_output_dirs=False)
 
     print('')
     print('################################################################################')
@@ -269,7 +285,7 @@ def create_rbn_obj(sTime,eTime,
 
     filepath    = get_rbn_obj_path(rbn_fof2_dir,reflection_type,sTime,eTime)
     output_dir  = os.path.split(filepath)[0]
-    handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
+    prepare_output_dirs({0:output_dir},clear_output_dirs=False)
 
     rbn_obj     = rbn_lib.RbnObject(sTime,eTime)
 
@@ -304,13 +320,13 @@ def plot_grid_timeseries(run_list,
             '_'.join([grid_square,gridsquare_data_param]),sTime,eTime)
     output_dir  = os.path.join(output_dir,fname_tag)
     filepath    = os.path.join(output_dir,filename)
-    handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
+    prepare_output_dirs({0:output_dir},clear_output_dirs=False)
 
     t0          = datetime.datetime.now()
 
     # Load in data.
     cache_dir       = os.path.join('data','cache')
-    handling.prepare_output_dirs({0:cache_dir},clear_output_dirs=clear_cache)
+    prepare_output_dirs({0:cache_dir},clear_output_dirs=clear_cache)
     cache_file      = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.cache.p'.format(fname_tag,sTime,eTime)
     cache_fpath     = os.path.join(cache_dir,cache_file)
 
@@ -449,7 +465,7 @@ def write_csv(sTime,eTime,reflection_type,output_dir,rbn_fof2_dir,data_set='acti
     filetag         = '{}.{}'.format(data_set_name,dataframe)
 
     output_dir      = os.path.join(output_dir,'csv',filetag)
-    handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False,php_viewers=False)
+    prepare_output_dirs({0:output_dir},clear_output_dirs=False,php_viewers=False)
 
     csv_fname       = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.{}.csv'.format(sTime,eTime,filetag)
     csv_path        = os.path.join(output_dir,csv_fname)
@@ -523,11 +539,11 @@ if __name__ == '__main__':
     dct['reflection_type']  = reflection_type
 #    dct['call_filt_de'] = 'aa4vv'
 
-    run_list            = gen_map_run_list(sTime,eTime,integration_time,interval_time,**dct)
+    run_list            = gen_run_list(sTime,eTime,integration_time,interval_time,**dct)
 
     # Create RBN Object ###############################################
     if create_rbn_objs:
-        handling.prepare_output_dirs({0:rbn_fof2_dir},clear_output_dirs=True,php_viewers=False)
+        prepare_output_dirs({0:rbn_fof2_dir},clear_output_dirs=True,php_viewers=False)
         if multiproc:
             pool = multiprocessing.Pool()
             pool.map(create_rbn_obj_dct_wrapper,run_list)
@@ -539,7 +555,7 @@ if __name__ == '__main__':
  
     # Prepare and Clear Output Directories #########################################
     if plot_maps or gen_csv:
-        handling.prepare_output_dirs({0:output_dir},clear_output_dirs=True,php_viewers=False)
+        prepare_output_dirs({0:output_dir},clear_output_dirs=True,php_viewers=False)
 
     # Generate CSV Files ###########################################################
     if gen_csv:
