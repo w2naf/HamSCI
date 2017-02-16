@@ -47,6 +47,62 @@ def get_custom_cmap(name='blue_red'):
 
     return new_cmap
 
+def cc255(color):
+    """
+    Convert any valid matplotlib color into a 255 bit
+    RGB triplet (tuple).
+    """
+    cc = matplotlib.colors.ColorConverter().to_rgb
+    trip = np.array(cc(color))*255
+    trip = [int(x) for x in trip]
+    return tuple(trip)
+
+def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
+    """
+    Generate a matplotlib cmap from a cdict that specifies
+    colors for specifc values specified as 255 bit RGB triplets.
+
+    Inputs:
+        cdict: Color dictionary.
+            Example:
+            cdict       = {}
+            cdict[ 0.0] = (  0,   0,   0)
+            cdict[ 1.8] = cc255('violet')
+            cdict[ 3.0] = cc255('blue')
+            cdict[ 8.0] = cc255('aqua')
+            cdict[10.0] = cc255('green')
+            cdict[13.0] = cc255('green')
+            cdict[17.0] = cc255('yellow')
+            cdict[21.0] = cc255('orange')
+            cdict[28.0] = cc255('red')
+            cdict[30.0] = cc255('red')
+        vmin: Bottom of color scale.
+        vmax: Top of color scale.
+    """
+    norm = matplotlib.colors.Normalize(vmin=vmin,vmax=vmax)
+    
+    red   = []
+    green = []
+    blue  = []
+    
+    keys = cdict.keys()
+    keys.sort()
+    
+    for x in keys:
+        r,g,b, = cdict[x]
+        x = norm(x)
+        r = r/255.
+        g = g/255.
+        b = b/255.
+        red.append(   (x, r, r))
+        green.append( (x, g, g))
+        blue.append(  (x, b, b))
+    cdict = {'red'   : tuple(red),
+             'green' : tuple(green),
+             'blue'  : tuple(blue)}
+    cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
+    return cmap
+
 def get_iterable(x):
     if isinstance(x, collections.Iterable) and not isinstance(x,basestring):
         return x
@@ -102,6 +158,14 @@ class TimeCheck(object):
             log.info(txt)
         else:
             print txt
+
+def make_list(item):
+    """ Force something to be iterable. """
+    item = np.array(item)
+    if item.shape == ():
+        item.shape = (1,)
+
+    return item.tolist()
 
 def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,width_100=False,img_extra='',
         php_viewers=True):

@@ -35,16 +35,17 @@ import matplotlib.markers as mmarkers
 from matplotlib.collections import PolyCollection
 
 import gridsquare
-
-
-def cc255(color):
-    cc = matplotlib.colors.ColorConverter().to_rgb
-    trip = np.array(cc(color))*255
-    trip = [int(x) for x in trip]
-    return tuple(trip)
+from general_lib import cc255, cdict_to_cmap, make_list
 
 class BandData(object):
     def __init__(self,cmap='HFRadio',vmin=0.,vmax=30.):
+        """
+        Create an object that contains frequency, name, and color
+        information about the ham radio bands.
+
+        Other routines can reference this object for consistent band
+        color and name handling.
+        """
         if cmap == 'HFRadio':
             self.cmap   = self.hf_cmap(vmin=vmin,vmax=vmax)
         else:
@@ -64,6 +65,10 @@ class BandData(object):
         self.__gen_band_dict__(bands)
 
     def __gen_band_dict__(self,bands):
+        """
+        Create a dictionary of information about the ham radio bands.
+        This is called by __init__().
+        """
         dct = {}
         for freq,name in bands:
             key = int(freq)
@@ -76,11 +81,31 @@ class BandData(object):
         self.band_dict          = dct
 
     def get_rgba(self,freq):
+        """
+        Return RGBA color values for a given frequency using the ham radio
+        band colormap.
+
+        Input:
+            freq: Float [MHz]
+
+        Returns:
+            RGBA sequence
+        """
         nrm     = self.norm(freq)
         rgba    = self.cmap(nrm)
         return rgba
 
     def get_hex(self,freq):
+        """
+        Return web Hex color values for a given frequency using the ham radio
+        band colormap.
+
+        Input:
+            freq: Float [MHz]
+
+        Returns:
+            hexes: sequence of hex color strings  
+        """
 
         freq    = np.array(freq)
         shape   = freq.shape
@@ -99,6 +124,12 @@ class BandData(object):
         return hexes
 
     def hf_cmap(self,name='HFRadio',vmin=0.,vmax=30.):
+        """
+        Generate a colormap for the HF Ham Radio Bands.
+
+        Colors were chosen to make individual bands easy
+        to distinguish.
+        """
 	fc = {}
         my_cdict = fc
 	fc[ 0.0] = (  0,   0,   0)
@@ -114,30 +145,6 @@ class BandData(object):
         cmap    = cdict_to_cmap(fc,name=name,vmin=vmin,vmax=vmax)
 	return cmap
 
-def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
-	norm = matplotlib.colors.Normalize(vmin=vmin,vmax=vmax)
-	
-	red   = []
-	green = []
-	blue  = []
-	
-	keys = cdict.keys()
-	keys.sort()
-	
-	for x in keys:
-	    r,g,b, = cdict[x]
-	    x = norm(x)
-	    r = r/255.
-	    g = g/255.
-	    b = b/255.
-	    red.append(   (x, r, r))
-	    green.append( (x, g, g))
-	    blue.append(  (x, b, b))
-	cdict = {'red'   : tuple(red),
-		 'green' : tuple(green),
-		 'blue'  : tuple(blue)}
-	cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
-	return cmap
 
 def ham_band_errorbars(freqs):
     """
@@ -170,6 +177,10 @@ def ham_band_errorbars(freqs):
     return (np.array(low_lst),np.array(upp_lst))
 
 def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None):
+    """
+    Download data from the RBN server, geolocate it, and store the result in a local
+    pickle file.
+    """
     if data_dir is None: data_dir = os.getenv('DAVIT_TMPDIR')
 
     ymd_list    = [datetime.datetime(sTime.year,sTime.month,sTime.day)]
@@ -306,14 +317,29 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
         return df
 
 class RbnObject(object):
-    """
-    gridsquare_precision:   Even number, typically 4 or 6
-    reflection_type:        Model used to determine reflection point in ionopshere.
-                            'sp_mid': spherical midpoint
-    """
     def __init__(self,sTime=None,eTime=None,data_dir='data/rbn',
             qrz_call=None,qrz_passwd=None,comment='Raw Data',df=None,reindex=True,
             gridsquare_precision=4,reflection_type='sp_mid'):
+        """
+        Creates the a container object to hold child RbnDataSet objects.
+        If start and end dates are provided, data will either be loaded from locally
+        stored data files or downloaded from the RBN website. See read_rbn().
+
+        If a dataframe containing RBN data is provided, that will be used as the initial dataset.
+
+        sTime:                  datetime.datetime object
+        eTime:                  datetime.datetime object
+        data_dir:               path of locally stored data files.
+        qrz_call:               login call sign for qrz.com for geolocation
+        qrz_passwd:             login password for qrz.com for geolocation
+        comment:                User-supplied name of initial dataset.
+        reindex:                Re-create the index column of the pandas dataframe.
+                                This is recommended in most cases.
+        gridsquare_precision:   Even number, typically 4 or 6
+        reflection_type:        Model used to determine reflection point in ionopshere.
+                                'sp_mid':       spherical midpoint
+                                'miller2015':   Miller et al. 2015 multihop algorithm.
+        """
 
         if df is None:
             df = read_rbn(sTime=sTime,eTime=eTime,data_dir=data_dir,
@@ -357,23 +383,23 @@ class RbnObject(object):
         return data_sets
 
     def geo_loc_stats(self,verbose=True):
-        # Figure out how many records properly geolocated.
+        """
+        Prints how many records properly geolocated.
+        """
         good_loc        = rbn_obj.DS001_dropna.df
         good_count_map  = good_loc['callsign'].count()
         total_count_map = len(rbn_obj.DS000.df)
         good_pct_map    = float(good_count_map) / total_count_map * 100.
-        print 'Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map)
-
-def make_list(item):
-    """ Force something to be iterable. """
-    item = np.array(item)
-    if item.shape == ():
-        item.shape = (1,)
-
-    return item.tolist()
+        print('Geolocation success: {0:d}/{1:d} ({2:.1f}%)'.format(good_count_map,total_count_map,good_pct_map))
 
 class RbnDataSet(object):
     def __init__(self, df, comment=None, parent=0, **metadata):
+        """
+        Creates an object to hold a Pandas RBN dataframe and associated metadata.
+
+        This constructor has methods to analyze data and track the history of changes
+        made to the dataset. It is normally called by the RbnObject constructor.
+        """
         self.parent = parent
 
         self.df     = df
@@ -711,6 +737,16 @@ class RbnDataSet(object):
     def filter_pathlength(self,min_length=None,max_length=None,
             new_data_set='pathlength_filter',comment=None,reindex=True):
         """
+        Remove spots with a ground propagation path that meet a specified
+        criteria.
+
+        Inputs:
+            min_length:     Minimum allowed ground path length [km]
+            max_length:     Maximum allowed ground path length [km]
+            new_data_set:   Name of new data set.
+            comment:        Defaults to Name of filter and min and max values.
+            reindex:        Reset dataframe index column.
+
         """
 
         if min_length is None and max_length is None:
@@ -944,6 +980,20 @@ class RbnDataSet(object):
 
 def band_legend(fig=None,loc='lower center',markerscale=0.5,prop={'size':10},
         title=None,bbox_to_anchor=None,rbn_rx=True,ncdxf=False,ncol=None,band_data=None):
+    """
+    Generate a legend with standard ham radio colorbar set.
+
+    Inputs:
+        fig:            Matplotlib figure object. Defaults to current figure.
+        loc:            Matplotlib legend loc keyword.
+        markerscale:    Matplotlib legend markerscale keyword.
+        prop:           Matplotlib legend prop keyword.
+        title:          Legend Title
+        bbox_to_anchor: Matplotlib legend bbox_to_anchor keyword.
+        rbn_rx:         Show symbol for RBN Receiver
+        ncdxf:          Show symbol for NCDXF Beacon
+        band_data:      Custom BandData() object. Allows a custom colorbar to be used.
+    """
 
     if fig is None: fig = plt.gcf() 
 
