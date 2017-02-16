@@ -204,7 +204,7 @@ def rbn_map(sTime,eTime,
 
     print('')
     print('################################################################################')
-    print('Plotting RBN Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT')))
+    print('Plotting RBN Map: {0} - {1}'.format(sTime.strftime('%d %b %Y %H%M UT'),eTime.strftime('%d %b %Y %H%M UT')))
 
     t0          = datetime.datetime.now()
     # Load in data.
@@ -510,10 +510,10 @@ if __name__ == '__main__':
 #    reflection_type     = 'sp_mid'
 
 #    # 2014 Nov Sweepstakes
-    sTime   = datetime.datetime(2014,11,1)
-    eTime   = datetime.datetime(2014,11,4)
-#    sTime   = datetime.datetime(2014,11,2,12)
-#    eTime   = datetime.datetime(2014,11,2,13)
+#    sTime   = datetime.datetime(2014,11,1)
+#    eTime   = datetime.datetime(2014,11,4)
+    sTime   = datetime.datetime(2014,11,2,12)
+    eTime   = datetime.datetime(2014,11,2,13)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
