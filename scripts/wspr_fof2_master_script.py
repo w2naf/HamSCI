@@ -24,6 +24,17 @@ def loop_info(map_sTime,map_eTime):
     print '################################################################################'
     print 'Plotting WSPR Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
 
+
+
+def write_csv_dct(run_dct):
+    """
+    Dictionary wrapper for write_csv() to help with
+    pool multiprocessing.
+    """
+
+    csv_path    = write_csv(**run_dct)
+    return csv_path
+
 def wspr_full_map(sTime,eTime,
         llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None,
@@ -116,6 +127,7 @@ def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
         this_sTime  = this_eTime
 
     return dct_list
+
 
 def wspr_map_dct_wrapper(run_dct):
     wspr_full_map(**run_dct)
