@@ -24,8 +24,6 @@ def loop_info(map_sTime,map_eTime):
     print '################################################################################'
     print 'Plotting WSPR Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
 
-
-
 def write_csv_dct(run_dct):
     """
     Dictionary wrapper for write_csv() to help with
@@ -35,7 +33,47 @@ def write_csv_dct(run_dct):
     csv_path    = write_csv(**run_dct)
     return csv_path
 
-def wspr_full_map(sTime,eTime,
+def create_wspr_obj_dct_wrapper(run_dct):
+    create_wspr_obj(**run_dct)
+
+def get_wspr_obj_path(output_dir,reflection_type,sTime,eTime):
+    filename    = '{}-{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.p'.format(reflection_type,sTime,eTime)
+    output_dir  = os.path.join(wspr_fof2_dir,reflection_type)
+    filepath    = os.path.join(output_dir,filename)
+    return filepath
+
+def create_wspr_obj(sTime,eTime,
+        llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
+        call_filt_de = None, call_filt_dx = None,
+        reflection_type         = 'sp_mid',
+        wspr_fof2_dir            = 'data/wspr_fof2',
+        **kwargs):
+
+    #Create wspr object
+    wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
+
+    #find lat/lon from gridsquares
+    wspr_obj.active.dxde_gs_latlon()
+    #Filter Path 
+    wspr_obj.active.filter_pathlength(500.)
+
+    #Calculate Reflection points
+    wspr_obj.active.calc_reflection_points(reflection_type=reflection_type)
+    wspr_obj.active.grid_data(gridsquare_precision)
+
+    #filter lat/lon and calls 
+    latlon_bnds = {'llcrnrlat':llcrnrlat,'llcrnrlon':llcrnrlon,'urcrnrlat':urcrnrlat,'urcrnrlon':urcrnrlon}
+    wspr_obj.active.latlon_filt(**latlon_bnds)
+    wspr_obj.active.filter_calls(call_filt_de,call_type='de')
+    wspr_obj.active.filter_calls(call_filt_dx,call_type='dx')
+
+    #Gridsquare data 
+    wspr_obj.active.compute_grid_stats()
+    with open(filepath,'wb') as fl:
+        pickle.dump(rbn_obj,fl)
+
+
+def wspr_map(sTime,eTime,
         llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None,
         reflection_type         = 'sp_mid',
@@ -130,7 +168,7 @@ def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
 
 
 def wspr_map_dct_wrapper(run_dct):
-    wspr_full_map(**run_dct)
+    wspr_map(**run_dct)
 
 if __name__ == '__main__':
     multiproc   = False 
