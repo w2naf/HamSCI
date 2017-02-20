@@ -5,6 +5,7 @@ import sys
 import os
 import datetime
 import multiprocessing
+import pickle
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -49,6 +50,10 @@ def create_wspr_obj(sTime,eTime,
         wspr_fof2_dir            = 'data/wspr_fof2',
         **kwargs):
 
+    filepath = get_wspr_obj_path(wspr_fof2_dir, reflection_type,sTime,eTime)
+    output_dir  = os.path.split(filepath)[0]
+    handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
+
     #Create wspr object
     wspr_obj = wspr_lib.WsprObject(sTime,eTime) 
 
@@ -70,7 +75,7 @@ def create_wspr_obj(sTime,eTime,
     #Gridsquare data 
     wspr_obj.active.compute_grid_stats()
     with open(filepath,'wb') as fl:
-        pickle.dump(rbn_obj,fl)
+        pickle.dump(wspr_obj,fl)
 
 
 def wspr_map(sTime,eTime,
@@ -166,12 +171,67 @@ def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
 
     return dct_list
 
+def write_csv(sTime,eTime,reflection_type,output_dir,wspr_fof2_dir,data_set='active',dataframe='grid_data',
+        print_header=True,**kwargs):
+    """
+    Write WSPR Obj data to a CSV File.
+    """
+
+    # Load in data.
+    wspr_fof2_fp = get_wspr_obj_path(wspr_fof2_dir,reflection_type,sTime,eTime)
+    with open(wspr_fof2_fp,'rb') as fl:
+        wspr_obj = pickle.load(fl)
+
+    ds          = getattr(wspr_obj,data_set)
+    df          = getattr(ds,dataframe)
+
+    # Prepare file names.
+    data_set_name   = ds.metadata['data_set_name']
+    filetag         = '{}.{}'.format(data_set_name,dataframe)
+
+    output_dir      = os.path.join(output_dir,'csv',filetag)
+    handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False,php_viewers=False)
+
+    csv_fname       = '{:%Y%m%d.%H%M}-{:%Y%m%d.%H%M}.{}.csv'.format(sTime,eTime,filetag)
+    csv_path        = os.path.join(output_dir,csv_fname)
+
+    with open(csv_path,'w') as fl:
+        if print_header:
+            fl.write('# Data Source: {!s}\n'.format(wspr_fof2_fp))
+            fl.write('#\n')
+            fl.write('## Data Set History ############################################################\n')
+
+            keys = ds.history.keys()
+            keys.sort()
+            for key in keys:
+                line = '# {!s}: {!s}\n'.format(key,ds.history[key])
+                fl.write(line)
+
+            fl.write('#\n')
+            fl.write('## Data Set Metadata ###########################################################\n')
+
+            keys = ds.metadata.keys()
+            keys.sort()
+            for key in keys:
+                line = '# {!s}: {!s}\n'.format(key,ds.metadata[key])
+                fl.write(line)
+
+            fl.write('#\n')
+            fl.write('## CSV Data ####################################################################\n')
+
+    df.to_csv(csv_path,mode='a')
+    return csv_path
+
 
 def wspr_map_dct_wrapper(run_dct):
     wspr_map(**run_dct)
 
 if __name__ == '__main__':
     multiproc   = False 
+    create_wspr_objs=True
+    plot_maps = False
+
+
     plot_de                 = True
     plot_dx                 = False
     plot_midpoints          = False
@@ -192,6 +252,8 @@ if __name__ == '__main__':
     #CW Sweapstakes 2014
     sTime = datetime.datetime(2014, 11,1)
     eTime = datetime.datetime(2014, 11,4)
+    eTime = datetime.datetime(2014, 11,2)
+
 #    eTime = datetime.datetime(2014, 11,2)
 #    #CW Sweapstakes 2016
 #    sTime = datetime.datetime(2016, 11,5)
@@ -276,16 +338,51 @@ if __name__ == '__main__':
     #Generate list of input values for every interval to plot 
     run_list    = gen_map_run_list(sTime,eTime,integration_time,interval_time,**dct)
 #    run_list    = gen_map_run_list(map_sTime,map_eTime,integration_time,interval_time,**dct)
-    
-    #Run map code
-    if multiproc:
-        pool = multiprocessing.Pool()
-        pool.map(wspr_map_dct_wrapper,run_list)
-        pool.close()
-        pool.join()
-    else:
-        for run_dct in run_list:
-            wspr_map_dct_wrapper(run_dct)
+
+    # Create WSPR Object ####
+    if create_wspr_objs:
+        if multiproc:
+            pool = multiprocessing.Pool()
+            pool.map(wspr_map_dct_wrapper,run_list)
+            pool.close()
+            pool.join()
+        else:
+            for run_dct in run_list:
+                create_wspr_obj_dct_wrapper(run_dct)
+
+    # Generate CSV Files ####
+    if gen_csv:
+
+        csv_requests = []
+        csv_requests.append( {'data_set':'active', 'dataframe':'grid_data'} )
+        csv_requests.append( {'data_set':'active', 'dataframe':'df'} )
+
+        for csv_request in csv_requests:
+            csv_list    = update_run_list(run_list,**csv_request)
+            if multiproc:
+                pool = multiprocessing.Pool()
+                vals = pool.map(write_csv_dct,csv_list)
+                pool.close()
+                pool.join()
+                csv_path = vals[-1]
+            else:
+                for csv_dct in csv_list:
+                    csv_path = write_csv_dct(csv_dct)
+
+            path        = os.path.split(csv_path)[0]
+            shutil.make_archive(path, 'zip', path)
+
+    # Plot Maps ####
+    if plot_maps: 
+        #Run map code
+        if multiproc:
+            pool = multiprocessing.Pool()
+            pool.map(wspr_map_dct_wrapper,run_list)
+            pool.close()
+            pool.join()
+        else:
+            for run_dct in run_list:
+                wspr_map_dct_wrapper(run_dct)
 
 
 #    wspr_path_map(map_sTime, map_eTime, filt_type = filt_type, output_dir=output_dir, **dct)
