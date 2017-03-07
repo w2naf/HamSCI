@@ -25,14 +25,6 @@ def loop_info(map_sTime,map_eTime):
     print '################################################################################'
     print 'Plotting WSPR Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
 
-def write_csv_dct(run_dct):
-    """
-    Dictionary wrapper for write_csv() to help with
-    pool multiprocessing.
-    """
-
-    csv_path    = write_csv(**run_dct)
-    return csv_path
 
 def create_wspr_obj_dct_wrapper(run_dct):
     create_wspr_obj(**run_dct)
@@ -171,6 +163,29 @@ def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
 
     return dct_list
 
+def update_run_list(run_list,**kwargs):
+    """
+    Returns a copy of a list of dictionaries
+    with new/updated items in each dictionary.
+    """
+
+    new_list    = []
+    for item in run_list:
+        item_copy   = item.copy() 
+        item_copy.update(kwargs)
+        new_list.append(item_copy)
+
+    return new_list
+
+def write_csv_dct(run_dct):
+    """
+    Dictionary wrapper for write_csv() to help with
+    pool multiprocessing.
+    """
+
+    csv_path    = write_csv(**run_dct)
+    return csv_path
+
 def write_csv(sTime,eTime,reflection_type,output_dir,wspr_fof2_dir,data_set='active',dataframe='grid_data',
         print_header=True,**kwargs):
     """
@@ -228,7 +243,8 @@ def wspr_map_dct_wrapper(run_dct):
 
 if __name__ == '__main__':
     multiproc   = False 
-    create_wspr_objs=True
+    create_wspr_objs=False
+    gen_csv = True
     plot_maps = False
 
 
