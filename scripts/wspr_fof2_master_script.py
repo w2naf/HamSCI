@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 #This code is used to generate the RBN-GOES map for the Space Weather feature article.
+#This code is the master file for wspr data processing to find fof2
 
 import sys
 import os
 import datetime
 import multiprocessing
 import pickle
+import shutil
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -85,7 +87,8 @@ def wspr_map(sTime,eTime,
         overlay_gridsquare_data = True,
         gridsquare_data_param   = 'f_max_MHz',
         fname_tag               = None,
-        output_dir = 'output/wspr'):
+        output_dir = 'output/wspr', 
+        wspr_fof2_dir = 'data/wspr_fof2'):
     """
     Creates 
     """
@@ -247,7 +250,6 @@ if __name__ == '__main__':
     gen_csv = True
     plot_maps = False
 
-
     plot_de                 = True
     plot_dx                 = False
     plot_midpoints          = False
@@ -286,7 +288,6 @@ if __name__ == '__main__':
 #    eTime = datetime.datetime(2013,5,13,17)
 
 #    wspr_obj = wspr_lib.WsprObject(sTime,sTime+datetime.timedelta(minutes=15)) 
-#    import ipdb; ipdb.set_trace()
 
     term=[True, False]
     integration_time    = datetime.timedelta(minutes=15)
@@ -310,7 +311,7 @@ if __name__ == '__main__':
     wspr_fof2_dir            = os.path.join('data','wspr_fof2',event_dir)
 
     dct['output_dir']       = output_dir
-#    dct['wspr_fof2_dir']     = wspr_fof2_dir
+    dct['wspr_fof2_dir']     = wspr_fof2_dir
     dct['reflection_type']  = reflection_type
 
 #    #Create output directory based on start and end time and parameter ploted
@@ -371,6 +372,7 @@ if __name__ == '__main__':
 
         csv_requests = []
         csv_requests.append( {'data_set':'active', 'dataframe':'grid_data'} )
+#        csv_requests.append( {'data_set':'active', 'dataframe':'grid_data','print_header':True} )
         csv_requests.append( {'data_set':'active', 'dataframe':'df'} )
 
         for csv_request in csv_requests:

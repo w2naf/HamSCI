@@ -521,6 +521,22 @@ if __name__ == '__main__':
 #    sTime   = datetime.datetime(2016,5,28)
 #    eTime   = datetime.datetime(2016,5,29)
 
+#    multiproc           = False
+#    create_rbn_objs     = True
+#
+#    gen_csv             = True
+#    plot_maps           = False
+#    plot_foF2           = False
+#    clear_foF2_cache    = False
+#
+#    reflection_type     = 'miller2015'
+##    reflection_type     = 'sp_mid'
+#
+##    # 2014 Nov Sweepstakes
+#    sTime   = datetime.datetime(2014,11,1)
+#    eTime   = datetime.datetime(2014,11,4)
+#    eTime   = datetime.datetime(2014,11,2)
+
     dct = {}
     dct.update({'llcrnrlat':20.,'llcrnrlon':-130.,'urcrnrlat':55.,'urcrnrlon':-65.})
 
