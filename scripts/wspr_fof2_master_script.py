@@ -166,6 +166,9 @@ def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
 
     return dct_list
 
+def wspr_map_dct_wrapper(run_dct):
+    wspr_map(**run_dct)
+
 def update_run_list(run_list,**kwargs):
     """
     Returns a copy of a list of dictionaries
@@ -241,8 +244,6 @@ def write_csv(sTime,eTime,reflection_type,output_dir,wspr_fof2_dir,data_set='act
     return csv_path
 
 
-def wspr_map_dct_wrapper(run_dct):
-    wspr_map(**run_dct)
 
 if __name__ == '__main__':
     multiproc   = False 
@@ -270,7 +271,7 @@ if __name__ == '__main__':
     #CW Sweapstakes 2014
     sTime = datetime.datetime(2014, 11,1)
     eTime = datetime.datetime(2014, 11,4)
-    eTime = datetime.datetime(2014, 11,2)
+#    eTime = datetime.datetime(2014, 11,2)
 
 #    eTime = datetime.datetime(2014, 11,2)
 #    #CW Sweapstakes 2016
