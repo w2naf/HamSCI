@@ -27,7 +27,21 @@ def loop_info(map_sTime,map_eTime):
     print '################################################################################'
     print 'Plotting WSPR Map: {0} - {1}'.format(map_sTime.strftime('%d %b %Y %H%M UT'),map_eTime.strftime('%d %b %Y %H%M UT'))
 
+def update_run_list(run_list,**kwargs):
+    """
+    Returns a copy of a list of dictionaries
+    with new/updated items in each dictionary.
+    """
 
+    new_list    = []
+    for item in run_list:
+        item_copy   = item.copy() 
+        item_copy.update(kwargs)
+        new_list.append(item_copy)
+
+    return new_list
+
+### Create WSPR Object Codes #################################
 def create_wspr_obj_dct_wrapper(run_dct):
     create_wspr_obj(**run_dct)
 
@@ -70,10 +84,8 @@ def create_wspr_obj(sTime,eTime,
     wspr_obj.active.compute_grid_stats()
     with open(filepath,'wb') as fl:
         pickle.dump(wspr_obj,fl)
-#    if sTime == datetime.datetime(2014,11,2,14,45):
-#        import ipdb; ipdb.set_trace()
 
-
+### Mapping Codes ############################################
 def wspr_map(sTime,eTime,
         llcrnrlon=-180., llcrnrlat=-90, urcrnrlon=180., urcrnrlat=90.,
         call_filt_de = None, call_filt_dx = None,
@@ -171,20 +183,7 @@ def gen_map_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
 def wspr_map_dct_wrapper(run_dct):
     wspr_map(**run_dct)
 
-def update_run_list(run_list,**kwargs):
-    """
-    Returns a copy of a list of dictionaries
-    with new/updated items in each dictionary.
-    """
-
-    new_list    = []
-    for item in run_list:
-        item_copy   = item.copy() 
-        item_copy.update(kwargs)
-        new_list.append(item_copy)
-
-    return new_list
-
+### CSV Save Code #################################
 def write_csv_dct(run_dct):
     """
     Dictionary wrapper for write_csv() to help with
@@ -246,7 +245,7 @@ def write_csv(sTime,eTime,reflection_type,output_dir,wspr_fof2_dir,data_set='act
     return csv_path
 
 
-
+### Main Code ###################
 if __name__ == '__main__':
     multiproc   = False 
     create_wspr_objs=True
