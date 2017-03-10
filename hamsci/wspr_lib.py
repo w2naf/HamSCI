@@ -193,8 +193,8 @@ def ham_band_errorbars(freqs):
 
     bands   = [ 1.80,  3.5,  7.0,  10.0,  14.0,  18.1,  21.0,
                24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
-    bands   = [ 1.80,  3.5,  7.0, 14.0,  18.1,  21.0,
-               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+#    bands   = [ 1.80,  3.5,  7.0, 14.0,  18.1,  21.0,
+#               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
 #    bands   = [ 1.80,  3.5, 5.0, 7.0,  10.1,  14.0,  18.068,  21.0,
 #               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
     bands   = np.array(bands)
@@ -227,8 +227,10 @@ def wspr_band_errorbars(freqs):
 
 #    bands   = [ 1.80,  3.5,  7.0,  10.0,  14.0,  18.1,  21.0,
 #               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
-    bands   = [ 1.80,  3.5,  7.0, 14.0,  18.1,  21.0,
-               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+#    bands   = [ 1.80,  3.5,  7.0, 14.0,  18.1,  21.0,
+#               24.89, 28.0, 50.0, 144.0, 220.0, 440.0]
+    bands   = [ 1.80,  3.5,  7.0,  10.0,  14.0,  18.1,  21.0,
+               24.89, 28.0, 50.0, 144.0, 220.0, 440.0, 1296.5]
 #    bands   = [ 1.80,  3.5, 5.0, 7.0,  10.1,  14.0,  18.068,  21.0,
 #               24.89, 28.0, 50.0, 144.0, 220.0, 440.0, 1296.5]
     bands   = np.array(bands)
@@ -243,6 +245,10 @@ def wspr_band_errorbars(freqs):
         lower   = 0.10 * freq
         low_lst.append(lower)
 
+#        import ipdb; ipdb.set_trace()
+#        print str(argmin)
+#        print freq
+##        print bands
         upper   = bands[argmin+1] - freq
         upp_lst.append(upper)
     
@@ -624,6 +630,7 @@ class WsprDataSet(object):
         f_max               = dct['f_max_MHz']
         #Needs Modification for WSPR frequencies!
 #        lower,upper         = ham_band_errorbars(f_max)
+        lower,upper         = wspr_band_errorbars(f_max)
 
         # Compute Zenith Angle Theta and FoF2.
         lambda_by_2         = dct['R_gc_min']/Re

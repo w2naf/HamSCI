@@ -70,6 +70,8 @@ def create_wspr_obj(sTime,eTime,
     wspr_obj.active.compute_grid_stats()
     with open(filepath,'wb') as fl:
         pickle.dump(wspr_obj,fl)
+    if sTime > datetime.datetime(2014,11,2, 15):
+        import ipdb; ipdb.set_trace()
 
 
 def wspr_map(sTime,eTime,
@@ -247,8 +249,8 @@ def write_csv(sTime,eTime,reflection_type,output_dir,wspr_fof2_dir,data_set='act
 
 if __name__ == '__main__':
     multiproc   = False 
-    create_wspr_objs=False
-    gen_csv = True
+    create_wspr_objs=True
+    gen_csv = False
     plot_maps = False
 
     plot_de                 = True
@@ -359,6 +361,7 @@ if __name__ == '__main__':
 
     # Create WSPR Object ####
     if create_wspr_objs:
+        #Should check pathlegnth filter
         if multiproc:
             pool = multiprocessing.Pool()
             pool.map(wspr_map_dct_wrapper,run_list)
