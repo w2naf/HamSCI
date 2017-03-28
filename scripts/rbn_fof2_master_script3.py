@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #This code is used to generate the RBN-GOES map for the Space Weather feature article.
 
 import sys
