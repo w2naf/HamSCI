@@ -89,6 +89,7 @@ class TxRxRaytracer(object):
         # 5 minutes later so that Doppler shift can be calculated.
         doppler_flag = 1
 
+        import ipdb; ipdb.set_trace()
         eng = matlab.engine.start_matlab()
     #    eng = matlab.engine.start_matlab('-desktop')
 
