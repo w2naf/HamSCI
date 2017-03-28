@@ -97,7 +97,6 @@ if __name__ == '__main__':
     else:
         rt_dcts = []
         for this_dct in run_lst:
-            import ipdb; ipdb.set_trace()
             rt_dct  = run_rt(this_dct)
             rt_dcts.append(rt_dct)
 
