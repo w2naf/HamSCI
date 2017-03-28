@@ -1,11 +1,13 @@
 import os
 import shutil
+import datetime
 
 import collections
 
 import numpy as np
 import matplotlib
 
+# Colormap Routines ############################################################
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=None,name=None):
     if n is None:
         n = cmap.N
@@ -47,11 +49,127 @@ def get_custom_cmap(name='blue_red'):
 
     return new_cmap
 
+def cc255(color):
+    """
+    Convert any valid matplotlib color into a 255 bit
+    RGB triplet (tuple).
+    """
+    cc = matplotlib.colors.ColorConverter().to_rgb
+    trip = np.array(cc(color))*255
+    trip = [int(x) for x in trip]
+    return tuple(trip)
+
+def cdict_to_cmap(cdict,name='CustomCMAP',vmin=0.,vmax=30.):
+    """
+    Generate a matplotlib cmap from a cdict that specifies
+    colors for specifc values specified as 255 bit RGB triplets.
+
+    Inputs:
+        cdict: Color dictionary.
+            Example:
+            cdict       = {}
+            cdict[ 0.0] = (  0,   0,   0)
+            cdict[ 1.8] = cc255('violet')
+            cdict[ 3.0] = cc255('blue')
+            cdict[ 8.0] = cc255('aqua')
+            cdict[10.0] = cc255('green')
+            cdict[13.0] = cc255('green')
+            cdict[17.0] = cc255('yellow')
+            cdict[21.0] = cc255('orange')
+            cdict[28.0] = cc255('red')
+            cdict[30.0] = cc255('red')
+        vmin: Bottom of color scale.
+        vmax: Top of color scale.
+    """
+    norm = matplotlib.colors.Normalize(vmin=vmin,vmax=vmax)
+    
+    red   = []
+    green = []
+    blue  = []
+    
+    keys = list(cdict.keys())
+    keys.sort()
+    
+    for x in keys:
+        r,g,b, = cdict[x]
+        x = norm(x)
+        r = r/255.
+        g = g/255.
+        b = b/255.
+        red.append(   (x, r, r))
+        green.append( (x, g, g))
+        blue.append(  (x, b, b))
+    cdict = {'red'   : tuple(red),
+             'green' : tuple(green),
+             'blue'  : tuple(blue)}
+    cmap  = matplotlib.colors.LinearSegmentedColormap(name, cdict)
+    return cmap
+
+# Event Control ################################################################
+def gen_run_list(sTime,eTime,integration_time,interval_time,**kw_args):
+    """
+    Generate a list of dictionaries containing the parameters necessary to
+    define and analyze event periods.
+
+    Args:
+        sTime:              datetime.datetime object
+        eTime:              datetime.datetime object
+        integration_time:   datetime.timedelta object
+                            How much time to include in an analysis period.
+        interval_time:      datetime.timedelta object
+                            How much time between consecutive startimes.
+
+    Returns:
+        dct_list:           List of dictionaries.
+
+    """
+    dct_list    = []
+    this_sTime  = sTime
+    while this_sTime+integration_time < eTime:
+        this_eTime   = this_sTime + integration_time
+
+        tmp = {}
+        tmp['sTime']    = this_sTime
+        tmp['eTime']    = this_eTime
+        tmp.update(kw_args)
+        dct_list.append(tmp)
+
+        this_sTime      = this_sTime + interval_time
+
+    return dct_list
+
+def update_run_list(run_list,**kwargs):
+    """
+    Returns a copy of a list of dictionaries
+    with new/updated items in each dictionary.
+    """
+
+    new_list    = []
+    for item in run_list:
+        item_copy   = item.copy() 
+        item_copy.update(kwargs)
+        new_list.append(item_copy)
+
+    return new_list
+
+# Misc. Functions ##############################################################
 def get_iterable(x):
     if isinstance(x, collections.Iterable) and not isinstance(x,str):
         return x
     else:
         return [x]
+
+def make_list(item):
+    """
+    Force something to be iterable.
+
+    This should probably be deprecated in favor of get_iterable.
+    """
+    item = np.array(item)
+    if item.shape == ():
+        item.shape = (1,)
+
+    return item.tolist()
 
 def generate_radar_dict():
     rad_list = []
@@ -75,14 +193,47 @@ def generate_radar_dict():
 
     return radar_dict
 
-def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,img_extra=''):
+class TimeCheck(object):
+    #import inspect
+    #curr_file = inspect.getfile(inspect.currentframe()) # script filename (usually with path)
+    #import logging
+    #import logging.config
+    #logging.filename    = curr_file+'.log'
+    #logging.config.fileConfig("logging.conf")
+    #log = logging.getLogger("root")
+
+    def __init__(self,label=None,log=None):
+        self.label  = label
+        self.log    = log
+        self.t0     = datetime.datetime.now()
+    def check(self):
+        self.t1 = datetime.datetime.now()
+        dt      = self.t1 - self.t0
+
+        txt = '{sec}'.format(sec=str(dt))
+
+        if self.label is not None:
+            txt = ': '.join([self.label,txt])
+
+        if self.log is not None:
+            log.info(txt)
+        else:
+            print(txt)
+
+# File Handling ################################################################
+def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,width_100=False,img_extra='',
+        php_viewers=True):
+
+    if width_100:
+        img_extra = "width='100%'"
+
     txt = []
     txt.append('<?php')
     txt.append('foreach (glob("*.png") as $filename) {')
-    txt.append('    echo "<img src=\'$filename\' width=\'100%\'> ";')
+    txt.append('    echo "<img src=\'$filename\' {img_extra}> ";'.format(img_extra=img_extra))
     txt.append('}')
     txt.append('?>')
-    show_all_txt_100 = '\n'.join(txt)
+    show_all_txt = '\n'.join(txt)
 
     txt = []
     txt.append('<?php')
@@ -90,7 +241,7 @@ def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,img_ext
     txt.append('    echo "<img src=\'$filename\' {img_extra}> <br />";'.format(img_extra=img_extra))
     txt.append('}')
     txt.append('?>')
-    show_all_txt = '\n'.join(txt)
+    show_all_txt_breaks = '\n'.join(txt)
 
     for value in output_dirs.values():
         if clear_output_dirs:
@@ -102,7 +253,8 @@ def prepare_output_dirs(output_dirs={0:'output'},clear_output_dirs=False,img_ext
             os.makedirs(value)
         except:
             pass
-        with open(os.path.join(value,'0000-show_all_100.php'),'w') as file_obj:
-            file_obj.write(show_all_txt_100)
-        with open(os.path.join(value,'0000-show_all.php'),'w') as file_obj:
-            file_obj.write(show_all_txt)
+        if php_viewers:
+            with open(os.path.join(value,'0000-show_all.php'),'w') as file_obj:
+                file_obj.write(show_all_txt)
+            with open(os.path.join(value,'0000-show_all_breaks.php'),'w') as file_obj:
+                file_obj.write(show_all_txt_breaks)
