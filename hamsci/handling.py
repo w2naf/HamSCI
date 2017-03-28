@@ -1,2 +1,4 @@
 # These imports maintain compatiblility and should eventually be deprecated.
-from general_lib import prepare_output_dirs, TimeCheck
+from . import general_lib
+prepare_output_dirs = general_lib.prepare_output_dirs
+TimeCheck = general_lib.TimeCheck
