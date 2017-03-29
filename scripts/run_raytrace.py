@@ -95,10 +95,11 @@ if __name__ == '__main__':
         pool.close()
         pool.join()
     else:
-        rt_dcts = []
+        rt_objs = []
         for this_dct in run_lst:
-            rt_dct  = run_rt(this_dct)
-            rt_dcts.append(rt_dct)
+            rt_obj  = run_rt(this_dct)
+            rt_objs.append(rt_obj)
+            import ipdb; ipdb.set_trace()
 
 #    if multiproc:
 #        pool    = multiprocessing.Pool()

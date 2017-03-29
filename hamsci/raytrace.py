@@ -26,7 +26,7 @@ class TxRxRaytracer(object):
     def __init__(self, date, frequency, nhops=3.,
                  tx_call      = None, tx_lat     = None,   tx_lon      = None,
                  rx_call      = None, rx_lat     = None,   rx_lon      = None,
-                 R12          = 0.,   kp         = 0.,     irregs_flag = 0.,
+                 R12          = -1,   kp         = 0.,     irregs_flag = 0.,
                  tx_power     = 1.,   gain_tx_db = 1.,     gain_rx_db  = 1.,
                  start_range  = 0.,   max_range  = 10000., num_range   = 201.,
                  start_height = 0.,   height_inc = 3.,     num_heights = 200., 
@@ -89,7 +89,6 @@ class TxRxRaytracer(object):
         # 5 minutes later so that Doppler shift can be calculated.
         doppler_flag = 1
 
-        import ipdb; ipdb.set_trace()
         eng = matlab.engine.start_matlab()
     #    eng = matlab.engine.start_matlab('-desktop')
 
@@ -262,7 +261,55 @@ class TxRxRaytracer(object):
             rt_dct['srch_ray_path_data'] = srch_ray_path_data
             rt_dct['srch_ray_data']      = srch_ray_data
 
-        self.rt_dct = rt_dct
+        # Reorganize the raytrace dictionary to make it more user friendly.
+        # Attach the new raytrace dictionary to the object.
+        keys = {}
+        tmp = []
+        tmp.append('date')
+        tmp.append('freq')
+        tmp.append('tx_lat')
+        tmp.append('tx_lon')
+        tmp.append('tx_call')
+        tmp.append('tx_power')
+        tmp.append('gain_tx_db')
+        tmp.append('rx_lat')
+        tmp.append('rx_lon')
+        tmp.append('rx_call')
+        tmp.append('gain_rx_db')
+        tmp.append('R12')
+        tmp.append('kp')
+        tmp.append('irregs_flag')
+        tmp.append('doppler_flag')
+        tmp.append('rx_range')
+        tmp.append('azm')
+        keys['metadata']    = tmp
+
+        tmp = []
+        tmp.append('ranges')
+        tmp.append('heights')
+        keys['axes']        = tmp
+
+        tmp = []
+        tmp.append('iono_en_grid')
+        tmp.append('iono_en_grid_5')
+        tmp.append('iono_pf_grid_5')
+        tmp.append('iono_pf_grid')
+        tmp.append('collision_freq')
+        keys['ionosphere']  = tmp
+
+        self.rt_dct = {}
+
+        for grp_key,var_keys in keys.items():
+            self.rt_dct[grp_key] = {}
+            for var_key in var_keys:
+                self.rt_dct[grp_key][var_key] = rt_dct.get(var_key)
+
+        rt  = {}
+        self.rt_dct['raytrace']   = rt 
+        rt['all_ray_paths']       = rt_dct.get('ray_path_data')
+        rt['all_ray_data']        = rt_dct.get('ray_data')
+        rt['connecting_ray_path'] = rt_dct.get('srch_ray_path_data')
+        rt['connecting_ray_data'] = rt_dct.get('srch_ray_data')
 
 #        view    = []
 #    #    view.append('Doppler_shift') 
