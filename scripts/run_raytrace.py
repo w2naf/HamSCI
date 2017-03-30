@@ -100,7 +100,7 @@ def plot_raytrace_and_power(rt_plt):
     return fpath
 
 if __name__ == '__main__':
-    multiproc   = False
+    multiproc   = True
     # Generate a dictionary of parameters to send to MATLAB.
 #    date    = datetime.datetime(2017,2,2,21,53)
 #
