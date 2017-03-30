@@ -162,8 +162,10 @@ def plot_iono_path_profile(rt_obj,
 
     return ax, aax, cbax
 
-def plot_power_path(rt_dct,ax,ylim=(-175,-100)):
-    rd      = rt_dct['ray_data'].sort_values('ground_range')
+def plot_power_path(rt_obj,ax,maxground=4000.,ylim=(-175,-100)):
+    rd      = rt_obj.rt_dct['raytrace']['all_ray_data'].sort_values('ground_range')
+    srd     = rt_obj.rt_dct['raytrace'].get('connecting_ray_data')
+    md      = rt_obj.rt_dct['metadata']
 
     plot_dct            = {}
     tmp, key            = ({},'rx_power_0_dB')
@@ -197,8 +199,7 @@ def plot_power_path(rt_dct,ax,ylim=(-175,-100)):
     for param in plot_list:
         xx      = rd.ground_range.tolist()
         yy      = rd[param].tolist()
-        if 'srch_ray_data' in rt_dct:
-            srd     = rt_dct['srch_ray_data']
+        if srd is not None:
             inx     = srd.ground_range.argmax()
             xx.append(srd.ground_range[inx])
             yy.append((srd[param])[inx])
@@ -213,7 +214,7 @@ def plot_power_path(rt_dct,ax,ylim=(-175,-100)):
         handles.append(handle)
         labels.append(label)
 
-    if 'srch_ray_data' in rt_dct:
+    if srd is not None:
         for param in plot_list:
             inx     = srd.ground_range.argmax()
             xx      = [srd.ground_range[inx]]
@@ -222,10 +223,10 @@ def plot_power_path(rt_dct,ax,ylim=(-175,-100)):
             handle, = ax.plot(xx,yy,marker='*',ls=' ',color=color,
                     ms=10,zorder=100)
 
-    if 'rx_lat' in rt_dct and 'rx_lon' in rt_dct:
+    if 'rx_lat' in md and 'rx_lon' in md:
         # Mark the receiver location.
-        rx_label    = rt_dct.get('rx_label','Receiver')
-        rx_range    = rt_dct.get('rx_range')
+        rx_label    = md.get('rx_label','Receiver')
+        rx_range    = md.get('rx_range')
         ax.axvline(rx_range,color='r',ls='--')
         trans   = matplotlib.transforms.blended_transform_factory( ax.transData, ax.transAxes)
         hndl    = ax.scatter([rx_range],[0],s=250,marker='*',color='red',zorder=100,clip_on=False,transform=trans)
@@ -234,7 +235,7 @@ def plot_power_path(rt_dct,ax,ylim=(-175,-100)):
 #    ax.legend(loc='upper left',fontsize='small')
     ax.legend(handles,labels,loc='lower left',fontsize='small')
 
-    ax.set_xlim(0,rt_dct['maxground'])
+    ax.set_xlim(0,maxground)
     ax.set_ylim(ylim)
 
     f       = rd.frequency.unique()
@@ -251,7 +252,7 @@ def plot_power_path(rt_dct,ax,ylim=(-175,-100)):
 #    title.append(date_s)
 #    title.append('TX Origin: {}, {}; Azimuth: {}, Frequency: {}'.format(tx_lat_s,tx_lon_s,azm_s,freq_s))
     line        = 'TX Power: {:0.1f} W, TX Gain: {:0.1f} dB, RX Gain: {:0.1f} dB'.format(
-                rt_dct['tx_power'], rt_dct['gain_tx_db'], rt_dct['gain_rx_db'])
+                md['tx_power'], md['gain_tx_db'], md['gain_rx_db'])
     title.append(line)
     ax.set_title('\n'.join(title))
 
@@ -276,14 +277,15 @@ def plot_raytrace_and_power(rt_obj,
     *maxalt:        Maximum altitude [km]
 
     """
-    fig                 = plt.figure(figsize=(15,10))
+    fig                 = plt.figure(figsize=(15,6))
     x_0,x_w             = (0.0, 0.95)
-    rt_rect             = [x_0, 0.50, x_w, 0.45]
+    rt_rect             = [x_0, 0.40, x_w, 0.45]
 
     x_scale             = 0.925
     xs_w                = x_scale * x_w
     xs_0                = x_0 + (x_w-xs_w)/2.
-    pwr_rect            = [xs_0, 0.275, xs_w, 0.30]
+#    pwr_rect            = [xs_0, 0.275, xs_w, 0.30]
+    pwr_rect            = [xs_0, 0.000, xs_w, 0.35]
 
     y_scale             = 0.5
     iono_cbar_hgt       = y_scale*rt_rect[3]
@@ -302,13 +304,14 @@ def plot_raytrace_and_power(rt_obj,
     pos['iono_cbax']    = iono_cbar_div.new_locator(nx=0, ny=0) 
 
     ################################################################################
-    ax, aax, cbax       = plot_iono_path_profile(rt_obj)
+    ax, aax, cbax       = plot_iono_path_profile(rt_obj,iono_param=iono_param,maxground=maxground,maxalt=maxalt)
+
     ax.set_axes_locator(pos['rt'])
     cbax.set_axes_locator(pos['iono_cbax'])
 
-#    ax      = fig.add_subplot(111)
-#    plot_power_path(rt_dct,ax)
-#    ax.set_axes_locator(pos['pwr'])
+    ax      = fig.add_subplot(111)
+    plot_power_path(rt_obj,ax,maxground=maxground)
+    ax.set_axes_locator(pos['pwr'])
 
     fig.savefig(output_file,bbox_inches='tight')
     plt.close(fig)
