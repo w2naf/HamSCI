@@ -10,58 +10,6 @@ from hamsci import raytrace
 from hamsci import raytrace_plot
 from hamsci.general_lib import prepare_output_dirs as prep_dirs
 
-def get_fname(sTime,eTime=None,freq=None,tx_call=None,rx_call=None,
-        tx_lat=None,tx_lon=None,rx_lat=None,rx_lon=None,):
-
-    sTime_str   = sTime.strftime('%Y%m%d.%H%M')
-
-    if eTime is not None:
-        eTime_str   = eTime.strftime('-%Y%m%d.%H%M')
-    else:
-        eTime_str   = ''
-
-    date_str    = sTime_str + eTime_str + 'UT'
-
-    if freq is not None:
-        freq_str    = '{:.0f}'.format(freq*1000)+'kHz'
-    else:
-        freq_str    = ''
-
-    if tx_call is None:
-        tx_s    = 'tx'+lat_lon_fname(tx_lat,tx_lon)
-    else:
-        tx_s    = 'tx'+tx_call
-
-    if rx_call is None:
-        rx_s    = 'rx'+lat_lon_fname(rx_lat,rx_lon)
-    else:
-        rx_s    = 'rx'+rx_call
-
-    fname           = '_'.join([date_str,freq_str,tx_s,rx_s])
-    return fname
-
-def lat_lon_fname(lat,lon):
-    """
-    Returns a string in the form of 000.000N000.000E
-    for a given lat/lon pair.
-    """
-    if lat < 0:
-        NS  = 'S'
-    else:
-        NS  = 'N'
-    lat_s   = '{:07.3f}{}'.format(abs(lat),NS)
-
-    if lon > 180: lon = lon - 360.
-
-    if lon < 0:
-        EW  = 'W'
-    else:
-        EW  = 'E'
-    lon_s   = '{:07.3f}{}'.format(abs(lon),EW)
-
-    ret     = ''.join([lat_s,lon_s])
-    return ret
-
 def gen_run_list(sTime,eTime,interval_time,**kw_args):
     """
     Generate a list of dictionaries containing the parameters necessary to
@@ -101,7 +49,7 @@ def gen_plot_list(rt_objs,output_dir='output'):
     dct_list    = []
     for rt_obj in rt_objs:
         md              = rt_obj.rt_dct['metadata']
-        fname           = get_fname(md['date'],None,md['freq'],
+        fname           = (md['date'],None,md['freq'],
                             md['tx_call'], md['rx_call'],
                             md['tx_lat'],  md['tx_lon'],
                             md['rx_lat'],  md['rx_lon'])
@@ -213,7 +161,7 @@ def run_rt(run_dct):
     rx_lon      = run_dct.get('rx_lon')
     rx_call     = run_dct.get('rx_call')
 
-    fname       = get_fname(date,None,freq,tx_call,rx_call,
+    fname       = raytrace.get_event_name(date,None,freq,tx_call,rx_call,
                     tx_lat,tx_lon,rx_lat,rx_lon)
 
     pkl_fname   = os.path.join(pkl_dir,'{}.p.bz2'.format(fname))
@@ -263,7 +211,7 @@ if __name__ == '__main__':
     rx_lat                  =   42.821      # KM3T
     rx_lon                  =  -71.606      # KM3T
 
-    event_fname             = get_fname(sTime,eTime,freq,tx_call,rx_call)
+    event_fname             = raytrace.get_event_name(sTime,eTime,freq,tx_call,rx_call)
 
     # Prepare output directory.
     base_dir        = os.path.join('output','raytrace',event_fname)

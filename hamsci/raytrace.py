@@ -295,3 +295,55 @@ class TxRxRaytracer(object):
         rt['connecting_ray_path'] = rt_dct.get('srch_ray_path_data')
         rt['connecting_ray_data'] = rt_dct.get('srch_ray_data')
 
+def get_event_name(sTime,eTime=None,freq=None,tx_call=None,rx_call=None,
+        tx_lat=None,tx_lon=None,rx_lat=None,rx_lon=None,):
+
+    sTime_str   = sTime.strftime('%Y%m%d.%H%M')
+
+    if eTime is not None:
+        eTime_str   = eTime.strftime('-%Y%m%d.%H%M')
+    else:
+        eTime_str   = ''
+
+    date_str    = sTime_str + eTime_str + 'UT'
+
+    if freq is not None:
+        freq_str    = '{:.0f}'.format(freq*1000)+'kHz'
+    else:
+        freq_str    = ''
+
+    if tx_call is None:
+        tx_s    = 'tx'+lat_lon_str(tx_lat,tx_lon)
+    else:
+        tx_s    = 'tx'+tx_call
+
+    if rx_call is None:
+        rx_s    = 'rx'+lat_lon_str(rx_lat,rx_lon)
+    else:
+        rx_s    = 'rx'+rx_call
+
+    fname           = '_'.join([date_str,freq_str,tx_s,rx_s])
+    return fname
+
+def lat_lon_str(lat,lon):
+    """
+    Returns a string in the form of 000.000N000.000E
+    for a given lat/lon pair.
+    """
+    if lat < 0:
+        NS  = 'S'
+    else:
+        NS  = 'N'
+    lat_s   = '{:07.3f}{}'.format(abs(lat),NS)
+
+    if lon > 180: lon = lon - 360.
+
+    if lon < 0:
+        EW  = 'W'
+    else:
+        EW  = 'E'
+    lon_s   = '{:07.3f}{}'.format(abs(lon),EW)
+
+    ret     = ''.join([lat_s,lon_s])
+    return ret
+
