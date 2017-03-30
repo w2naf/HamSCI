@@ -48,100 +48,13 @@ def gen_plot_list(rt_objs,output_dir='output'):
     """
     dct_list    = []
     for rt_obj in rt_objs:
-        md              = rt_obj.rt_dct['metadata']
-        fname           = (md['date'],None,md['freq'],
-                            md['tx_call'], md['rx_call'],
-                            md['tx_lat'],  md['tx_lon'],
-                            md['rx_lat'],  md['rx_lon'])
-
         dct                 = {}
         dct['rt_obj']       = rt_obj
-        dct['fname']        = fname
+        dct['fname']        = rt_obj.get_event_name()
         dct['output_dir']   = output_dir
         dct_list.append(dct)
 
     return dct_list
-
-def rt_rx_pwr_to_csv(rt_dcts,print_header=True,output_dir='output',fname=None):
-    """
-    Writes Ray Trace Dictionary RX Power to CSV.
-    """
-
-    # Prepare file names.
-    if fname is None:
-        fname       = 'rxPwr_'+rt_dcts[0].get('event_fname','0')
-
-    csv_fname       = '{}.csv'.format(fname)
-    csv_path        = os.path.join(output_dir,csv_fname)
-
-    keys    = []
-    keys.append('event_fname')
-    keys.append('date')
-    keys.append('freq')
-    keys.append('tx_call')
-    keys.append('tx_lat')
-    keys.append('tx_lon')
-    keys.append('rx_call')
-    keys.append('rx_lat')
-    keys.append('rx_lon')
-    keys.append('rx_range')
-    keys.append('azm')
-    keys.append('gain_tx_db')
-    keys.append('gain_xx_db')
-    keys.append('tx_power')
-
-#    keys.append('Doppler_shift') 
-#    keys.append('Doppler_spread') 
-#    keys.append('TEC_path') 
-#    keys.append('apogee') 
-#    keys.append('deviative_absorption') 
-#    keys.append('effective_range') 
-#    keys.append('final_elev') 
-#    keys.append('frequency') 
-#    keys.append('geometric_path_length') 
-#    keys.append('gnd_rng_to_apogee') 
-#    keys.append('ground_range') 
-#    keys.append('group_range') 
-#    keys.append('initial_elev') 
-#    keys.append('lat') 
-#    keys.append('lon') 
-#    keys.append('nhops_attempted') 
-#    keys.append('phase_path') 
-#    keys.append('plasma_freq_at_apogee') 
-#    keys.append('ray_id') 
-#    keys.append('ray_label') 
-#    keys.append('rx_power_0_dB') 
-#    keys.append('rx_power_O_dB') 
-#    keys.append('rx_power_X_dB') 
-#    keys.append('rx_power_dB') 
-#    keys.append('virtual_height') 
-#    keys.append('power_dbw')
-
-    with open(csv_path,'w') as fl:
-        if print_header:
-            fl.write('# PHaRLAP Predicted Receive Power')
-            fl.write('#\n')
-            fl.write('## Metadata ####################################################################\n')
-
-            for key in keys:
-                val     = rt_dcts[0].get(key)
-                line    = '# {!s}: {!s}\n'.format(key,val)
-                fl.write(line)
-
-            fl.write('#\n')
-            fl.write('## Parameter Legend ############################################################\n')
-            fl.write('# rx_power_0_dB: No Losses\n')
-            fl.write('# rx_power_dB: Ground and Deviative Losses\n')
-            fl.write('# rx_power_O_dB: O Mode\n')
-            fl.write('# rx_power_X_dB: X Mode\n')
-
-            fl.write('#\n')
-            fl.write('## CSV Data ####################################################################\n')
-
-    rx_power    = extract_rx_power(rt_dcts)
-    rx_power.to_csv(csv_path,mode='a')
-
-    return csv_path
 
 def run_rt(run_dct):
     """
@@ -187,7 +100,7 @@ def plot_raytrace_and_power(rt_plt):
     return fpath
 
 if __name__ == '__main__':
-    multiproc   = True
+    multiproc   = False
     # Generate a dictionary of parameters to send to MATLAB.
 #    date    = datetime.datetime(2017,2,2,21,53)
 #
@@ -229,7 +142,6 @@ if __name__ == '__main__':
     run_dct['rx_lat']       = rx_lat
     run_dct['rx_lon']       = rx_lon
     run_dct['frequency']    = freq
-#    run_dct['event_fname']  = event_fname
     run_dct['pkl_dir']      = pkl_dir
     run_dct['output_dir']   = rt_dir
     run_dct['use_cache']    = True
@@ -256,7 +168,12 @@ if __name__ == '__main__':
         for rt_plt in plt_lst:
             plot_raytrace_and_power(rt_plt)
 
-#    plot_rx_power_timeseries(rt_dcts,sTime,eTime,output_dir=rx_ts_dir)
-#    rt_rx_pwr_to_csv(rt_dcts,output_dir=rx_ts_dir)
-#
-#    import ipdb; ipdb.set_trace()
+    fname       = 'rxPwr_{}.png'.format(event_fname)
+    fpath       = os.path.join(base_dir,fname)
+    raytrace_plot.plot_rx_power_timeseries(rt_objs,sTime,eTime,output_file=fpath)
+
+    fname       = 'rxPwr_{}.csv'.format(event_fname)
+    fpath       = os.path.join(base_dir,fname)
+    raytrace.rt_rx_pwr_to_csv(rt_objs,output_file=fpath)
+
+    import ipdb; ipdb.set_trace()

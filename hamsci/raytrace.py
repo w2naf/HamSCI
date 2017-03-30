@@ -295,6 +295,15 @@ class TxRxRaytracer(object):
         rt['connecting_ray_path'] = rt_dct.get('srch_ray_path_data')
         rt['connecting_ray_data'] = rt_dct.get('srch_ray_data')
 
+    def get_event_name(self):
+        md               = self.rt_dct['metadata']
+        event_name       = get_event_name(md['date'],None,md['freq'],
+                            md['tx_call'], md['rx_call'],
+                            md['tx_lat'],  md['tx_lon'],
+                            md['rx_lat'],  md['rx_lon'])
+        return event_name
+
+
 def get_event_name(sTime,eTime=None,freq=None,tx_call=None,rx_call=None,
         tx_lat=None,tx_lon=None,rx_lat=None,rx_lon=None,):
 
@@ -346,4 +355,113 @@ def lat_lon_str(lat,lon):
 
     ret     = ''.join([lat_s,lon_s])
     return ret
+
+def extract_rx_power(rt_objs,param='rx_power_dB'):
+    """
+    Extract the receive power and times from a list of rt_dcts.
+    """
+    params  = []
+    params.append('rx_power_0_dB')
+    params.append('rx_power_dB')
+    params.append('rx_power_O_dB')
+    params.append('rx_power_X_dB')
+
+    rx_pwrs = []
+    dates   = []
+    for rt_obj in rt_objs:
+        tmp         = {}
+        date        = dates.append(rt_obj.rt_dct['metadata'].get('date'))
+
+        srd         = rt_obj.rt_dct['raytrace'].get('connecting_ray_data')
+        for param in params:
+            if srd is not None:
+                inx         = srd.ground_range.argmax()
+#                xx          = [srd.ground_range[inx]]
+                tmp[param]  = (srd[param])[inx]
+            else:
+                tmp[param]  = np.nan
+
+        rx_pwrs.append(tmp)
+
+    rx_pwrs = pd.DataFrame(rx_pwrs,index=dates)
+    return rx_pwrs.sort_index()
+
+def rt_rx_pwr_to_csv(rt_objs,print_header=True,output_file='output.csv'):
+    """
+    Writes Ray Trace Dictionary RX Power to CSV.
+    """
+
+    md0         = rt_objs[0].rt_dct['metadata']
+    event_name  = rt_objs[0].get_event_name()
+
+    keys    = []
+#    keys.append('event_fname')
+    keys.append('date')
+    keys.append('freq')
+    keys.append('tx_call')
+    keys.append('tx_lat')
+    keys.append('tx_lon')
+    keys.append('rx_call')
+    keys.append('rx_lat')
+    keys.append('rx_lon')
+    keys.append('rx_range')
+    keys.append('azm')
+    keys.append('gain_tx_db')
+    keys.append('gain_rx_db')
+    keys.append('tx_power')
+
+#    keys.append('Doppler_shift') 
+#    keys.append('Doppler_spread') 
+#    keys.append('TEC_path') 
+#    keys.append('apogee') 
+#    keys.append('deviative_absorption') 
+#    keys.append('effective_range') 
+#    keys.append('final_elev') 
+#    keys.append('frequency') 
+#    keys.append('geometric_path_length') 
+#    keys.append('gnd_rng_to_apogee') 
+#    keys.append('ground_range') 
+#    keys.append('group_range') 
+#    keys.append('initial_elev') 
+#    keys.append('lat') 
+#    keys.append('lon') 
+#    keys.append('nhops_attempted') 
+#    keys.append('phase_path') 
+#    keys.append('plasma_freq_at_apogee') 
+#    keys.append('ray_id') 
+#    keys.append('ray_label') 
+#    keys.append('rx_power_0_dB') 
+#    keys.append('rx_power_O_dB') 
+#    keys.append('rx_power_X_dB') 
+#    keys.append('rx_power_dB') 
+#    keys.append('virtual_height') 
+#    keys.append('power_dbw')
+
+    with open(output_file,'w') as fl:
+        if print_header:
+            fl.write('# PHaRLAP Predicted Receive Power')
+            fl.write('#\n')
+            fl.write('## Metadata ####################################################################\n')
+
+            line    ='# event_name: {}'.format(event_name)
+            fl.write(line)
+            for key in keys:
+                val     = md0.get(key)
+                line    = '# {!s}: {!s}\n'.format(key,val)
+                fl.write(line)
+
+            fl.write('#\n')
+            fl.write('## Parameter Legend ############################################################\n')
+            fl.write('# rx_power_0_dB: No Losses\n')
+            fl.write('# rx_power_dB: Ground and Deviative Losses\n')
+            fl.write('# rx_power_O_dB: O Mode\n')
+            fl.write('# rx_power_X_dB: X Mode\n')
+
+            fl.write('#\n')
+            fl.write('## CSV Data ####################################################################\n')
+
+    rx_power    = extract_rx_power(rt_objs)
+    rx_power.to_csv(output_file,mode='a')
+
+    return output_file
 

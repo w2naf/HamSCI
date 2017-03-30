@@ -1,9 +1,3 @@
-import os
-import datetime
-import pickle as pickle
-import bz2
-import multiprocessing
-
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -15,11 +9,10 @@ from mpl_toolkits.axes_grid import Divider
 import matplotlib.dates as mdates
 
 import matlab.engine
+
+from . import raytrace
 #eng = matlab.engine.start_matlab('-desktop')
 #eng = matlab.engine.start_matlab()
-
-import hamsci
-from hamsci.general_lib import prepare_output_dirs as prep_dirs
 
 def plot_iono_path_profile(rt_obj,
         iono_param='iono_pf_grid',  iono_arr=None,
@@ -486,47 +479,19 @@ def curvedEarthAxes(rect=111, fig=None, minground=0., maxground=2000, minalt=0,
 
     return ax1, aux_ax
 
-def extract_rx_power(rt_dcts,param='rx_power_dB'):
+def plot_rx_power_timeseries(rt_objs,sTime=None,eTime=None,output_file='output.png'):
     """
-    Extract the receive power and times from a list of rt_dcts.
+    Plot RX Power Time Series given a list of rt_objs.
     """
-    params  = []
-    params.append('rx_power_0_dB')
-    params.append('rx_power_dB')
-    params.append('rx_power_O_dB')
-    params.append('rx_power_X_dB')
+    rx_power    = raytrace.extract_rx_power(rt_objs)
 
-    rx_pwrs = []
-    dates   = []
-    for rt_dct in rt_dcts:
-        tmp         = {}
-        date        = dates.append(rt_dct.get('date'))
+    md0         = rt_objs[0].rt_dct['metadata']
 
-        srd         = rt_dct.get('srch_ray_data')
-        for param in params:
-            if srd is not None:
-                inx         = srd.ground_range.argmax()
-#                xx          = [srd.ground_range[inx]]
-                tmp[param]  = (srd[param])[inx]
-            else:
-                tmp[param]  = np.nan
-
-        rx_pwrs.append(tmp)
-
-    rx_pwrs = pd.DataFrame(rx_pwrs,index=dates)
-    return rx_pwrs.sort_index()
-
-def plot_rx_power_timeseries(rt_dcts,sTime=None,eTime=None,output_dir='output',fname=None):
-    """
-    Plot RX Power Time Series
-    """
-    rx_power    = extract_rx_power(rt_dcts)
-
-    freq        = rt_dcts[0].get('freq')
-    tx_lat      = rt_dcts[0].get('tx_lat')
-    tx_lon      = rt_dcts[0].get('tx_lon')
-    rx_lat      = rt_dcts[0].get('rx_lat')
-    rx_lon      = rt_dcts[0].get('rx_lon')
+    freq        = md0.get('freq')
+    tx_lat      = md0.get('tx_lat')
+    tx_lon      = md0.get('tx_lon')
+    rx_lat      = md0.get('rx_lat')
+    rx_lon      = md0.get('rx_lon')
 
     if sTime is None or eTime is None:
         dates   = [x['date'] for x in rt_dcts]
@@ -565,8 +530,8 @@ def plot_rx_power_timeseries(rt_dcts,sTime=None,eTime=None,output_dir='output',f
     title.append(date_s)
     title.append('TX: {}, {}; RX: {}, {}, Frequency: {}'.format(tx_lat_s,tx_lon_s,rx_lat_s,rx_lon_s,freq_s))
 
-    tx_call = rt_dcts[0].get('tx_call')
-    rx_call = rt_dcts[0].get('rx_call')
+    tx_call = md0.get('tx_call')
+    rx_call = md0.get('rx_call')
     if tx_call is not None and rx_call is not None:
         title.append('TX: {}; RX: {}'.format(tx_call,rx_call))
 
@@ -577,9 +542,6 @@ def plot_rx_power_timeseries(rt_dcts,sTime=None,eTime=None,output_dir='output',f
     ax.set_ylabel('Predicted RX dB')
 
     fig.tight_layout()
-    if fname is None:
-        fname       = 'rxPwr_'+rt_dcts[0].get('event_fname','0')
 
-    fpath       = os.path.join(output_dir,fname+'.png')
-    fig.savefig(fpath,bbox_inches='tight')
+    fig.savefig(output_file,bbox_inches='tight')
     plt.close(fig)
