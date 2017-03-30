@@ -239,7 +239,7 @@ def plot_raytrace_and_power(rt_plt):
     return fpath
 
 if __name__ == '__main__':
-    multiproc   = False
+    multiproc   = True
     # Generate a dictionary of parameters to send to MATLAB.
 #    date    = datetime.datetime(2017,2,2,21,53)
 #
@@ -248,14 +248,14 @@ if __name__ == '__main__':
 #    rx_lat                  =   40.907  # Jenny Jump
 #    rx_lon                  =  -74.926  # Jenny Jump
 
-    sTime                   = datetime.datetime(2014,11,3)
-    eTime                   = datetime.datetime(2014,11,4)
+    sTime                   = datetime.datetime(2014,11,1)
+    eTime                   = datetime.datetime(2014,11,2)
     interval_time           = datetime.timedelta(minutes=5)
 
 #    sTime                   = datetime.datetime(2014,11,3,12)
 #    eTime                   = datetime.datetime(2014,11,3,15)
 #    interval_time           = datetime.timedelta(hours=1)
-    freq                    =   21.150
+    freq                    =   14.110
     tx_call                 =   'YV5B'
     tx_lat                  =    9.096      # YV5B
     tx_lon                  =  -67.824      # YV5B
@@ -297,7 +297,6 @@ if __name__ == '__main__':
         for this_dct in run_lst:
             rt_obj  = run_rt(this_dct)
             rt_objs.append(rt_obj)
-            break
 
     plt_lst                 = gen_plot_list(rt_objs,output_dir=rt_dir)
     if multiproc:
