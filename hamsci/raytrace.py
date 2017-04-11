@@ -6,6 +6,14 @@ import pandas as pd
 
 import matlab.engine
 
+import threading
+
+class MatlabInstance(threading.local):
+    def __init__(self):
+        self.eng = matlab.engine.start_matlab()
+
+mi  = MatlabInstance()
+
 class TxRxRaytracer(object):
     def __init__(self, date, frequency, nhops=3.,
                  tx_call      = None, tx_lat     = None,   tx_lon      = None,
@@ -73,7 +81,8 @@ class TxRxRaytracer(object):
         # 5 minutes later so that Doppler shift can be calculated.
         doppler_flag = 1
 
-        eng = matlab.engine.start_matlab()
+        eng = mi.eng
+#        eng = matlab.engine.start_matlab()
     #    eng = matlab.engine.start_matlab('-desktop')
 
 
@@ -191,6 +200,7 @@ class TxRxRaytracer(object):
         fns.append('rx_power_dB')    # Includes deviative absorption, GS loss
         fns.append('rx_power_O_dB')  # Includes deviative absorption, GS loss, O mode absorption
         fns.append('rx_power_X_dB')  # Includes deviative absorption, GS loss, X mode absorption
+        import ipdb; ipdb.set_trace()
 
         ray_data = {}
         ray_data['ray_id']  = np.array(eng.workspace['rd_id'],dtype=np.int).flatten()
