@@ -25,7 +25,10 @@ from hamsci import handling
 from pyporktools import qrz
 
 # Set default gridsquare precision
-gridsquare_precision = 4
+gridsquare_precision    = 4
+
+# Set radius of the Earth
+Re                      = 6371  # Radius of the Earth
 
 def loop_info(map_sTime,map_eTime):
     print('')
@@ -346,7 +349,7 @@ def create_rbn_obj(sTime,eTime,
         cols    = OrderedDict()
         cols['tx_call']                         = 'dx'
         cols['rx_call']                         = 'callsign'
-        cols['freq']                            = 'frequency'
+        cols['freq']                            = 'freq'
         cols['srch_rd_rx_power_dB']             = 'dB'
         cols['srch_rd_lat']                     = 'refl_lat'
         cols['srch_rd_lon']                     = 'refl_lon'
@@ -358,11 +361,16 @@ def create_rbn_obj(sTime,eTime,
         df      = df_0[list(cols.keys())]
         df      = df.rename(columns=cols)
 
+        # Convert freq to kHz for compatibility with later routines.
+        df['freq']      = df['freq']*1000.
+
         # Geolocate the Data ###################
         df['de_lat']    = np.ones(len(df)) * np.nan
         df['de_lon']    = np.ones(len(df)) * np.nan
         df['dx_lat']    = np.ones(len(df)) * np.nan
         df['dx_lon']    = np.ones(len(df)) * np.nan
+        df['R_gc']      = np.ones(len(df)) * np.nan
+        df['azm']       = np.ones(len(df)) * np.nan
 
         de_calls        = df.callsign.unique()
         dx_calls        = df.dx.unique()
@@ -378,6 +386,25 @@ def create_rbn_obj(sTime,eTime,
             tf                  = df.dx == call
             df.loc[tf,'dx_lat'] = lat
             df.loc[tf,'dx_lon'] = lon
+
+        # Calculate Total Great Circle Path Distance
+        lat1, lon1          = df['de_lat'],df['de_lon']
+        lat2, lon2          = df['dx_lat'],df['dx_lon']
+        R_gc                = Re*hamsci.geopack.greatCircleDist(lat1,lon1,lat2,lon2)
+        df.loc[:,'R_gc']    = R_gc
+
+        df.loc[:,'azm']     = hamsci.geopack.greatCircleAzm(df.de_lat,df.de_lon,df.dx_lat,df.dx_lon)
+
+        # Calculate Band
+        df.loc[:,'band']        = np.array((np.floor(df['freq']/1000.)),dtype=np.int)
+
+        # Create ''raw'' dataframe. ############
+        tf      = df.hop_nr == df.hops_attempted
+        df_raw  = df[tf]
+        del df_raw['refl_lat']
+        del df_raw['refl_lon']
+        del df_raw['refl_height']
+        del df_raw['refl_plasma_freq']
 
         import ipdb; ipdb.set_trace()
 #    rbn_obj     = rbn_lib.RbnObject(sTime,eTime)
