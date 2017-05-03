@@ -4,6 +4,7 @@ import os
 import shutil
 import datetime
 import pickle
+import glob
 
 import multiprocessing
 
@@ -17,6 +18,7 @@ from mpl_toolkits.basemap import Basemap
 from matplotlib import pyplot as plt
 import numpy as np
 import scipy as sp
+import scipy.io
 import pandas as pd
 
 from davitpy.models import iri
@@ -305,6 +307,35 @@ class iono_3d(object):
             fig.savefig(_filename,bbox_inches='tight')
             plt.close()
             paths.append(_filename)
+        return paths
+
+    def save_matfile(self,keys=None,output_dir='data',filename=None):
+
+        if keys is None:
+            keys = self.profiles.keys()
+        
+        keys    = hamsci.general_lib.get_iterable(keys)
+        
+        paths = []
+        for key in keys:
+            profl   = self.profiles[key]
+            edens   = profl['e_density']
+            lats    = profl['glats']
+            lons    = profl['glons']
+            alts    = profl['alts']
+            ranges  = profl['ranges']
+
+            if filename is None:
+                _filename = os.path.join(output_dir,'{0}_profile.mat'.format(profl['fname_base']))
+            else:
+                _filename = os.path.join(output_dir,filename)
+
+            paths.append(_filename)
+
+            # Save profile to matlab file.
+            mat_profl           = profl.copy()
+            mat_profl['date']   = str(mat_profl['date']) # MATLAB cannot
+            sp.io.savemat(_filename,mat_profl)
         return paths
 
     def plot_map(self,figsize=(10,8),alt=250.,
@@ -675,8 +706,6 @@ class iono_3d(object):
         return self.profiles
 
 if __name__ == "__main__":
-    date        = datetime.datetime(2012,12,25)
-    eDate       = datetime.datetime(2012,12,25,12)
     use_cache   = False
 
     kw_args          = {}
@@ -694,9 +723,17 @@ if __name__ == "__main__":
     dirs        = {}
     dirs['map_dir']     = os.path.join(base_dir,'maps')
     dirs['profile_dir'] = os.path.join(base_dir,'profiles')
+    dirs['matfile_dir'] = os.path.join(base_dir,'matfiles')
     prepare_output_dirs(dirs,clear_output_dirs=True)
 
-    while date < eDate:
+    input_dir   = 'data/sim_tx_rx'
+    input_fls   = glob.glob(os.path.join(input_dir,'*.csv'))
+
+    for input_fl in input_fls:
+        bn      = os.path.basename(input_fl)
+        date    = datetime.datetime.strptime(bn,'%Y-%m-%d %H:%M:%S.csv')
+
+
         iono = iono_3d(date,**kw_args)
         iono.generate_wave()
 
@@ -705,10 +742,27 @@ if __name__ == "__main__":
                 'projection':'stere','resolution':'l'}
         iono.plot_map(basemap_dict=basemap_dict,output_dir=dirs['map_dir'])
 
-        tx_lat, tx_lon  = (44.838,-123.603)
-        rx_lat, rx_lon  = (33.003,-79.420)
-        iono.generate_tx_rx_profile(tx_lat,tx_lon,rx_lat,rx_lon)
+        # Load required paths from a file.
+        # Drop all paths with r_gc < r_gc_min
+        min_r_gc    = 50.   # Minimum required path distance in km.
+        names       = ['tx_call','rx_call','tx_lat','tx_lon','rx_lat','rx_lon']
+        df          = pd.read_csv(input_fl,names=names)
+
+        df['r_gc']  = Re*hamsci.geopack.greatCircleDist(df.tx_lat,df.tx_lon,df.rx_lat,df.rx_lon)
+        tf          = df.r_gc >= min_r_gc
+        df          = df[tf]
+
+        # Replace slashes with dashes in calls to make compatible with filenames.
+        df.loc[:,'tx_call'] = df.tx_call.map(lambda x: str.replace(x,'/','-'))
+        df.loc[:,'rx_call'] = df.rx_call.map(lambda x: str.replace(x,'/','-'))
+
+        df  = df[:10]
+        for inx,row in df.iterrows():
+#            iono.generate_tx_rx_profile(tx_lat,tx_lon,rx_lat,rx_lon)
+            iono.generate_tx_rx_profile(tx_call=row.tx_call,tx_lat=row.tx_lat,tx_lon=row.tx_lon,
+                                        rx_call=row.rx_call,rx_lat=row.rx_lat,rx_lon=row.rx_lon)
         iono.plot_profiles(output_dir=dirs['profile_dir'])
+        iono.save_matfile(output_dir=dirs['matfile_dir'])
 
         date += datetime.timedelta(hours=3)
 
