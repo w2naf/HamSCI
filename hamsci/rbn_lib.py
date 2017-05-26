@@ -198,7 +198,7 @@ def read_rbn(sTime,eTime=None,data_dir='data/rbn',qrz_call=None,qrz_passwd=None)
              u = urllib.request.urlopen(url)
              f = open(data_path, 'wb')
              meta = u.info()
-             file_size = int(meta.getheaders("Content-Length")[0])
+             file_size = int(meta["Content-Length"])
              print("Downloading: %s Bytes: %s" % (data_path, file_size))
          
              file_size_dl = 0

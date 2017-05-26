@@ -4,6 +4,7 @@
 import string
 import numpy as np
 import pandas as pd
+from functools import reduce
 
 # Create string lookup lists for each of the codes.
 alpha_upper = np.char.array([x for x in string.ascii_uppercase])
@@ -98,6 +99,8 @@ def latlon2gridsquare(lat,lon,precision=6):
         
     return ret_arr
 
+
+
 def gridsquare2latlon(gridsquare,position='center'):
     """
     Calculates lat,lon pairs from gridsquares.
@@ -109,13 +112,14 @@ def gridsquare2latlon(gridsquare,position='center'):
         'upper left'
         'upper right'
         'lower right'
-    """
+    """    
     # Don't process lines that have no grid square.
     gs_0        = np.array(gridsquare)
     gs_1        = gs_0.flatten()
     gs_good_tf  = gs_1 != ''
-    gs_2        = gs_1[gs_good_tf]
-
+    # gs_2        = gs_1[gs_good_tf]
+    gs_2 = list(filter(lambda x: x != '', gs_1))
+    
     # Make everything lower case and put into a character array
     # for easy slicing.
     gss = np.char.array(gs_2).lower()
@@ -145,7 +149,8 @@ def gridsquare2latlon(gridsquare,position='center'):
         lon_code, lat_code  = np.array(list(zip(*codes)))
 
         # Convert code into an index number and choose a base.
-        alpha        = not bool(pos/2 % 2)
+        alpha = not bool(pos/2 % 2)
+        
         if alpha:
             lon_inx = np.array(alpha_pd.loc[lon_code].tolist(),dtype=np.float)
 
@@ -206,7 +211,6 @@ def gridsquare2latlon(gridsquare,position='center'):
 
     return ret_lat,ret_lon
 
-
 def gridsquare_grid(precision=4):
     """
     Generate a grid of gridsquares up to an arbitrary precision.
@@ -214,7 +218,7 @@ def gridsquare_grid(precision=4):
     
     # Figure out the size of dLat and dLon for a specified precision.
     N = 1.
-    for curr_zPrec in range(precision/2):
+    for curr_zPrec in range(int(precision/2)):
         if curr_zPrec == 0:
             # Field case... base 18
             N = N * 18.

@@ -119,7 +119,7 @@ def rbn_map_multiview(run_dct):
 def create_webview(tags=None,html_fname='0-multiview.html',
         output_dir='output',width=500):
     # Get the names of the directories in the output_dir.
-    dirs    = os.walk(output_dir).next()[1] 
+    dirs    = next(os.walk(output_dir))[1] 
     dirs.sort()
     if tags is None:
         fname_tags  = dirs
@@ -285,7 +285,7 @@ def create_rbn_obj(sTime,eTime,
     output_dir  = os.path.split(filepath)[0]
     handling.prepare_output_dirs({0:output_dir},clear_output_dirs=False)
 
-    rbn_obj     = rbn_lib.RbnObject(sTime,eTime)
+    rbn_obj     = rbn_lib.RbnObject(sTime,eTime,qrz_call='W2NAF',qrz_passwd='hamscience')
 
     rbn_obj.active.dropna()
     rbn_obj.active.filter_pathlength(500.)
@@ -350,6 +350,10 @@ def plot_grid_timeseries(run_list,
                 tmp['rbn_'+gs_param+'_err_up']  = ds.grid_data.loc[grid_square,gs_param+'_err_up']
                 data_list.append(tmp)
 
+        if len(data_list) < 1:
+            print("Empty DataFrame")
+            return
+        
         df_ts   = pd.DataFrame(data_list)
 
         with open(cache_fpath,'wb') as fl:
@@ -508,10 +512,10 @@ if __name__ == '__main__':
 #    reflection_type     = 'sp_mid'
 
 #    # 2014 Nov Sweepstakes
-    sTime   = datetime.datetime(2014,11,1)
-    eTime   = datetime.datetime(2014,11,4)
-#    sTime   = datetime.datetime(2014,11,2,12)
-#    eTime   = datetime.datetime(2014,11,2,13)
+    # sTime   = datetime.datetime(2014,11,1)
+    # eTime   = datetime.datetime(2014,11,4)
+    sTime   = datetime.datetime(2014,11,2,12)
+    eTime   = datetime.datetime(2014,11,2,13)
 
     # 2015 Nov Sweepstakes
 #    sTime   = datetime.datetime(2015,11,7)
