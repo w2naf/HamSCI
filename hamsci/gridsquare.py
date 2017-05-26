@@ -4,7 +4,6 @@
 import string
 import numpy as np
 import pandas as pd
-from functools import reduce
 
 # Create string lookup lists for each of the codes.
 alpha_upper = np.char.array([x for x in string.ascii_uppercase])
