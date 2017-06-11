@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 matplotlib.rcParams['text.usetex'] = True
 from matplotlib import pyplot as plt
 import mpl_toolkits.axes_grid.axes_size as Size

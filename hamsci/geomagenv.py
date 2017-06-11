@@ -8,7 +8,7 @@ import scipy as sp
 import pandas as pd
 
 import matplotlib
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
 

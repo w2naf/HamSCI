@@ -17,7 +17,7 @@ import numpy as np      #Numerical python - provides array types and operations
 import pandas as pd     #This is a nice utility for working with time-series type data.
 
 # Some view options for debugging.
-pd.set_option('display.height', 1000)
+# pd.set_option('display.height', 1000)
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
@@ -25,7 +25,7 @@ pd.set_option('display.width', 1000)
 from pyporktools import qrz
 
 import matplotlib
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
 import matplotlib.patches as mpatches
