@@ -4,4 +4,7 @@ from hamsci import handling
 from hamsci import geomagenv
 from hamsci import general_lib
 from hamsci import eclipse
-from hamsci import raytrace
+try:
+    from hamsci import raytrace
+except:
+    pass
